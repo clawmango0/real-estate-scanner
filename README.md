@@ -3,7 +3,7 @@
 Comprehensive investment analysis tool for real estate scouting.
 
 ![Properties](https://img.shields.io/badge/Properties-25-orange)
-![Features](https://img.shields.io/badge/Features-9-brightgreen)
+![Features](https://img.shields.io/badge/Features-10-brightgreen)
 ![Status](https://img.shields.io/badge/Status-Active-blue)
 
 ## Features
@@ -17,44 +17,36 @@ Comprehensive investment analysis tool for real estate scouting.
 - Condition scoring (1-10)
 - Rehab cost estimates based on condition
 - After Repair Value (ARV) calculation
-- Potential equity after rehab
 
 ### 3. 📈 Appreciation Projections
 - Conservative (3%), Moderate (5%), Aggressive (7%) scenarios
-- 5-year projections including:
-  - Price appreciation
-  - Principal paydown
-  - Total return analysis
+- 5-year projections including price appreciation + principal paydown
 
 ### 4. 🔄 BRRRR Calculator
 - Buy, Rehab, Rent, Refinance, Repeat analysis
 - Total cash needed calculation
-- Post-refinance cash flow
-- Cash-on-Cash after refi
 
 ### 5. 🎯 Sensitivity Analysis
 - Interest rate impact (5-9%)
 - Down payment variations (10-30%)
-- Break-even scenarios
 
 ### 6. 💰 Taxes & Insurance
-- Texas property tax rates (Ft Worth: 1.95%, Crowley: 1.85%)
+- Texas property tax rates integrated
 - Insurance estimates per sqft
-- Realistic expense tracking
 
 ### 7. 🏘️ Neighborhood Scores
 - School ratings integration
 - Age/condition factors
-- Composite neighborhood score (0-100)
 
 ### 8. 📋 Comparable Sales
-- Recent sold comparables
-- $/sqft analysis
-- ARV validation
+- Recent sold data for validation
 
-### 9. 🗺️ Mapping Ready
-- Property data structured for map visualization
-- Color-coded scoring for quick review
+### 9. 🗺️ Map-Ready Data
+- Structured for visualization
+
+### 10. 🔍 Web Scraper (Setup Required)
+- Scrapling-based scraper included (requires Playwright browsers)
+- Simple HTTP scraper as fallback
 
 ---
 
@@ -64,7 +56,7 @@ Comprehensive investment analysis tool for real estate scouting.
 # Run full analysis
 python3 comprehensive_analyzer.py
 
-# Run rental comps
+# Run rental comparison
 python3 rental_comps.py
 
 # Run basic analysis
@@ -73,15 +65,27 @@ python3 analyzer.py
 
 ---
 
+## Adding New Data
+
+See `DATA_FORMAT.md` for easy formats to add:
+- Properties for sale
+- Rental comps
+- Recently sold comparables
+- Duplexes/multi-unit
+
+---
+
 ## Files
 
 | File | Description |
 |------|-------------|
-| `comprehensive_analyzer.py` | Full-featured analyzer with all 9 features |
-| `analyzer.py` | Basic analyzer with Mr. Kelly's rubric |
+| `comprehensive_analyzer.py` | Main analyzer with all 10 features |
+| `analyzer.py` | Basic analyzer with scoring rubric |
 | `rental_comps.py` | Rental market comparison |
-| `properties.md` | Property data & analysis results |
-| `dashboard.html` | Interactive web dashboard |
+| `scraper.py` | Scrapling-based scraper (requires setup) |
+| `simple_scraper.py` | Basic HTTP scraper |
+| `properties.md` | Analysis results |
+| `DATA_FORMAT.md` | Data entry formats |
 
 ---
 
@@ -99,10 +103,10 @@ python3 analyzer.py
 
 ## Key Insights
 
-- **This market is NOT for cash flow** - Buy expecting equity growth, not monthly income
-- **BRRRR can help** but doesn't fully solve the cash flow problem
-- **Crowley wins** on neighborhood scores (newer, better schools)
-- **Rates matter** - At 5%, some properties approach positive cash flow
+- **This market is NOT for cash flow** - Buy expecting equity growth
+- **BRRRR can help** but doesn't fully solve cash flow
+- **Crowley wins** on neighborhood scores
+- **Rates matter** - At 5%, some properties approach positive CF
 
 ---
 
