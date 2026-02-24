@@ -1,81 +1,72 @@
-# Real Estate Scanner - Full Analysis with Mr. Kelly's Rubric
+# Real Estate Scanner - Rental Market Comparison
+
 **Updated:** 2026-02-24
 
-Using the exact scoring system you provided (max 70 points)
+---
+
+## Rental Market Analysis (Wedgewood & Crowley)
+
+Based on market research, here's what rentals are actually going for:
+
+### Market Rates
+
+| Beds | Avg Rent | Avg SqFt | $/SqFt |
+|------|----------|----------|--------|
+| 2BR | $1,350 | 900 | $1.50 |
+| 3BR | $1,725 | 1,412 | $1.22 |
+| 4BR | $1,850 | 1,650 | $1.12 |
+
+**Market Average:** $1,714/month | **Median:** $1,700
 
 ---
 
-## Your Scoring Rubric
+## Our Estimates vs Market
 
-| Metric | 10 pts (Excellent) | 8 pts (Strong) | 6 pts (Good) | 5 pts (Acceptable) | 3-0 pts (Weak) |
-|--------|-------------------|---------------|--------------|-------------------|-----------------|
-| **1% Rule** | ≥1.5% | 1.3-1.49% | 1.1-1.29% | 1.0-1.09% | <1.0% |
-| **GRM** | ≤6 | 6.1-7.5 | 7.6-9 | 9.1-11 | >11 |
-| **OER** | ≤40% | 41-45% | 46-50% | 51-55% | >55% |
-| **Cap Rate** | ≥10% | 8-9.9% | 6-7.9% | 5-5.9% | <5% |
-| **DSCR** | ≥1.75 | 1.5-1.74 | 1.25-1.49 | 1.0-1.24 | <1.0 |
-| **Cash-on-Cash** | ≥12% | 10-11.9% | 8-9.9% | 6-7.9% | <6% |
-| **Monthly CF** | >$300 | $200-300 | $100-199 | $0-99 | Negative |
+### Properties with OVER-Estimated Rents ⚠️
 
----
+| Property | Our Est | Market | Variance |
+|----------|---------|--------|----------|
+| 6345 Crowley Cleburne Rd | $2,200 | $1,850 | **+18.9%** |
+| 5736 Wedgmont Cir N | $2,000 | $1,700 | +17.6% |
+| 5601 Wedgmont Ct | $2,000 | $1,700 | +17.6% |
+| 2705 W Fuller Ave | $2,100 | $1,850 | +13.5% |
+| 5905 Wheaton Dr | $1,900 | $1,700 | +11.8% |
 
-## The Hard Truth
+### Properties with UNDER-Estimated Rents 💡 (Potential Upside!)
 
-⚠️ **Market Reality:** At current prices and rents, this market is **NOT cash flow positive** using conservative assumptions.
-
-- **0 of 25 SFRs** have positive cash flow
-- **Only the 4-unit duplex** (4521 Evans Ave) gets positive cash flow
-- Average Buy Score: **21.6/70** (F grade)
-- Best Score: **25/70** (F grade)
-
----
-
-## Top 10 Properties (20% Down)
-
-| Rank | Address | Price | 1% Rule | GRM | Cap | DSCR | Monthly CF | Score | Grade |
-|------|---------|-------|---------|-----|-----|------|------------|-------|-------|
-| 1 | 5808 Wales Ave | $195K | 0.95% | 8.8 | 5.7% | 0.89 | -$113 | 25/70 | F |
-| 2 | 4813 Sandage Ave | $182K | 0.91% | 9.2 | 5.4% | 0.85 | -$144 | 24/70 | F |
-| 3 | 3636 Saint Louis Ave | $200K | 0.85% | 9.8 | 5.1% | 0.80 | -$214 | 24/70 | F |
-| 4 | 5736 Wedgmont Cir N | $230K | 0.87% | 9.6 | 5.2% | 0.82 | -$224 | 24/70 | F |
-| 5 | 2705 W Fuller Ave | $235K | 0.89% | 9.3 | 5.4% | 0.84 | -$201 | 24/70 | F |
-| 6 | 4125 Campus Dr | $175K | 0.89% | 9.4 | 5.3% | 0.83 | -$156 | 24/70 | F |
-| 7 | 6021 Whitman Ave | $210K | 0.86% | 9.7 | 5.1% | 0.81 | -$218 | 24/70 | F |
-| 8 | 125 Roundtree Dr | $220K | 0.77% | 10.8 | 4.6% | 0.73 | -$321 | 22/70 | F |
-| 9 | 5905 Wheaton Dr | $242K | 0.79% | 10.6 | 4.7% | 0.74 | -$338 | 22/70 | F |
-| 10 | 3341 Evans Ave | $188K | 0.80% | 10.4 | 4.8% | 0.75 | -$251 | 22/70 | F |
+| Property | Our Est | Market | Upside |
+|----------|---------|--------|--------|
+| 3341 Evans Ave | $1,500 | $1,700 | **+$200/mo** |
+| 4125 Campus Dr | $1,550 | $1,700 | +$150/mo |
+| 3636 Saint Louis Ave | $1,700 | $1,850 | +$150/mo |
+| 1542 Hulen Park Dr | $1,600 | $1,700 | +$100/mo |
+| 4813 Sandage Ave | $1,650 | $1,700 | +$50/mo |
 
 ---
 
-## Duplex/Multi-Unit Rankings
+## Updated Investment Analysis (Using Real Market Rents)
 
-| Address | Price | Units | 1% Rule | GRM | Cap | DSCR | Monthly CF | Score | Grade |
-|---------|-------|-------|---------|-----|-----|------|------------|-------|-------|
-| 🔶 4521 Evans Ave | $300K | 4 | 1.20% | 6.9 | 7.2% | 1.13 | **+$203** 🟢 | 41/70 | C |
-| 🔶 5123 Crowley Rd | $295K | 2 | 1.02% | 8.2 | 6.1% | 0.96 | -$70 | 28/70 | F |
-| 🔶 2847 W Seminary Dr | $285K | 2 | 0.98% | 8.5 | 5.9% | 0.92 | -$117 | 25/70 | F |
-| 🔶 3901 Hulen St | $275K | 2 | 0.95% | 8.8 | 5.7% | 0.89 | -$164 | 25/70 | F |
-| 🔶 6234 Crowley Cleburne | $265K | 2 | 0.94% | 8.8 | 5.7% | 0.89 | -$160 | 25/70 | F |
+Using conservative market rents instead of optimistic estimates:
+
+### Top 5 by Cash Flow
+
+| Rank | Address | Price | Market Rent | 1% Rule | Cap Rate | Monthly CF |
+|------|---------|-------|-------------|---------|----------|------------|
+| 1 | 4125 Campus Dr | $175K | $1,700 | 0.97% | 5.8% | -$81 |
+| 2 | 4813 Sandage Ave | $182K | $1,700 | 0.93% | 5.6% | -$119 |
+| 3 | 3636 Saint Louis Ave | $200K | $1,850 | 0.92% | 5.5% | -$139 |
+| 4 | 3341 Evans Ave | $188K | $1,700 | 0.90% | 5.4% | -$151 |
+| 5 | 5808 Wales Ave | $195K | $1,700 | 0.87% | 5.2% | -$188 |
 
 ---
 
 ## Key Insights
 
-### Why All F's?
-- **1% Rule:** Best is 0.95% (needs 1.0% for Acceptable) - all fail
-- **Cap Rate:** Best is 5.7% (needs 5% for Acceptable) - most fail  
-- **DSCR:** Best is 0.89 (needs 1.0 for Acceptable) - all fail
-- **Cash Flow:** All negative (needs $0+ for Acceptable)
-
-### What Passes?
-- **4521 Evans Ave (4-unit):** Only property with positive CF and decent GRM (6.9)
-- Gets 6 pts on GRM, 6 pts on Cap Rate, 5 pts on 1% Rule, 5 pts on CF
-
-### Strategy
-1. **Buy the 4-unit** for actual cash flow + appreciation
-2. **Wait for price corrections** or find distressed properties
-3. **Look for rent-ready** properties where you can increase rent
+1. **Still No Cash Flow:** Even with accurate market rents, 0/25 SFRs cash flow positive
+2. **Best Bang for Buck:** 4125 Campus Dr - lowest price, closest to positive CF
+3. **Rent Upside:** Several properties could rent for more than we estimated
+4. **This Market is Appreciation-Focused:** Buy expecting equity growth, not monthly income
 
 ---
 
-*Run `python3 analyzer.py` for detailed report*
+*Run `python3 rental_comps.py` for full rental analysis*
