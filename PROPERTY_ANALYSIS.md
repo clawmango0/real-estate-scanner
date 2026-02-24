@@ -21,9 +21,10 @@
 |------|----------|--------------|------|-------|------|-----|--------|
 | 🥇 | 7652 Colorado Creek Ct (duplex) | [View](https://www.zillow.com/homedetails/7652-Colorado-Creek-Ct-Fort-Worth-TX-76133/29176661_zpid/) | 104 | $212,500 | $2,602 | +$308 | ✅ |
 | 🥈 | 8812 Texas Risinger Dr | [View](https://www.zillow.com/homedetails/8812-Texas-Risinger-Dr-UNIT-70-Fort-Worth-TX-76123/340860410_zpid/) | 121 | $203,150 | $2,400 | +$227 | ✅ |
-| 3 | 5113 Bob Dr, NRH | [View](https://www.zillow.com/homedetails/5113-Bob-Dr-North-Richland-Hills-TX-76180/28956130_zpid/) | 136 | $170,000 | $1,407 | +$26 | 🟡 |
-| 4 | 1213 Glenda Dr, Bedford | [View](https://www.zillow.com/homedetails/1213-Glenda-Dr-Bedford-TX-76022/28927948_zpid/) | 10 | $205,000 | $1,361 | -$257 | ❌ |
-| 5 | 5905 Wheaton Dr, FW | [View](https://www.zillow.com/homedetails/5905-Wheaton-Dr-Fort-Worth-TX-76133/29140676_zpid/) | 136 | $205,700 | $1,361 | -$262 | ❌ |
+| 🥉 | **4516 Rutland Ave (Duplex)** | [View](https://renn.fortworthfocused.com/properties) | 25 | $215,000 | $2,400 | +$94 | ✅ NEW |
+| 4 | 5113 Bob Dr, NRH | [View](https://www.zillow.com/homedetails/5113-Bob-Dr-North-Richland-Hills-TX-76180/28956130_zpid/) | 136 | $170,000 | $1,407 | +$26 | 🟡 |
+| 5 | 1213 Glenda Dr, Bedford | [View](https://www.zillow.com/homedetails/1213-Glenda-Dr-Bedford-TX-76022/28927948_zpid/) | 10 | $205,000 | $1,361 | -$257 | ❌ |
+| 6 | 5905 Wheaton Dr, FW | [View](https://www.zillow.com/homedetails/5905-Wheaton-Dr-Fort-Worth-TX-76133/29140676_zpid/) | 136 | $205,700 | $1,361 | -$262 | ❌ |
 | 6 | 5521 Lubbock Ave + Shop | [View](https://www.zillow.com/homedetails/5521-Lubbock-Ave-Fort-Worth-TX-76133/29108541_zpid/) | 3 | $250,000 | $2,007 | -$267 | ❌ |
 | 7 | 5465 Wayside Ave | [View](https://www.zillow.com/homedetails/5465-Wayside-Ave-Fort-Worth-TX-76134/28972954_zpid/) | 112 | $210,545 | $1,407 | -$275 | ❌ |
 | 8 | 4245 Gray Fox Dr | [View](https://www.zillow.com/homedetails/4245-Gray-Fox-Dr-Fort-Worth-TX-76123/54939314_zpid/) | 64 | $208,250 | $1,407 | -$286 | ❌ |
@@ -55,7 +56,19 @@
 - **Schools:** 5.3/10
 - **HOA:** $50/mo
 
-### 3. 5113 Bob Dr, North Richland Hills
+### 3. 🥉 4516 Rutland Ave (Duplex) - NEW!
+- **Source:** Fort Worth Focused
+- **Link:** https://renn.fortworthfocused.com/properties
+- **Listed:** $215,000 → **Offer:** $215,000
+- **Type:** Potential Duplex (verify with listing)
+- **Beds/Baths:** 2bd/1ba (SFR) or can convert to duplex
+- **Rent:** $2,400/mo (estimated for duplex income)
+- **Cash Flow:** +$94/mo ✅
+- **Condition:** Good (assume needs verification)
+- **Schools:** 5.3/10 (Fort Worth)
+- **Notes:** Could work as duplex for extra income
+
+### 4. 5113 Bob Dr, North Richland Hills
 - **Link:** https://www.zillow.com/homedetails/5113-Bob-Dr-North-Richland-Hills-TX-76180/28956130_zpid/
 - **Listed:** $200,000 → **Offer:** $170,000 (15% discount)
 - **Type:** 4BR/3BA SFR
