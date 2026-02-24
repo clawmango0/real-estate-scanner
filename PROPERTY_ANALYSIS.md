@@ -74,6 +74,32 @@
 
 ---
 
+## Price per SqFt Analysis
+
+| Property | $/SqFt | vs Market ($195 avg) | Assessment |
+|---------|---------|---------------------|------------|
+| 7652 Colorado Creek | $85 | -56% | ✅ GOOD DEAL |
+| 5113 Bob Dr | $89 | -54% | ✅ GOOD DEAL |
+| 4516 Rutland | $100 | -49% | ✅ GOOD DEAL |
+| 8812 Texas Risinger | $113 | -42% | ✅ GOOD DEAL |
+| 2933 Sycamore | $167 | -14% | 🟡 Premium |
+
+---
+
+## Refurbishment Estimates
+
+Based on year built and condition descriptions:
+
+| Property | Year | Condition | Rehab Est | % |
+|----------|------|-----------|-----------|---|
+| 7652 Colorado Creek | 2024 | NEW | $5,000 | 2% |
+| 8812 Texas Risinger | 2024 | NEW, leased | $5,000 | 2% |
+| 2933 Sycamore | 1985 | Established | $22,500 | 5% |
+| 4516 Rutland | 1960 | Older | $17,200 | 8% |
+| 5113 Bob Dr | 1959 | Diamond in rough | $20,000 | 10% |
+
+---
+
 ## Data Sources
 
 ### Working Sources ✅
