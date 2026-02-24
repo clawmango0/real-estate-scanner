@@ -1,0 +1,65 @@
+{
+  "alerts": [
+    {
+      "property_id": 1,
+      "address": "4813 Sandage Ave, Ft Worth",
+      "timestamp": "2026-02-24T09:35:44.537184",
+      "criteria_met": [
+        "min_cash_flow",
+        "min_coc",
+        "max_price",
+        "min_beds",
+        "allowed_types"
+      ]
+    },
+    {
+      "property_id": 2,
+      "address": "5808 Wales Ave, Ft Worth",
+      "timestamp": "2026-02-24T09:35:44.537205",
+      "criteria_met": [
+        "min_cash_flow",
+        "min_coc",
+        "max_price",
+        "min_beds",
+        "allowed_types"
+      ]
+    },
+    {
+      "property_id": 3,
+      "address": "3636 Saint Louis Ave, Ft Worth",
+      "timestamp": "2026-02-24T09:35:44.537219",
+      "criteria_met": [
+        "min_cash_flow",
+        "min_coc",
+        "max_price",
+        "min_beds",
+        "allowed_types"
+      ]
+    },
+    {
+      "property_id": 11,
+      "address": "4125 Campus Dr, Ft Worth",
+      "timestamp": "2026-02-24T09:35:44.537231",
+      "criteria_met": [
+        "min_cash_flow",
+        "min_coc",
+        "max_price",
+        "min_beds",
+        "allowed_types"
+      ]
+    },
+    {
+      "property_id": 12,
+      "address": "3341 Evans Ave, Ft Worth",
+      "timestamp": "2026-02-24T09:35:44.537243",
+      "criteria_met": [
+        "min_cash_flow",
+        "min_coc",
+        "max_price",
+        "min_beds",
+        "allowed_types"
+      ]
+    }
+  ],
+  "last_check": "2026-02-24T09:35:44.537245"
+}

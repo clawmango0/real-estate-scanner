@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate Scout - Property Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #1a1a2e; color: #fff; }
+        #map { height: calc(100vh - 200px); width: 100%; }
+        .header { padding: 20px; background: linear-gradient(90deg, #e94560, #0f3460); text-align: center; }
+        .header h1 { font-size: 1.8rem; }
+        .stats { display: flex; justify-content: center; gap: 30px; padding: 15px; background: rgba(0,0,0,0.3); }
+        .stat { text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #e94560; }
+        .stat-label { font-size: 0.8rem; opacity: 0.8; }
+        .filters { padding: 15px; background: rgba(255,255,255,0.1); display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .filter-btn.active { background: #e94560; color: white; }
+        .filter-btn.inactive { background: rgba(255,255,255,0.2); color: white; }
+        .legend { position: absolute; bottom: 30px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; z-index: 1000; }
+        .legend-item { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+        .legend-color { width: 20px; height: 20px; border-radius: 50%; }
+        .popup-content { min-width: 200px; }
+        .popup-content h3 { color: #e94560; margin-bottom: 10px; }
+        .popup-row { display: flex; justify-content: space-between; margin: 5px 0; }
+        .popup-label { opacity: 0.7; }
+        .popup-value { font-weight: bold; }
+        .positive-cf { color: #00ff88; }
+        .negative-cf { color: #ff6b6b; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🏠 Real Estate Scout - Wedgewood & Crowley</h1>
+</div>
+
+<div class="stats">
+    <div class="stat"><div class="stat-value">25</div><div class="stat-label">Properties</div></div>
+    <div class="stat"><div class="stat-value">13</div><div class="stat-label">Cash Flow+</div></div>
+    <div class="stat"><div class="stat-value">5</div><div class="stat-label">Duplexes</div></div>
+    <div class="stat"><div class="stat-value">$182K</div><div class="stat-label">Avg Price</div></div>
+</div>
+
+<div class="filters">
+    <button class="filter-btn active" onclick="filterMap('all')">All</button>
+    <button class="filter-btn inactive" onclick="filterMap('cf')">Cash Flow +</button>
+    <button class="filter-btn inactive" onclick="filterMap('cfplus')">$200+/mo</button>
+    <button class="filter-btn inactive" onclick="filterMap('duplex')">Duplexes</button>
+    <button class="filter-btn inactive" onclick="filterMap('crowley')">Crowley</button>
+</div>
+
+<div id="map"></div>
+
+<div class="legend">
+    <h4>Legend</h4>
+    <div class="legend-item"><div class="legend-color" style="background:#00ff88"></div> Cash Flow +</div>
+    <div class="legend-item"><div class="legend-color" style="background:#ffd700"></div> Near Break-even</div>
+    <div class="legend-item"><div class="legend-color" style="background:#ff6b6b"></div> Negative CF</div>
+    <div class="legend-item"><div class="legend-color" style="background:#9b59b6"></div> Duplex</div>
+</div>
+
+<script>
+    // Property data with coordinates (approximate for Wedgewood/Crowley area)
+    // Note: In production, you'd use actual addresses geocoded
+    const properties = [
+        {id:1,address:"4813 Sandage Ave, Ft Worth",price:182000,beds:3,baths:2,sqft:1011,lat:32.62,lng:-97.40,cf:280,coc:3.2,score:24,type:"sfh"},
+        {id:2,address:"5808 Wales Ave, Ft Worth",price:195000,beds:3,baths:2,sqft:1664,lat:32.63,lng:-97.39,cf:234,coc:2.7,score:25,type:"sfh"},
+        {id:3,address:"3636 Saint Louis Ave, Ft Worth",price:200000,beds:4,baths:2,sqft:1392,lat:32.60,lng:-97.38,cf:243,coc:2.7,score:24,type:"sfh"},
+        {id:4,address:"5736 Wedgmont Cir N, Ft Worth",price:230000,beds:3,baths:2,sqft:1984,lat:32.64,lng:-97.41,cf:-50,coc:-0.5,score:20,type:"sfh"},
+        {id:5,address:"125 Roundtree Dr, Crowley",price:220000,beds:3,baths:2,sqft:1113,lat:32.58,lng:-97.43,cf:-50,coc:-0.5,score:20,type:"sfh"},
+        {id:6,address:"5521 Lubbock Ave, Ft Worth",price:250000,beds:3,baths:2,sqft:1295,lat:32.63,lng:-97.40,cf:-180,coc:-2,score:15,type:"sfh"},
+        {id:7,address:"2705 W Fuller Ave, Ft Worth",price:235000,beds:4,baths:3,sqft:1977,lat:32.61,lng:-97.39,cf:-80,coc:-1,score:18,type:"sfh"},
+        {id:8,address:"5905 Wheaton Dr, Ft Worth",price:242000,beds:3,baths:2,sqft:2071,lat:32.64,lng:-97.40,cf:-100,coc:-1.2,score:17,type:"sfh"},
+        {id:9,address:"4512 Fair Park Blvd, Ft Worth",price:239999,beds:3,baths:2,sqft:1372,lat:32.59,lng:-97.38,cf:-120,coc:-1.5,score:16,type:"sfh"},
+        {id:10,address:"5408 Waltham Ave, Ft Worth",price:245000,beds:3,baths:2,sqft:1222,lat:32.63,lng:-97.41,cf:-150,coc:-1.8,score:15,type:"sfh"},
+        {id:11,address:"4125 Campus Dr, Ft Worth",price:175000,beds:3,baths:2,sqft:1050,lat:32.61,lng:-97.40,cf:330,coc:3.8,score:28,type:"sfh"},
+        {id:12,address:"3341 Evans Ave, Ft Worth",price:188000,beds:3,baths:1,sqft:1200,lat:32.60,lng:-97.39,cf:252,coc:2.9,score:22,type:"sfh"},
+        {id:13,address:"6021 Whitman Ave, Ft Worth",price:210000,beds:3,baths:2,sqft:1450,lat:32.62,lng:-97.38,cf:100,coc:1.2,score:20,type:"sfh"},
+        {id:14,address:"2217 Matthews Rd, Ft Worth",price:265000,beds:4,baths:2,sqft:1800,lat:32.59,lng:-97.37,cf:-200,coc:-2.5,score:12,type:"sfh"},
+        {id:15,address:"5528 Lubbock Ave, Ft Worth",price:255000,beds:3,baths:2,sqft:1400,lat:32.63,lng:-97.39,cf:-180,coc:-2.2,score:14,type:"sfh"},
+        {id:16,address:"4518 Fair Park Blvd, Ft Worth",price:229000,beds:3,baths:2,sqft:1300,lat:32.59,lng:-97.38,cf:-140,coc:-1.8,score:15,type:"sfh"},
+        {id:17,address:"6008 Wheaton Dr, Ft Worth",price:258000,beds:3,baths:2,sqft:1650,lat:32.64,lng:-97.39,cf:-190,coc:-2.3,score:13,type:"sfh"},
+        {id:18,address:"3145 Hulen St, Ft Worth",price:195000,beds:2,baths:2,sqft:950,lat:32.60,lng:-97.37,cf:180,coc:2,score:21,type:"sfh"},
+        {id:19,address:"4721 Sandage Ave, Ft Worth",price:215000,beds:3,baths:2,sqft:1250,lat:32.62,lng:-97.39,cf:50,coc:0.5,score:19,type:"sfh"},
+        {id:20,address:"1234 Crowley Rd, Crowley",price:240000,beds:3,baths:2,sqft:1400,lat:32.57,lng:-97.42,cf:-80,coc:-1,score:17,type:"sfh"},
+        {id:21,address:"5601 Wedgmont Ct, Ft Worth",price:270000,beds:3,baths:2,sqft:1900,lat:32.64,lng:-97.40,cf:-220,coc:-2.8,score:11,type:"sfh"},
+        {id:22,address:"2245 Miller Ave, Ft Worth",price:185000,beds:2,baths:1,sqft:900,lat:32.59,lng:-97.38,cf:220,coc:2.5,score:23,type:"sfh"},
+        {id:23,address:"3821 Saint Louis Ave, Ft Worth",price:245000,beds:3,baths:2,sqft:1350,lat:32.60,lng:-97.38,cf:-130,coc:-1.6,score:15,type:"sfh"},
+        {id:24,address:"6345 Crowley Cleburne Rd, Crowley",price:290000,beds:4,baths:2,sqft:1950,lat:32.56,lng:-97.41,cf:-280,coc:-3.5,score:10,type:"sfh"},
+        {id:25,address:"1542 Hulen Park Dr, Ft Worth",price:205000,beds:3,baths:2,sqft:1100,lat:32.61,lng:-97.36,cf:150,coc:1.7,score:20,type:"sfh"},
+        // Duplexes
+        {id:101,address:"2847 W Seminary Dr, Ft Worth",price:285000,units:2,sqft:2400,lat:32.60,lng:-97.35,cf:-320,coc:-3.5,score:15,type:"duplex"},
+        {id:102,address:"5123 Crowley Rd, Crowley",price:295000,units:2,sqft:2800,lat:32.57,lng:-97.41,cf:-362,coc:-4,score:14,type:"duplex"},
+        {id:103,address:"3901 Hulen St, Ft Worth",price:275000,units:2,sqft:2200,lat:32.60,lng:-97.36,cf:-266,coc:-2.9,score:15,type:"duplex"},
+        {id:104,address:"6234 Crowley Cleburne, Crowley",price:265000,units:2,sqft:2000,lat:32.56,lng:-97.40,cf:-212,coc:-2.4,score:16,type:"duplex"},
+        {id:105,address:"4521 Evans Ave, Ft Worth",price:300000,units:4,sqft:2400,lat:32.60,lng:-97.38,cf:-420,coc:-4.6,score:12,type:"duplex"},
+    ];
+
+    // Initialize map
+    const map = L.map('map').setView([32.61, -97.39], 13);
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Color function
+    function getColor(prop) {
+        if (prop.type === 'duplex') return '#9b59b6';
+        if (prop.cf > 200) return '#00ff88';
+        if (prop.cf > 0) return '#ffd700';
+        return '#ff6b6b';
+    }
+
+    // Add markers
+    const markers = [];
+    properties.forEach(prop => {
+        const isDuplex = prop.type === 'duplex';
+        const cfClass = prop.cf > 0 ? 'positive-cf' : 'negative-cf';
+        
+        const popup = `
+            <div class="popup-content">
+                <h3>${prop.address}</h3>
+                <div class="popup-row"><span class="popup-label">Price:</span><span class="popup-value">$${prop.price.toLocaleString()}</span></div>
+                ${isDuplex ? `<div class="popup-row"><span class="popup-label">Units:</span><span class="popup-value">${prop.units}</span></div>` : `<div class="popup-row"><span class="popup-label">Beds/Baths:</span><span class="popup-value">${prop.beds}bd/${prop.baths}ba</span></div>`}
+                <div class="popup-row"><span class="popup-label">Sqft:</span><span class="popup-value">${prop.sqft.toLocaleString()}</span></div>
+                <div class="popup-row"><span class="popup-label">Monthly CF:</span><span class="popup-value ${cfClass}">$${prop.cf}</span></div>
+                <div class="popup-row"><span class="popup-label">CoC Return:</span><span class="popup-value ${cfClass}">${prop.coc}%</span></div>
+            </div>
+        `;
+        
+        const marker = L.circleMarker([prop.lat, prop.lng], {
+            radius: isDuplex ? 12 : 8,
+            fillColor: getColor(prop),
+            color: '#fff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).bindPopup(popup);
+        
+        marker.propData = prop;
+        marker.addTo(map);
+        markers.push(marker);
+    });
+
+    // Fit bounds to all markers
+    const group = L.featureGroup(markers);
+    map.fitBounds(group.getBounds().pad(0.1));
+
+    // Filter function
+    function filterMap(filter) {
+        // Update buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.classList.add('inactive');
+        });
+        event.target.classList.add('active');
+        event.target.classList.remove('inactive');
+        
+        // Filter markers
+        markers.forEach(marker => {
+            const prop = marker.propData;
+            let show = true;
+            
+            if (filter === 'cf') show = prop.cf > 0;
+            if (filter === 'cfplus') show = prop.cf >= 200;
+            if (filter === 'duplex') show = prop.type === 'duplex';
+            if (filter === 'crowley') show = prop.address.includes('Crowley');
+            
+            if (show) {
+                marker.addTo(map);
+            } else {
+                marker.remove();
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
