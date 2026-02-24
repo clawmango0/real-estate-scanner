@@ -1,83 +1,75 @@
-# Real Estate Scanner - Wedgewood & Crowley, TX
+# Real Estate Scanner - Multi-Area Analysis
 
 **Updated:** 2026-02-24
 
-## 🏆 Top Properties with Your $100K Investment
+## 📍 Three Areas Analyzed
 
-Based on your criteria: $100K down payment, looking for cash flow positive deals
+| Area | Center Coordinates | Description |
+|------|------------------|-------------|
+| **Wedgewood/Crowley** | 32.634, -97.41 | SW Fort Worth - established neighborhoods |
+| **Denton** | 32.874, -97.20 | North - college town, UNT |
+| **Downtown FW** | 32.718, -97.36 | Central - urban core, Sundance Square |
 
-| Rank | Address | Price | Your Cash | Loan | Monthly CF | CoC Return |
-|------|---------|-------|-----------|------|------------|------------|
-| 🥇 | 4125 Campus Dr, Ft Worth | $175K | $100K | $75K | **+$330** | 3.8% |
-| 🥈 | 4813 Sandage Ave, Ft Worth | $182K | $100K | $82K | **+$280** | 3.2% |
-| 🥉 | 3341 Evans Ave, Ft Worth | $188K | $100K | $88K | **+$252** | 2.9% |
-| 4 | 3636 Saint Louis Ave, Ft Worth | $200K | $100K | $100K | **+$243** | 2.7% |
-| 5 | 5808 Wales Ave, Ft Worth | $195K | $100K | $95K | **+$234** | 2.7% |
+---
 
-**13 out of 25 properties cash flow positive with $100K down!**
+## 🏆 AREA COMPARISON (With $100K Down)
+
+| Area | Positive CF | Avg Price | Best CF | Winner? |
+|------|-------------|-----------|---------|---------|
+| **Wedgewood/Crowley** | **7/10 (70%)** | $212K | **+$354/mo** | 🥇 |
+| Denton | 1/10 (10%) | $264K | +$31/mo | 🥈 |
+| Downtown FW | 0/10 (0%) | $302K | -$99/mo | 🥉 |
+
+---
+
+## 🏠 TOP DEALS BY AREA
+
+### Wedgewood/Crowley (BEST AREA!)
+| Address | Price | Monthly CF | CoC |
+|---------|-------|------------|-----|
+| 4125 Campus Dr | $175K | **+$354** | 4.0% |
+| 3636 Saint Louis Ave | $200K | +$316 | 3.6% |
+| 4813 Sandage Ave | $182K | +$305 | 3.5% |
+| 3341 Evans Ave | $188K | +$277 | 3.1% |
+| 5808 Wales Ave | $195K | +$259 | 2.9% |
+
+### Denton
+| Address | Price | Monthly CF | CoC |
+|---------|-------|------------|-----|
+| 907 Rio Grande Ave | $225K | +$31 | 0.3% |
+
+### Downtown Fort Worth
+| Address | Price | Monthly CF | CoC |
+|---------|-------|------------|-----|
+| 2500 W 8th St | $245K | -$99 | -1.1% |
+
+---
+
+## 📊 COMBINED ANALYSIS (All 30 Properties)
+
+- **Total Properties:** 30
+- **Positive Cash Flow:** 8/30 (27%)
+- **Average Price:** $259K
+- **Best Overall:** 4125 Campus Dr, Ft Worth (+$354/mo)
+
+---
+
+## 💡 KEY INSIGHTS
+
+1. **Wedgewood/Crowley dominates** - 70% of properties cash flow positive with $100K down
+2. **Denton is marginal** - Only 1 property barely makes money
+3. **Downtown FW doesn't work** - Prices too high for rental rates
+4. **Clear winner:** Stick with Wedgewood/Crowley for cash flow!
 
 ---
 
 ## 📁 Files
 
-| File | Description |
-|------|-------------|
-| `property_map.html` | 🗺️ Interactive map with all properties |
-| `alerts.py` | 🔔 Alert system - runs daily, notifies on matches |
-| `investor_scenarios.py` | 💰 $100K down analysis |
-| `comprehensive_analyzer.py` | 📊 Full financial analysis |
-| `rental_comps.py` | 🏠 Rental market comparison |
-| `properties.md` | 📋 All properties & details |
-| `DATA_FORMAT.md` | 📝 Format for adding new properties |
+- `multi_area_analyzer.py` - Full 3-area analysis code
+- `property_map.html` - Interactive map (add more areas!)
+- `investor_scenarios.py` - Detailed scenarios
+- `alerts.py` - Alert system
 
 ---
 
-## 🚀 Quick Start
-
-```bash
-# Run alert scan
-python3 alerts.py
-
-# Run investor scenarios
-python3 investor_scenarios.py
-
-# Open map
-open property_map.html
-```
-
----
-
-## 🔧 Rehab Cost Rubric
-
-| Condition | $/SqFt | Example |
-|-----------|---------|---------|
-| 10 (Like New) | $0-5 | New construction |
-| 8-9 (Excellent) | $5-10 | Recently updated |
-| 7 (Good) | $10-15 | Minor updates |
-| 6 (Fair) | $15-25 | Some wear |
-| 5 (Needs Work) | $25-35 | Paint, flooring |
-| 3-4 (Major Rehab) | $50-75 | HVAC, plumbing |
-| 1-2 (Tear Down) | $75-100+ | Complete gut |
-
----
-
-## 🔔 Alert Criteria (Customizable)
-
-Current settings in `alerts.py`:
-- Min Cash Flow: $200/mo
-- Min CoC: 2%
-- Max Price: $250K
-- Min Beds: 3
-
----
-
-## 📊 Market Summary
-
-- **Properties Analyzed:** 25 SFR + 5 Duplexes
-- **Positive Cash Flow:** 13/25 (with $100K down)
-- **Best Cash Flow:** $330/mo (4125 Campus Dr)
-- **Best CoC Return:** 3.8%
-
----
-
-*Built for Mr. Kelly's real estate scouting*
+*Run with: `python3 multi_area_analyzer.py`*
