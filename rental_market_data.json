@@ -1,78 +1,26 @@
 [
   {
-    "city": "Fort-Worth",
-    "state": "TX",
-    "url": "https://www.rentcafe.com/apartments-for-rent/us/tx/fort-worth/",
-    "listings_found": 255,
-    "avg_rent": 1407.68,
-    "min_rent": 504,
-    "max_rent": 4711,
-    "median_rent": 1309,
-    "price_distribution": {
-      "under_1000": 47,
-      "1000_1500": 117,
-      "1500_2000": 62,
-      "over_2000": 29
-    },
-    "sample_addresses": [
-      "6415 Old Denton Rd, Fort Worth",
-      "2901 Bledsoe St",
-      "150 Boland St",
-      "6148 San Villa Dr",
-      "2300 Ridgmar Blvd",
-      "8201 Sartain Dr",
-      "5500 S Hulen St",
-      "220 E Broadway Ave",
-      "5500 S Hulen St ",
-      "150 Boland St, Fort Worth",
-      "6415 Old Denton Rd ",
-      "545 Harrold Street St",
-      "545 Harrold St",
-      "5500 S Hulen St, Fort Worth",
-      "2751 River Park Dr",
-      "8100 N Riverside Dr, Fort Worth",
-      "9001 Meadowbrook Blvd, Fort Worth",
-      "8100 N Riverside Dr",
-      "3400 Western Center Blvd, Fort Worth",
-      "5836 Highland Park Dr"
-    ]
+    "area": "Ft Worth",
+    "url": "fort-worth",
+    "listings": 255,
+    "avg_rent": 1407,
+    "min": 504,
+    "max": 4711
   },
   {
-    "city": "Denton",
-    "state": "TX",
-    "url": "https://www.rentcafe.com/apartments-for-rent/us/tx/denton/",
-    "listings_found": 235,
-    "avg_rent": 1360.83,
-    "min_rent": 505,
-    "max_rent": 4268,
-    "median_rent": 1295,
-    "price_distribution": {
-      "under_1000": 64,
-      "1000_1500": 89,
-      "1500_2000": 58,
-      "over_2000": 24
-    },
-    "sample_addresses": [
-      "1451 Centre Place Dr, Denton",
-      "616 E Hickory St ",
-      "6503 W Shady Shores Rd",
-      "6303 W Shady Shores Rd",
-      "2553 Carril Al Lago Dr",
-      "2001 Duchess Dr",
-      "2105 Stella St ",
-      "1030 Dallas Dr",
-      "321 W Hickory St ",
-      "2401 E Mckinney St ",
-      "606 East Hickory St  ",
-      "2105 Stella St",
-      "219 University Dr",
-      "1119 Hickory St",
-      "616 E Hickory St",
-      "1451 Centre Place Dr ",
-      "3202 Unicorn Lake Blvd, Denton",
-      "2001 Duchess Dr ",
-      "1101 Avenue C St",
-      "2001 Duchess Dr, Denton"
-    ]
+    "area": "Mid Cities (Denton)",
+    "url": "denton",
+    "listings": 235,
+    "avg_rent": 1360,
+    "min": 505,
+    "max": 4268
+  },
+  {
+    "area": "Arlington",
+    "url": "arlington",
+    "listings": 229,
+    "avg_rent": 1375,
+    "min": 595,
+    "max": 4402
   }
 ]

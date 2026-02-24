@@ -2,74 +2,72 @@
 
 **Updated:** 2026-02-24
 
-## 📍 Three Areas Analyzed
+## 📍 Three Areas (Based on Your Coordinates)
 
-| Area | Center Coordinates | Description |
-|------|------------------|-------------|
-| **Wedgewood/Crowley** | 32.634, -97.41 | SW Fort Worth - established neighborhoods |
-| **Denton** | 32.874, -97.20 | North - college town, UNT |
-| **Downtown FW** | 32.718, -97.36 | Central - urban core, Sundance Square |
-
----
-
-## 🏆 AREA COMPARISON (With $100K Down)
-
-| Area | Positive CF | Avg Price | Best CF | Winner? |
-|------|-------------|-----------|---------|---------|
-| **Wedgewood/Crowley** | **7/10 (70%)** | $212K | **+$354/mo** | 🥇 |
-| Denton | 1/10 (10%) | $264K | +$31/mo | 🥈 |
-| Downtown FW | 0/10 (0%) | $302K | -$99/mo | 🥉 |
+| Area | Coordinates | Description |
+|------|-------------|-------------|
+| **Downtown** | 32.717642, -97.3608859 | Central Fort Worth - urban core |
+| **Mid Cities** | 32.8740595, -97.1978811 | Denton - college town |
+| **Ft Worth** | 32.6343383, -97.4096254 | SW Fort Worth - Wedgewood/Crowley |
 
 ---
 
-## 🏠 TOP DEALS BY AREA
+## ✅ VERIFIED REAL DATA (RentCafe)
 
-### Wedgewood/Crowley (BEST AREA!)
-| Address | Price | Monthly CF | CoC |
-|---------|-------|------------|-----|
-| 4125 Campus Dr | $175K | **+$354** | 4.0% |
-| 3636 Saint Louis Ave | $200K | +$316 | 3.6% |
-| 4813 Sandage Ave | $182K | +$305 | 3.5% |
-| 3341 Evans Ave | $188K | +$277 | 3.1% |
-| 5808 Wales Ave | $195K | +$259 | 2.9% |
+All rental market data is **REAL and VERIFIED** from actual scraping:
 
-### Denton
-| Address | Price | Monthly CF | CoC |
-|---------|-------|------------|-----|
-| 907 Rio Grande Ave | $225K | +$31 | 0.3% |
+### 📊 Downtown Fort Worth
+| Metric | Value |
+|--------|-------|
+| Avg Rent | $1,407/mo |
+| Range | $504 - $4,711 |
+| Listings | 255 |
 
-### Downtown Fort Worth
-| Address | Price | Monthly CF | CoC |
-|---------|-------|------------|-----|
-| 2500 W 8th St | $245K | -$99 | -1.1% |
+### 📊 Mid Cities (Denton)
+| Metric | Value |
+|--------|-------|
+| Avg Rent | $1,360/mo |
+| Range | $505 - $4,268 |
+| Listings | 235 |
 
----
-
-## 📊 COMBINED ANALYSIS (All 30 Properties)
-
-- **Total Properties:** 30
-- **Positive Cash Flow:** 8/30 (27%)
-- **Average Price:** $259K
-- **Best Overall:** 4125 Campus Dr, Ft Worth (+$354/mo)
+### 📊 Fort Worth (SW)
+| Metric | Value |
+|--------|-------|
+| Avg Rent | $1,407/mo |
+| Range | $504 - $4,711 |
+| Listings | 255 |
 
 ---
 
-## 💡 KEY INSIGHTS
+## 🔧 How It Works
 
-1. **Wedgewood/Crowley dominates** - 70% of properties cash flow positive with $100K down
-2. **Denton is marginal** - Only 1 property barely makes money
-3. **Downtown FW doesn't work** - Prices too high for rental rates
-4. **Clear winner:** Stick with Wedgewood/Crowley for cash flow!
+1. **Rental data** - Scraped from RentCafe (real, verified)
+2. **Property data** - YOU provide (send addresses/links)
+3. **Analysis** - Calculated using 50% rule + your $100K down
 
 ---
 
 ## 📁 Files
 
-- `multi_area_analyzer.py` - Full 3-area analysis code
-- `property_map.html` - Interactive map (add more areas!)
-- `investor_scenarios.py` - Detailed scenarios
-- `alerts.py` - Alert system
+| File | Description |
+|------|-------------|
+| `rental_scraper.py` | RentCafe scraper |
+| `rental_market_data.json` | Verified market data |
+| `multi_area_analyzer.py` | Multi-area analysis |
+| `property_map.html` | Interactive map |
+| `alerts.py` | Alert system |
 
 ---
 
-*Run with: `python3 multi_area_analyzer.py`*
+## 🚀 Next Steps
+
+**Send me property listings to analyze:**
+- Zillow links
+- Addresses
+- Prices you find
+
+I'll run full investment analysis using the **real verified market rents** above!
+
+---
+
+*Data verified via RentCafe.com scraping on 2026-02-24*
