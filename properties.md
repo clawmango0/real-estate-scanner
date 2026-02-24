@@ -1,132 +1,91 @@
-# Comprehensive Real Estate Investment Analysis
-**Wedgewood (Fort Worth) & Crowley, TX**
+# Properties Analysis - Wedgewood (Fort Worth) & Crowley, TX
+
 **Updated:** 2026-02-24
 
 ---
 
-## 📊 Investment Metrics (With Taxes & Insurance)
+## 🏆 Top 5 Deals (With $100K Down Payment)
 
-| Address | Price | Rent | Mortgage | Taxes/yr | Ins/yr | Monthly CF | Cap Rate | CoC |
-|---------|-------|------|----------|----------|--------|------------|----------|-----|
-| 4813 Sandage Ave | $182K | $1,652 | $969 | $3,549 | $1,952 | **-$601** | 2.4% | -17.2% |
-| 5808 Wales Ave | $195K | $1,732 | $1,038 | $3,802 | $2,050 | **-$660** | 2.3% | -17.6% |
-| 3636 Saint Louis Ave | $200K | $1,816 | $1,064 | $3,900 | $2,009 | **-$649** | 2.5% | -16.9% |
-| 5736 Wedgmont Cir N | $230K | $1,770 | $1,224 | $4,485 | $2,098 | **-$888** | 1.8% | -20.1% |
-| 125 Roundtree Dr | $220K | $1,665 | $1,171 | $4,070 | $1,967 | **-$842** | 1.8% | -20.0% |
-
-*Note: Including property taxes (~2%) and insurance in expenses - more realistic than 50% rule alone!*
+| Rank | Address | Price | Your Cash | Monthly CF | CoC | Notes |
+|------|---------|-------|-----------|------------|-----|-------|
+| 1 | 4125 Campus Dr | $175K | $100K | **+$330** | 3.8% | 🥇 BEST DEAL |
+| 2 | 4813 Sandage Ave | $182K | $100K | **+$280** | 3.2% | |
+| 3 | 3341 Evans Ave | $188K | $100K | **+$252** | 2.9% | |
+| 4 | 3636 Saint Louis Ave | $200K | $100K | **+$243** | 2.7% | 4bd/2ba |
+| 5 | 5808 Wales Ave | $195K | $100K | **+$234** | 2.7% | Large sqft |
 
 ---
 
-## 🔧 Rehab Cost Estimates
+## 📊 All 25 Properties Ranked by Cash Flow
 
-| Address | Condition | Est. Rehab | $/Sqft | ARV | Potential Equity |
-|---------|-----------|------------|--------|-----|-------------------|
-| 4813 Sandage Ave | 6/10 ⚠️ | $35,385 | $35 | $209K | -$8K |
-| 5808 Wales Ave | 7/10 ✅ | $24,960 | $15 | $224K | +$4K |
-| 3636 Saint Louis Ave | 5/10 ⚠️ | $48,720 | $35 | $230K | -$19K |
-| 5736 Wedgmont Cir N | 7/10 ✅ | $29,760 | $15 | $265K | +$5K |
-| 125 Roundtree Dr | 8/10 ✅ | $16,695 | $15 | $253K | +$16K |
+### Cash Flow Positive (13 Properties) 🟢
 
----
+| Address | Price | Rent | Loan | Mortgage | Monthly CF | CoC |
+|---------|-------|------|------|----------|------------|-----|
+| 4125 Campus Dr | $175K | $1,657 | $75K | $499 | **+$330** | 3.8% |
+| 4813 Sandage Ave | $182K | $1,652 | $82K | $546 | **+$280** | 3.2% |
+| 3341 Evans Ave | $188K | $1,675 | $88K | $585 | **+$252** | 2.9% |
+| 3636 Saint Louis Ave | $200K | $1,816 | $100K | $665 | **+$243** | 2.7% |
+| 5808 Wales Ave | $195K | $1,732 | $95K | $632 | **+$234** | 2.7% |
+| 6021 Whitman Ave | $210K | $1,816 | $110K | $732 | **+$176** | 2.0% |
+| 2245 Miller Ave | $185K | $1,357 | $85K | $566 | **+$112** | 1.3% |
+| 1542 Hulen Park Dr | $205K | $1,616 | $105K | $699 | **+$109** | 1.2% |
+| 4721 Sandage Ave | $215K | $1,704 | $115K | $765 | **+$87** | 0.9% |
+| 3145 Hulen St | $195K | $1,408 | $95K | $632 | **+$72** | 0.8% |
+| 2705 W Fuller Ave | $235K | $2,106 | $135K | **+$155 | $898** | 1.6% |
+| 5408 Waltham Ave | $245K | $1,745 | $145K | $965 | **+$67** | 0.7% |
+| 5905 Wheaton Dr | $242K | $1,897 | $142K | $945 | **+$2** | 0.02% |
 
-## 📈 5-Year Appreciation Projections (4813 Sandage Ave)
+### Cash Flow Negative (12 Properties) 🔴
 
-| Scenario | Price in 5 Yrs | Total Equity | Total Return |
-|----------|---------------|--------------|--------------|
-| Conservative (3%) | $210,988 | $85,730 | $49,666 |
-| Moderate (5%) | $232,283 | $107,026 | $70,961 |
-| Aggressive (7%) | $255,264 | $130,007 | $93,943 |
-
-*Includes: appreciation + principal paydown + cash flow (or lack thereof)*
-
----
-
-## 🔄 BRRRR Analysis
-
-| Address | Purchase | Rehab | ARV | Total Cash | CF After Refi | CoC After Refi |
-|---------|----------|-------|-----|------------|---------------|-----------------|
-| 4813 Sandage Ave | $182K | $35K | $209K | $77K | -$218/mo | -3.4% |
-| 5808 Wales Ave | $195K | $25K | $224K | $70K | -$253/mo | -4.3% |
-| 3636 Saint Louis Ave | $200K | $49K | $230K | $95K | -$240/mo | -3.0% |
-
-*BRRRR helps reduce your cash injection but still doesn't solve the cash flow problem in this market!*
-
----
-
-## 🎯 Sensitivity Analysis (4813 Sandage Ave)
-
-### Interest Rate Impact
-| Rate | Monthly CF |
-|------|------------|
-| 5% | **+$44** 🟢 |
-| 6% | -$47 🔴 |
-| 7% (current) | -$143 🔴 |
-| 8% | -$242 🔴 |
-
-### Down Payment Impact
-| Down % | Monthly CF |
-|--------|------------|
-| 10% | -$264 🔴 |
-| 20% (current) | -$143 🔴 |
-| 30% | -$22 🔴 |
-
-**Insight:** Even at 5% rates or 30% down, cash flow is marginal at best!
+| Address | Price | Rent | Loan | Mortgage | Monthly CF | CoC |
+|---------|-------|------|------|----------|------------|-----|
+| 5521 Lubbock Ave | $250K | $1,800 | $150K | $998 | -$98 | -1.1% |
+| 125 Roundtree Dr | $220K | $1,665 | $120K | $799 | -$34 | -0.4% |
+| 5736 Wedgmont Cir N | $230K | $1,770 | $130K | $865 | -$65 | -0.7% |
+| 4512 Fair Park Blvd | $240K | $1,704 | $140K | $932 | -$78 | -0.9% |
+| 1234 Crowley Rd | $240K | $1,800 | $140K | $932 | -$32 | -0.4% |
+| 2217 Matthews Rd | $265K | $1,900 | $165K | $1,098 | -$148 | -1.7% |
+| 5518 Fair Park Blvd | $229K | $1,652 | $129K | $859 | -$34 | -0.4% |
+| 6008 Wheaton Dr | $258K | $1,897 | $158K | $1,052 | -$104 | -1.2% |
+| 3821 Saint Louis Ave | $245K | $1,704 | $145K | $965 | -$113 | -1.3% |
+| 5528 Lubbock Ave | $255K | $1,852 | $155K | $1,032 | -$106 | -1.2% |
+| 5601 Wedgmont Ct | $270K | $2,000 | $170K | $1,132 | -$132 | -1.5% |
+| 6345 Crowley Cleburne Rd | $290K | $2,200 | $190K | $1,265 | -$165 | -1.9% |
 
 ---
 
-## 🏘️ Neighborhood Scores
+## 🏢 Duplexes (Not Recommended)
 
-### Top 5 (Best Areas)
-| Address | Score | Notes |
-|---------|-------|-------|
-| 125 Roundtree Dr | 93/100 🟢 | Crowley - newer, good schools |
-| 1234 Crowley Rd | 93/100 🟢 | Crowley - newer construction |
-| 6345 Crowley Cleburne Rd | 93/100 🟢 | Crowley - large lot, new |
-| 5808 Wales Ave | 75/100 🟢 | Ft Worth - solid schools |
-| 5736 Wedgmont Cir N | 75/100 🟢 | Ft Worth - good area |
-
-### Bottom 5 (Needs Work)
-| Address | Score | Notes |
-|---------|-------|-------|
-| 2245 Miller Ave | 61/100 🟡 | Older, lower schools |
-| 3341 Evans Ave | 61/100 🟡 | Older, condition issues |
-| 4518 Fair Park Blvd | 64/100 🟡 | Older area |
+| Address | Price | Units | With $100K Down | Monthly CF |
+|---------|-------|-------|------------------|------------|
+| 2847 W Seminary Dr | $285K | 2 | $185K loan | -$320 |
+| 5123 Crowley Rd | $295K | 2 | $195K loan | -$362 |
+| 3901 Hulen St | $275K | 2 | $175K loan | -$266 |
+| 6234 Crowley Cleburne | $265K | 2 | $165K loan | -$212 |
+| 4521 Evans Ave | $300K | 4 | $200K loan | -$420 |
 
 ---
 
-## 📋 Comparable Sales (Recent)
+## 📈 Key Insights
 
-| Address | Sold Price | Sold Date | $/Sqft |
-|---------|------------|-----------|--------|
-| 4805 Sandage Ave | $178,000 | Dec 2025 | $178 |
-| 5805 Wales Ave | $190,000 | Nov 2025 | $115 |
-| 3630 Saint Louis Ave | $195,000 | Jan 2026 | $141 |
-| 5730 Wedgmont Cir | $225,000 | Oct 2025 | $115 |
-| 120 Roundtree Dr | $215,000 | Sep 2025 | $195 |
+1. **13/25 properties cash flow positive** with $100K down payment
+2. **Best deal: 4125 Campus Dr** - $175K price, $100K down, $330/mo cash flow
+3. **Crowley properties** generally don't cash flow well (higher prices, similar rents)
+4. **Duplexes don't work** in this market - rents too low for the prices
 
 ---
 
-## 📊 Market Summary
+## 🔧 Rehab Estimates
 
-| Metric | Value |
-|--------|-------|
-| Properties with Positive CF | **0/25** |
-| Average Monthly CF (w/ taxes/ins) | **-$891** |
-| Average Cash-on-Cash Return | **-20.3%** |
-| Best Neighborhood | Crowley (scores 90+) |
-| Best Path to Profit | **Appreciation + BRRRR** |
-
----
-
-## 💡 Key Takeaways
-
-1. **Cash Flow is Dead in This Market** - With taxes + insurance + mortgage, every property is negative
-2. **Buy for Appreciation** - 5-7% annual growth is the only path to profits
-3. **BRRRR Helps** - But doesn't fully solve the cash flow issue
-4. **Crowley Wins on Score** - Newer construction, better schools, higher neighborhood scores
-5. **Rates Matter Big** - 5% rate = positive cash flow on some properties!
+| Property | Condition | SqFt | Rehab Cost |
+|----------|-----------|------|------------|
+| 4125 Campus Dr | 5/10 | 1,050 | $36,750 |
+| 4813 Sandage Ave | 6/10 | 1,011 | $25,275 |
+| 3341 Evans Ave | 4/10 | 1,200 | $60,000 |
+| 3636 Saint Louis Ave | 5/10 | 1,392 | $48,720 |
+| 5808 Wales Ave | 7/10 | 1,664 | $24,960 |
 
 ---
 
-*Run `python3 comprehensive_analyzer.py` for full details*
+*Analysis assumes: 7% interest, 30-year fixed, 50% expense rule, market rent rates*

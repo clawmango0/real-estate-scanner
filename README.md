@@ -1,113 +1,83 @@
-# 🏠 Real Estate Scanner - Wedgewood & Crowley, TX
+# Real Estate Scanner - Wedgewood & Crowley, TX
 
-Comprehensive investment analysis tool for real estate scouting.
+**Updated:** 2026-02-24
 
-![Properties](https://img.shields.io/badge/Properties-25-orange)
-![Features](https://img.shields.io/badge/Features-10-brightgreen)
-![Status](https://img.shields.io/badge/Status-Active-blue)
+## 🏆 Top Properties with Your $100K Investment
 
-## Features
+Based on your criteria: $100K down payment, looking for cash flow positive deals
 
-### 1. 📊 Investment Metrics
-- Full financial analysis with mortgage, taxes, insurance
-- 1% Rule, GRM, Cap Rate, DSCR, Cash-on-Cash
-- Uses Mr. Kelly's exact 70-point scoring rubric
+| Rank | Address | Price | Your Cash | Loan | Monthly CF | CoC Return |
+|------|---------|-------|-----------|------|------------|------------|
+| 🥇 | 4125 Campus Dr, Ft Worth | $175K | $100K | $75K | **+$330** | 3.8% |
+| 🥈 | 4813 Sandage Ave, Ft Worth | $182K | $100K | $82K | **+$280** | 3.2% |
+| 🥉 | 3341 Evans Ave, Ft Worth | $188K | $100K | $88K | **+$252** | 2.9% |
+| 4 | 3636 Saint Louis Ave, Ft Worth | $200K | $100K | $100K | **+$243** | 2.7% |
+| 5 | 5808 Wales Ave, Ft Worth | $195K | $100K | $95K | **+$234** | 2.7% |
 
-### 2. 🔧 Rehab Estimator
-- Condition scoring (1-10)
-- Rehab cost estimates based on condition
-- After Repair Value (ARV) calculation
-
-### 3. 📈 Appreciation Projections
-- Conservative (3%), Moderate (5%), Aggressive (7%) scenarios
-- 5-year projections including price appreciation + principal paydown
-
-### 4. 🔄 BRRRR Calculator
-- Buy, Rehab, Rent, Refinance, Repeat analysis
-- Total cash needed calculation
-
-### 5. 🎯 Sensitivity Analysis
-- Interest rate impact (5-9%)
-- Down payment variations (10-30%)
-
-### 6. 💰 Taxes & Insurance
-- Texas property tax rates integrated
-- Insurance estimates per sqft
-
-### 7. 🏘️ Neighborhood Scores
-- School ratings integration
-- Age/condition factors
-
-### 8. 📋 Comparable Sales
-- Recent sold data for validation
-
-### 9. 🗺️ Map-Ready Data
-- Structured for visualization
-
-### 10. 🔍 Web Scraper (Setup Required)
-- Scrapling-based scraper included (requires Playwright browsers)
-- Simple HTTP scraper as fallback
+**13 out of 25 properties cash flow positive with $100K down!**
 
 ---
 
-## Quick Start
+## 📁 Files
+
+| File | Description |
+|------|-------------|
+| `property_map.html` | 🗺️ Interactive map with all properties |
+| `alerts.py` | 🔔 Alert system - runs daily, notifies on matches |
+| `investor_scenarios.py` | 💰 $100K down analysis |
+| `comprehensive_analyzer.py` | 📊 Full financial analysis |
+| `rental_comps.py` | 🏠 Rental market comparison |
+| `properties.md` | 📋 All properties & details |
+| `DATA_FORMAT.md` | 📝 Format for adding new properties |
+
+---
+
+## 🚀 Quick Start
 
 ```bash
-# Run full analysis
-python3 comprehensive_analyzer.py
+# Run alert scan
+python3 alerts.py
 
-# Run rental comparison
-python3 rental_comps.py
+# Run investor scenarios
+python3 investor_scenarios.py
 
-# Run basic analysis
-python3 analyzer.py
+# Open map
+open property_map.html
 ```
 
 ---
 
-## Adding New Data
+## 🔧 Rehab Cost Rubric
 
-See `DATA_FORMAT.md` for easy formats to add:
-- Properties for sale
-- Rental comps
-- Recently sold comparables
-- Duplexes/multi-unit
-
----
-
-## Files
-
-| File | Description |
-|------|-------------|
-| `comprehensive_analyzer.py` | Main analyzer with all 10 features |
-| `analyzer.py` | Basic analyzer with scoring rubric |
-| `rental_comps.py` | Rental market comparison |
-| `scraper.py` | Scrapling-based scraper (requires setup) |
-| `simple_scraper.py` | Basic HTTP scraper |
-| `properties.md` | Analysis results |
-| `DATA_FORMAT.md` | Data entry formats |
+| Condition | $/SqFt | Example |
+|-----------|---------|---------|
+| 10 (Like New) | $0-5 | New construction |
+| 8-9 (Excellent) | $5-10 | Recently updated |
+| 7 (Good) | $10-15 | Minor updates |
+| 6 (Fair) | $15-25 | Some wear |
+| 5 (Needs Work) | $25-35 | Paint, flooring |
+| 3-4 (Major Rehab) | $50-75 | HVAC, plumbing |
+| 1-2 (Tear Down) | $75-100+ | Complete gut |
 
 ---
 
-## Market Summary
+## 🔔 Alert Criteria (Customizable)
 
-| Metric | Value |
-|--------|-------|
-| Properties Analyzed | 25 |
-| Positive Cash Flow | 0 |
-| Average Monthly CF | -$891 |
-| Best Neighborhood | Crowley (90+) |
-| Best Use Case | Appreciation play |
+Current settings in `alerts.py`:
+- Min Cash Flow: $200/mo
+- Min CoC: 2%
+- Max Price: $250K
+- Min Beds: 3
 
 ---
 
-## Key Insights
+## 📊 Market Summary
 
-- **This market is NOT for cash flow** - Buy expecting equity growth
-- **BRRRR can help** but doesn't fully solve cash flow
-- **Crowley wins** on neighborhood scores
-- **Rates matter** - At 5%, some properties approach positive CF
+- **Properties Analyzed:** 25 SFR + 5 Duplexes
+- **Positive Cash Flow:** 13/25 (with $100K down)
+- **Best Cash Flow:** $330/mo (4125 Campus Dr)
+- **Best CoC Return:** 3.8%
 
 ---
 
-*Updated: February 24, 2026*
+*Built for Mr. Kelly's real estate scouting*
