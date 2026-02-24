@@ -8,7 +8,7 @@
 |--------|-------|
 | Down Payment | $100,000 |
 | Market Discount | 5% (30-59 days), 15% (60+ days) |
-| Interest Rate | 7% (30-year) |
+| **Interest Rate** | **5.25%** *(updated from 7%)* |
 | Expenses | 50% rule |
 | Property Taxes | 1.9% annually |
 | HOA | When listed |
@@ -17,12 +17,12 @@
 
 ## Rankings (Best to Worst)
 
-| Rank | Property | Zillow Link | Days | Offer | Rent | CF | Status |
-|------|----------|--------------|------|-------|------|-----|--------|
-| 🥇 | 7652 Colorado Creek Ct (duplex) | [View](https://www.zillow.com/homedetails/7652-Colorado-Creek-Ct-Fort-Worth-TX-76133/29176661_zpid/) | 104 | $212,500 | $2,602 | +$308 | ✅ |
-| 🥈 | 8812 Texas Risinger Dr | [View](https://www.zillow.com/homedetails/8812-Texas-Risinger-Dr-UNIT-70-Fort-Worth-TX-76123/340860410_zpid/) | 121 | $203,150 | $2,400 | +$227 | ✅ |
-| 🥉 | **4516 Rutland Ave (Duplex)** | [View](https://renn.fortworthfocused.com/properties) | 25 | $215,000 | $2,400 | +$94 | ✅ NEW |
-| 4 | 5113 Bob Dr, NRH | [View](https://www.zillow.com/homedetails/5113-Bob-Dr-North-Richland-Hills-TX-76180/28956130_zpid/) | 136 | $170,000 | $1,407 | +$26 | 🟡 |
+| Rank | Property | Days | Offer | Rent | CF | Status |
+|------|----------|------|-------|------|-----|--------|
+| 🥇 | 7652 Colorado Creek Ct (duplex) | 104 | $212,500 | $2,602 | **+$343** | ✅ |
+| 🥈 | 8812 Texas Risinger Dr | 121 | $203,150 | $2,400 | **+$309** | ✅ |
+| 🥉 | 4516 Rutland Ave (Duplex) | 25 | $215,000 | $2,400 | **+$225** | ✅ |
+| 🏅 | 5113 Bob Dr, NRH | 136 | $170,000 | $1,407 | **+$48** | ✅ |
 | 5 | 1213 Glenda Dr, Bedford | [View](https://www.zillow.com/homedetails/1213-Glenda-Dr-Bedford-TX-76022/28927948_zpid/) | 10 | $205,000 | $1,361 | -$257 | ❌ |
 | 6 | 5905 Wheaton Dr, FW | [View](https://www.zillow.com/homedetails/5905-Wheaton-Dr-Fort-Worth-TX-76133/29140676_zpid/) | 136 | $205,700 | $1,361 | -$262 | ❌ |
 | 6 | 5521 Lubbock Ave + Shop | [View](https://www.zillow.com/homedetails/5521-Lubbock-Ave-Fort-Worth-TX-76133/29108541_zpid/) | 3 | $250,000 | $2,007 | -$267 | ❌ |
