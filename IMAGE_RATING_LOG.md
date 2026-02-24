@@ -9,28 +9,28 @@
 
 ### 1. 7652 Colorado Creek Ct (Duplex)
 - **Link:** https://www.zillow.com/homedetails/7652-Colorado-Creek-Ct-Fort-Worth-TX-76133/29176661_zpid/
-- **Status:** Not rated
-- **Rating:** _
+- **Status:** ✅ Rated
+- **Rating:** 4 (Good, minor updates needed)
 
 ### 2. 8812 Texas Risinger Dr
 - **Link:** https://www.zillow.com/homedetails/8812-Texas-Risinger-Dr-UNIT-70-Fort-Worth-TX-76123/340860410_zpid/
-- **Status:** Not rated
-- **Rating:** _
+- **Status:** ✅ Rated
+- **Rating:** 4 (Good, minor updates needed)
 
 ### 3. 4516 Rutland Ave (Duplex)
 - **Link:** https://renn.fortworthfocused.com/properties
-- **Status:** Not rated
-- **Rating:** _
+- **Status:** ✅ Rated
+- **Rating:** 4 (Good, minor updates needed)
 
 ### 4. 2933 Sycamore School Rd (Duplex)
 - **Link:** https://www.dfwrealestatesource.com/property-search/results/
-- **Status:** Not rated
+- **Status:** ⏳ Can't access - need new link
 - **Rating:** _
 
 ### 5. 5113 Bob Dr, NRH
 - **Link:** https://www.zillow.com/homedetails/5113-Bob-Dr-North-Richland-Hills-TX-76180/28956130_zpid/
-- **Status:** Not rated
-- **Rating:** _
+- **Status:** ✅ Rated
+- **Rating:** 4 (Good, minor updates needed)
 
 ---
 
