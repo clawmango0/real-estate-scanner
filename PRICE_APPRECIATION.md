@@ -68,6 +68,29 @@
 
 ---
 
+## Tarrant County Tax Assessor
+
+**Website:** https://www.tax.tarrantcountytx.gov/search
+
+### Manual Lookup Steps:
+1. Go to: https://www.tax.tarrantcountytx.gov/search
+2. Search by address (e.g., "7652 Colorado Creek Ct")
+3. Click property result
+4. Look for:
+   - **Assessed Value** (for taxes)
+   - **Prior Year Values** (click "History" or "Prior Year")
+   - **Market Value** trends
+
+### What to Record:
+| Year | Market Value | Assessed Value |
+|------|--------------|----------------|
+| 2026 | $XXX,XXX | $XXX,XXX |
+| 2025 | $XXX,XXX | $XXX,XXX |
+| 2024 | $XXX,XXX | $XXX,XXX |
+| 2023 | $XXX,XXX | $XXX,XXX |
+
+---
+
 ## Red Flags
 
 - Property depreciating while area grows
