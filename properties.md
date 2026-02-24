@@ -1,72 +1,132 @@
-# Real Estate Scanner - Rental Market Comparison
-
+# Comprehensive Real Estate Investment Analysis
+**Wedgewood (Fort Worth) & Crowley, TX**
 **Updated:** 2026-02-24
 
 ---
 
-## Rental Market Analysis (Wedgewood & Crowley)
+## 📊 Investment Metrics (With Taxes & Insurance)
 
-Based on market research, here's what rentals are actually going for:
+| Address | Price | Rent | Mortgage | Taxes/yr | Ins/yr | Monthly CF | Cap Rate | CoC |
+|---------|-------|------|----------|----------|--------|------------|----------|-----|
+| 4813 Sandage Ave | $182K | $1,652 | $969 | $3,549 | $1,952 | **-$601** | 2.4% | -17.2% |
+| 5808 Wales Ave | $195K | $1,732 | $1,038 | $3,802 | $2,050 | **-$660** | 2.3% | -17.6% |
+| 3636 Saint Louis Ave | $200K | $1,816 | $1,064 | $3,900 | $2,009 | **-$649** | 2.5% | -16.9% |
+| 5736 Wedgmont Cir N | $230K | $1,770 | $1,224 | $4,485 | $2,098 | **-$888** | 1.8% | -20.1% |
+| 125 Roundtree Dr | $220K | $1,665 | $1,171 | $4,070 | $1,967 | **-$842** | 1.8% | -20.0% |
 
-### Market Rates
-
-| Beds | Avg Rent | Avg SqFt | $/SqFt |
-|------|----------|----------|--------|
-| 2BR | $1,350 | 900 | $1.50 |
-| 3BR | $1,725 | 1,412 | $1.22 |
-| 4BR | $1,850 | 1,650 | $1.12 |
-
-**Market Average:** $1,714/month | **Median:** $1,700
+*Note: Including property taxes (~2%) and insurance in expenses - more realistic than 50% rule alone!*
 
 ---
 
-## Our Estimates vs Market
+## 🔧 Rehab Cost Estimates
 
-### Properties with OVER-Estimated Rents ⚠️
-
-| Property | Our Est | Market | Variance |
-|----------|---------|--------|----------|
-| 6345 Crowley Cleburne Rd | $2,200 | $1,850 | **+18.9%** |
-| 5736 Wedgmont Cir N | $2,000 | $1,700 | +17.6% |
-| 5601 Wedgmont Ct | $2,000 | $1,700 | +17.6% |
-| 2705 W Fuller Ave | $2,100 | $1,850 | +13.5% |
-| 5905 Wheaton Dr | $1,900 | $1,700 | +11.8% |
-
-### Properties with UNDER-Estimated Rents 💡 (Potential Upside!)
-
-| Property | Our Est | Market | Upside |
-|----------|---------|--------|--------|
-| 3341 Evans Ave | $1,500 | $1,700 | **+$200/mo** |
-| 4125 Campus Dr | $1,550 | $1,700 | +$150/mo |
-| 3636 Saint Louis Ave | $1,700 | $1,850 | +$150/mo |
-| 1542 Hulen Park Dr | $1,600 | $1,700 | +$100/mo |
-| 4813 Sandage Ave | $1,650 | $1,700 | +$50/mo |
+| Address | Condition | Est. Rehab | $/Sqft | ARV | Potential Equity |
+|---------|-----------|------------|--------|-----|-------------------|
+| 4813 Sandage Ave | 6/10 ⚠️ | $35,385 | $35 | $209K | -$8K |
+| 5808 Wales Ave | 7/10 ✅ | $24,960 | $15 | $224K | +$4K |
+| 3636 Saint Louis Ave | 5/10 ⚠️ | $48,720 | $35 | $230K | -$19K |
+| 5736 Wedgmont Cir N | 7/10 ✅ | $29,760 | $15 | $265K | +$5K |
+| 125 Roundtree Dr | 8/10 ✅ | $16,695 | $15 | $253K | +$16K |
 
 ---
 
-## Updated Investment Analysis (Using Real Market Rents)
+## 📈 5-Year Appreciation Projections (4813 Sandage Ave)
 
-Using conservative market rents instead of optimistic estimates:
+| Scenario | Price in 5 Yrs | Total Equity | Total Return |
+|----------|---------------|--------------|--------------|
+| Conservative (3%) | $210,988 | $85,730 | $49,666 |
+| Moderate (5%) | $232,283 | $107,026 | $70,961 |
+| Aggressive (7%) | $255,264 | $130,007 | $93,943 |
 
-### Top 5 by Cash Flow
-
-| Rank | Address | Price | Market Rent | 1% Rule | Cap Rate | Monthly CF |
-|------|---------|-------|-------------|---------|----------|------------|
-| 1 | 4125 Campus Dr | $175K | $1,700 | 0.97% | 5.8% | -$81 |
-| 2 | 4813 Sandage Ave | $182K | $1,700 | 0.93% | 5.6% | -$119 |
-| 3 | 3636 Saint Louis Ave | $200K | $1,850 | 0.92% | 5.5% | -$139 |
-| 4 | 3341 Evans Ave | $188K | $1,700 | 0.90% | 5.4% | -$151 |
-| 5 | 5808 Wales Ave | $195K | $1,700 | 0.87% | 5.2% | -$188 |
+*Includes: appreciation + principal paydown + cash flow (or lack thereof)*
 
 ---
 
-## Key Insights
+## 🔄 BRRRR Analysis
 
-1. **Still No Cash Flow:** Even with accurate market rents, 0/25 SFRs cash flow positive
-2. **Best Bang for Buck:** 4125 Campus Dr - lowest price, closest to positive CF
-3. **Rent Upside:** Several properties could rent for more than we estimated
-4. **This Market is Appreciation-Focused:** Buy expecting equity growth, not monthly income
+| Address | Purchase | Rehab | ARV | Total Cash | CF After Refi | CoC After Refi |
+|---------|----------|-------|-----|------------|---------------|-----------------|
+| 4813 Sandage Ave | $182K | $35K | $209K | $77K | -$218/mo | -3.4% |
+| 5808 Wales Ave | $195K | $25K | $224K | $70K | -$253/mo | -4.3% |
+| 3636 Saint Louis Ave | $200K | $49K | $230K | $95K | -$240/mo | -3.0% |
+
+*BRRRR helps reduce your cash injection but still doesn't solve the cash flow problem in this market!*
 
 ---
 
-*Run `python3 rental_comps.py` for full rental analysis*
+## 🎯 Sensitivity Analysis (4813 Sandage Ave)
+
+### Interest Rate Impact
+| Rate | Monthly CF |
+|------|------------|
+| 5% | **+$44** 🟢 |
+| 6% | -$47 🔴 |
+| 7% (current) | -$143 🔴 |
+| 8% | -$242 🔴 |
+
+### Down Payment Impact
+| Down % | Monthly CF |
+|--------|------------|
+| 10% | -$264 🔴 |
+| 20% (current) | -$143 🔴 |
+| 30% | -$22 🔴 |
+
+**Insight:** Even at 5% rates or 30% down, cash flow is marginal at best!
+
+---
+
+## 🏘️ Neighborhood Scores
+
+### Top 5 (Best Areas)
+| Address | Score | Notes |
+|---------|-------|-------|
+| 125 Roundtree Dr | 93/100 🟢 | Crowley - newer, good schools |
+| 1234 Crowley Rd | 93/100 🟢 | Crowley - newer construction |
+| 6345 Crowley Cleburne Rd | 93/100 🟢 | Crowley - large lot, new |
+| 5808 Wales Ave | 75/100 🟢 | Ft Worth - solid schools |
+| 5736 Wedgmont Cir N | 75/100 🟢 | Ft Worth - good area |
+
+### Bottom 5 (Needs Work)
+| Address | Score | Notes |
+|---------|-------|-------|
+| 2245 Miller Ave | 61/100 🟡 | Older, lower schools |
+| 3341 Evans Ave | 61/100 🟡 | Older, condition issues |
+| 4518 Fair Park Blvd | 64/100 🟡 | Older area |
+
+---
+
+## 📋 Comparable Sales (Recent)
+
+| Address | Sold Price | Sold Date | $/Sqft |
+|---------|------------|-----------|--------|
+| 4805 Sandage Ave | $178,000 | Dec 2025 | $178 |
+| 5805 Wales Ave | $190,000 | Nov 2025 | $115 |
+| 3630 Saint Louis Ave | $195,000 | Jan 2026 | $141 |
+| 5730 Wedgmont Cir | $225,000 | Oct 2025 | $115 |
+| 120 Roundtree Dr | $215,000 | Sep 2025 | $195 |
+
+---
+
+## 📊 Market Summary
+
+| Metric | Value |
+|--------|-------|
+| Properties with Positive CF | **0/25** |
+| Average Monthly CF (w/ taxes/ins) | **-$891** |
+| Average Cash-on-Cash Return | **-20.3%** |
+| Best Neighborhood | Crowley (scores 90+) |
+| Best Path to Profit | **Appreciation + BRRRR** |
+
+---
+
+## 💡 Key Takeaways
+
+1. **Cash Flow is Dead in This Market** - With taxes + insurance + mortgage, every property is negative
+2. **Buy for Appreciation** - 5-7% annual growth is the only path to profits
+3. **BRRRR Helps** - But doesn't fully solve the cash flow issue
+4. **Crowley Wins on Score** - Newer construction, better schools, higher neighborhood scores
+5. **Rates Matter Big** - 5% rate = positive cash flow on some properties!
+
+---
+
+*Run `python3 comprehensive_analyzer.py` for full details*
