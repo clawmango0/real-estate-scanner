@@ -1,51 +1,46 @@
-# Scanner Results - 2026-02-25 (Updated)
+# Scanner Results - 2026-02-25
 
-## Sources Successfully Scraped
-- ✅ renn.fortworthfocused.com
-- ✅ yourhomesearchdfw.com
+## Sources Checked
+- renn.fortworthfocused.com: OK
 
-## Properties Analyzed
+## Properties Under $300K
 
-### Current Listings (Fort Worth Area)
+| Address | Price | Beds | Baths | SqFt | Status |
+|---------|-------|------|-------|------|--------|
+| 4516 Rutland Ave, Fort Worth | $215,000 | 2 | 1 | 1,080 | Active |
+| 5521 Lubbock Ave, Fort Worth | $250,000 | 3 | 2 | 1,295 | Active |
+| 2847 W Seminary Dr, Fort Worth | $285,000 | 2 units | - | 2,400 | Active |
+| 168 Bovine Dr, Newark | $315,000 | 3 | 2 | 1,658 | Active |
 
-| Address | Price | Beds/Baths | Est. Rent | Cash Flow | Status |
-|---------|-------|------------|-----------|-----------|--------|
-| 4516 Rutland Ave | $215,000 | 2/1 | $1,200 | -$586/mo | ❌ FAIL |
-| 5521 Lubbock Ave | $250,000 | 3/2 | $1,500 | -$724/mo | ❌ FAIL |
-| 2847 W Seminary (duplex) | $285,000 | 2 units | $2,800 | -$362/mo | ❌ FAIL |
-| 7652 Colorado Creek (duplex) | $212,000 | 2 units | $2,602 | +$140/mo | ❌ FAIL |
+- yourhomesearchdfw.com: OK
 
-## Investment Criteria
+---
+
+## Investment Analysis
+
+### Criteria
 - Down Payment: $100K
-- Target: +$200/mo CF, 8%+ CoC
-- Price: $100K-$250K
+- Target: +$200/mo Cash Flow, 8%+ CoC
+- Price Range: $100K-$250K
 
-## Why Properties Fail
+### Current Listings Analysis
 
-| Property | Issue |
-|----------|-------|
-| SFRs ($215K-$250K) | Price too high for rent. Need <$150K |
-| Duplexes ($285K) | Rent doesn't support price. Need <$210K |
+| Property | Price | Est. Rent | Cash Flow | Status |
+|----------|-------|-----------|-----------|--------|
+| 4516 Rutland Ave | $215K | $1,200/mo | -$586/mo | ❌ FAIL |
+| 5521 Lubbock Ave | $250K | $1,500/mo | -$724/mo | ❌ FAIL |
+| 2847 W Seminary (duplex) | $285K | $2,800/mo | -$362/mo | ❌ FAIL |
 
-## What Works
+### Summary
+- SFRs need price <$150K to cash flow
+- Duplexes need price <$210K to cash flow
+- Current market prices too high for standard financing
 
-| Strategy | Target Price | Expected CF |
-|----------|-------------|-------------|
-| SFR (all-cash) | <$150K | +$200+/mo |
-| Duplex ($100K down) | <$210K | +$200+/mo |
+### Recommendations
+1. Look for distressed properties <$150K
+2. Target pre-foreclosure and probate
+3. Consider seller financing
+4. Check rural areas (Granbury, Godley)
 
-## Recommendations
 
-1. **Find distressed properties** <$150K (foreclosure, probate, tax lien)
-2. **Seller financing** - negotiate below-market terms
-3. **Rural areas** - Granbury, Godley, Rio Vista (cheaper)
-4. **Lease option** - minimal cash upfront
-5. **BRRRR** - refinance after rehab
-
-## Action Items
-- [ ] Set up alerts for properties <$150K
-- [ ] Check county tax auctions
-- [ ] Drive for dollars in target areas
-- [ ] Network with wholesalers
-
-*Updated: Feb 25, 2026*
+*Last updated: 2026-02-25 09:57 CST*
