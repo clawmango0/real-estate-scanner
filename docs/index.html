@@ -294,22 +294,73 @@
         }
         function closeModal(){document.getElementById('modal').classList.remove('active');}
         
-        // URL Analyzer - calls backend API
+        // URL Analyzer - tries to extract data from listing URLs
         async function analyzeURL(e){
             e.preventDefault();
-            const url=document.getElementById('propertyUrl').value;
-            const btn=document.getElementById('analyzeBtn');
-            const status=document.getElementById('analyzeStatus');
+            const url = document.getElementById('propertyUrl').value;
+            const btn = document.getElementById('analyzeBtn');
+            const status = document.getElementById('analyzeStatus');
             
-            btn.disabled=true;
-            status.textContent='Analyzing... (This will call the property analyzer)';
-            status.className='analyze-status';
+            btn.disabled = true;
+            status.innerHTML = '🔄 Analyzing URL...';
             
-            // Note: In production, this would call a backend API
-            // For now, show what would happen
-            status.innerHTML='URL received: '+url+'<br><br>In production, this would:<br>1. Fetch the property page<br>2. Extract address, price, beds, baths, sqft<br>3. Calculate investment metrics<br>4. Add to dashboard<br><br>Add property manually below for now!';
-            status.className='analyze-status';
-            btn.disabled=false;
+            // Try to parse data from URL
+            const data = parseURLData(url);
+            
+            // Pre-fill form
+            if(data.price) document.getElementById('mPrice').value = data.price;
+            if(data.address) document.getElementById('mAddress').value = data.address;
+            if(data.beds) document.getElementById('mBeds').value = data.beds;
+            if(data.baths) document.getElementById('mBaths').value = data.baths;
+            
+            // Show manual form with pre-filled data
+            document.getElementById('manualForm').classList.add('show');
+            
+            if(data.found){
+                status.innerHTML = '✅ Extracted: ' + (data.price ? '$'+data.price : '') + ' ' + (data.address || '') + '<br>Please review and click "Add Property"';
+            } else {
+                status.innerHTML = '⚠️ Could not auto-extract. Please fill in details below.';
+            }
+            
+            btn.disabled = false;
+        }
+        
+        // Parse property data from URL
+        function parseURLData(url){
+            const data = {found: false, price: '', address: '', beds: '', baths: ''};
+            
+            // Look for price (5-7 digit numbers)
+            const priceMatch = url.match(/(\d{5,7})/);
+            if(priceMatch){
+                const p = parseInt(priceMatch[0]);
+                if(p > 20000 && p < 1000000){
+                    data.price = p;
+                    data.found = true;
+                }
+            }
+            
+            // Look for beds
+            const bedsMatch = url.match(/(\d+)bed/i);
+            if(bedsMatch){
+                data.beds = bedsMatch[1];
+                data.found = true;
+            }
+            
+            // Look for baths
+            const bathsMatch = url.match(/(\d+\.?\d*)bath/i);
+            if(bathsMatch){
+                data.baths = bathsMatch[1];
+                data.found = true;
+            }
+            
+            // Try to extract address from URL path
+            const pathMatch = url.match(/fort[\-\s]?worth[\-\s]?(\d+)/i);
+            if(pathMatch){
+                data.address = pathMatch[1] + ' Fort Worth';
+                data.found = true;
+            }
+            
+            return data;
         }
         
         // Manual add
