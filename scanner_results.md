@@ -1,55 +1,51 @@
-# Scanner Results - 2026-02-25
+# Scanner Results - 2026-02-25 (Updated)
 
 ## Sources Successfully Scraped
+- ✅ renn.fortworthfocused.com
+- ✅ yourhomesearchdfw.com
 
-### 1. Fort Worth Focused (renn.fortworthfocused.com)
-✓ Active - MLS data
+## Properties Analyzed
 
-### 2. Your Home Search DFW (yourhomesearchdfw.com)
-✓ Active - Multiple listings
+### Current Listings (Fort Worth Area)
 
----
+| Address | Price | Beds/Baths | Est. Rent | Cash Flow | Status |
+|---------|-------|------------|-----------|-----------|--------|
+| 4516 Rutland Ave | $215,000 | 2/1 | $1,200 | -$586/mo | ❌ FAIL |
+| 5521 Lubbock Ave | $250,000 | 3/2 | $1,500 | -$724/mo | ❌ FAIL |
+| 2847 W Seminary (duplex) | $285,000 | 2 units | $2,800 | -$362/mo | ❌ FAIL |
+| 7652 Colorado Creek (duplex) | $212,000 | 2 units | $2,602 | +$140/mo | ❌ FAIL |
 
-## Active Listings Under $350K (Fort Worth Area)
+## Investment Criteria
+- Down Payment: $100K
+- Target: +$200/mo CF, 8%+ CoC
+- Price: $100K-$250K
 
-| Address | Price | Beds | Baths | SqFt | Status |
-|---------|-------|------|-------|------|--------|
-| 4516 Rutland Ave, Fort Worth 76133 | $215,000 | 2 | 1 | 1,080 | Active |
-| 5521 Lubbock Ave, Fort Worth 76133 | $250,000 | 3 | 2 | 1,295 | Active Option Contract |
-| 168 Bovine Drive, Newark | $315,000 | 3 | 2 | 1,658 | Active |
-| 6520 Kary Lynn Dr, S Watauga | $320,000 | 3 | 2 | 1,481 | Active |
-| 144 Wenham Way, Forney | $368,000 | 3 | 2 | 1,884 | Active |
+## Why Properties Fail
 
----
+| Property | Issue |
+|----------|-------|
+| SFRs ($215K-$250K) | Price too high for rent. Need <$150K |
+| Duplexes ($285K) | Rent doesn't support price. Need <$210K |
 
-## Investment Analysis Needed
+## What Works
 
-Properties to analyze for investment criteria:
-- Price: $100K-$250K target
-- Min Cash Flow: +$200/mo
-- Min CoC: 8%+
+| Strategy | Target Price | Expected CF |
+|----------|-------------|-------------|
+| SFR (all-cash) | <$150K | +$200+/mo |
+| Duplex ($100K down) | <$210K | +$200+/mo |
 
-### Quick Estimates:
-| Property | Est. Rent | Est. Cash Flow | Notes |
-|----------|-----------|----------------|-------|
-| 4516 Rutland | $1,200/mo | TBD | 2/1 - tight |
-| 5521 Lubbock | $1,500/mo | TBD | 3/2 - better |
-| 168 Bovine | $1,600/mo | TBD | 3/2 - Newark |
-| 6520 Kary Lynn | $1,500/mo | TBD | 3/2 - Watauga |
+## Recommendations
 
----
+1. **Find distressed properties** <$150K (foreclosure, probate, tax lien)
+2. **Seller financing** - negotiate below-market terms
+3. **Rural areas** - Granbury, Godley, Rio Vista (cheaper)
+4. **Lease option** - minimal cash upfront
+5. **BRRRR** - refinance after rehab
 
-## Data Sources Working:
-- ✓ renn.fortworthfocused.com
-- ✓ yourhomesearchdfw.com
-- ✗ zillow.com (403 blocked)
-- ✗ rentcafe.com (403 blocked)
-- ✗ realtor.com (429 blocked)
+## Action Items
+- [ ] Set up alerts for properties <$150K
+- [ ] Check county tax auctions
+- [ ] Drive for dollars in target areas
+- [ ] Network with wholesalers
 
----
-
-*Last Updated: 2026-02-25 09:30 AM*
-
-## Source Check - 2026-02-25 09:30
-- https://renn.fortworthfocused.com/listing: OK
-- https://www.yourhomesearchdfw.com/: OK
+*Updated: Feb 25, 2026*
