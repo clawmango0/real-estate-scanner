@@ -171,11 +171,11 @@
             <div class="table-header">
                 <div class="table-title">📋 Property Details</div>
                 <div class="table-filters">
-                    <button class="filter-btn active" onclick="filterTable('all')">All</button>
-                    <button class="filter-btn" onclick="filterTable('pass')">Passing</button>
-                    <button class="filter-btn" onclick="filterTable('fail')">Failing</button>
-                    <button class="filter-btn" onclick="filterTable('SFR')">SFR</button>
-                    <button class="filter-btn" onclick="filterTable('Duplex')">Duplex</button>
+                    <button class="filter-btn active" onclick="filterTable('all', this)">All</button>
+                    <button class="filter-btn" onclick="filterTable('pass', this)">Passing</button>
+                    <button class="filter-btn" onclick="filterTable('fail', this)">Failing</button>
+                    <button class="filter-btn" onclick="filterTable('SFR', this)">SFR</button>
+                    <button class="filter-btn" onclick="filterTable('Duplex', this)">Duplex</button>
                 </div>
             </div>
             <div class="table-wrapper">
@@ -279,8 +279,17 @@
             if(sortCol>=0) ps.sort((a,b)=>{const k=['address','type','price','beds','rent','cashFlow','coc'][sortCol];return sortAsc?a[k]-b[k]:b[k]-a[k]});
             tbody.innerHTML = ps.map(p=>`<tr onclick="openModal(${properties.indexOf(p)})"><td><div class="property-address">${p.address.split(',')[0]}</div><div class="property-area">${p.area}</div></td><td>${p.type}</td><td>$${p.price.toLocaleString()}</td><td>${p.beds}</td><td>$${p.rent}</td><td class="cf-value ${p.cashFlow>=0?'positive':'negative'}">$${Math.round(p.cashFlow)}</td><td>${p.coc.toFixed(1)}%</td><td><span class="status-badge ${p.passes?'pass':'fail'}">${p.passes?'PASS':'FAIL'}</span></td></tr>`).join('');
         }
-        function filterTable(f) { currentFilter=f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); event.target.classList.add('active'); renderTable(); }
-        function sortTable(c) { if(sortCol===c) sortAsc=!sortAsc; else {sortCol=c; sortAsc=true} renderTable(); }
+        function filterTable(f, btn) { 
+            currentFilter=f; 
+            document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); 
+            if(btn) btn.classList.add('active'); 
+            renderTable(); 
+        }
+        function sortTable(c) { 
+            if(sortCol===c) sortAsc=!sortAsc; 
+            else {sortCol=c; sortAsc=true} 
+            renderTable(); 
+        }
         function openModal(i) {
             const p = properties[i];
             document.getElementById('modalAddress').textContent = p.address.split(',')[0];
