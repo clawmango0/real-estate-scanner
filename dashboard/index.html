@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fort Worth Property Scout Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1E3A5F;
+            --secondary: #2E7D32;
+            --accent: #FF6B35;
+            --success: #4CAF50;
+            --danger: #F44336;
+            --bg: #0D1117;
+            --card-bg: #161B22;
+            --text-primary: #E6EDF3;
+            --text-secondary: #8B949E;
+            --border: #30363D;
+            --hover-bg: #21262D;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+        .header { background: linear-gradient(135deg, var(--primary), #0D1117); padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .logo-section { display: flex; align-items: center; gap: 1rem; }
+        .logo { width: 48px; height: 48px; background: var(--secondary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .title h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(90deg, var(--text-primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .title p { color: var(--text-secondary); font-size: 0.875rem; }
+        .refresh-btn { background: var(--primary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: 0.2s; }
+        .refresh-btn:hover { background: var(--hover-bg); border-color: var(--secondary); }
+        .nav { display: flex; gap: 0.5rem; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border); overflow-x: auto; }
+        .nav-btn { background: transparent; border: none; color: var(--text-secondary); padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 500; white-space: nowrap; transition: 0.2s; }
+        .nav-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
+        .nav-btn.active { background: var(--secondary); color: white; }
+        .main { padding: 1.5rem 2rem; max-width: 1600px; margin: 0 auto; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr; } }
+        .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
+        .kpi-card:hover { border-color: var(--secondary); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--secondary); opacity: 0; transition: 0.3s; }
+        .kpi-card:hover::before { opacity: 1; }
+        .kpi-label { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .kpi-value { font-size: 2rem; font-weight: 700; }
+        .kpi-value.success { color: var(--success); }
+        .kpi-value.danger { color: var(--danger); }
+        .kpi-value.accent { color: var(--accent); }
+        .kpi-change { font-size: 0.75rem; margin-top: 0.5rem; }
+        .kpi-change.up { color: var(--success); }
+        .kpi-change.down { color: var(--danger); }
+        .kpi-expanded { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border); border-radius: 0 0 12px 12px; padding: 1rem; z-index: 100; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .kpi-card:hover .kpi-expanded { display: block; }
+        .kpi-expanded h4 { color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .kpi-expanded p { font-size: 0.875rem; margin-bottom: 0.25rem; }
+        .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+        @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+        .chart-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; transition: 0.3s; }
+        .chart-card:hover { border-color: var(--primary); }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .chart-title { font-size: 1rem; font-weight: 600; }
+        .chart-subtitle { font-size: 0.75rem; color: var(--text-secondary); }
+        .table-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .table-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .table-title { font-size: 1rem; font-weight: 600; }
+        .table-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .filter-btn { background: var(--hover-bg); border: 1px solid var(--border); color: var(--text-secondary); padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+        .filter-btn:hover, .filter-btn.active { background: var(--primary); color: var(--text-primary); border-color: var(--primary); }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 0.75rem 1rem; background: var(--hover-bg); color: var(--text-secondary); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        th:hover { color: var(--text-primary); }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+        tr:hover td { background: var(--hover-bg); cursor: pointer; }
+        .property-address { font-weight: 500; }
+        .property-area { font-size: 0.75rem; color: var(--text-secondary); }
+        .status-badge { display: inline-flex; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+        .status-badge.pass { background: rgba(76, 175, 80, 0.15); color: var(--success); }
+        .status-badge.fail { background: rgba(244, 67, 54, 0.15); color: var(--danger); }
+        .cf-value { font-weight: 600; }
+        .cf-value.positive { color: var(--success); }
+        .cf-value.negative { color: var(--danger); }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+        .modal-title { font-size: 1.25rem; font-weight: 600; }
+        .modal-subtitle { color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.25rem; }
+        .modal-close { background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; }
+        .modal-body { padding: 1.5rem; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        @media (max-width: 500px) { .detail-grid { grid-template-columns: 1fr; } }
+        .detail-card { background: var(--hover-bg); border-radius: 8px; padding: 1rem; }
+        .detail-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.25rem; }
+        .detail-value { font-size: 1.25rem; font-weight: 600; }
+        .detail-value.success { color: var(--success); }
+        .detail-value.danger { color: var(--danger); }
+        .analysis-section { background: var(--hover-bg); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+        .analysis-section h4 { font-size: 0.875rem; margin-bottom: 0.75rem; color: var(--text-secondary); }
+        .analysis-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+        .analysis-row:last-child { border-bottom: none; }
+        .analysis-label { color: var(--text-secondary); }
+        .analysis-value { font-weight: 500; }
+        .footer { text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 0.75rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo">🏠</div>
+            <div class="title">
+                <h1>Fort Worth Property Scout</h1>
+                <p>Real Estate Investment Analyzer</p>
+            </div>
+        </div>
+        <button class="refresh-btn" onclick="refreshData()"><span>🔄</span><span>Refresh Data</span></button>
+    </header>
+    <nav class="nav">
+        <button class="nav-btn active">📊 Overview</button>
+        <button class="nav-btn">🏠 Properties</button>
+        <button class="nav-btn">💰 Investment Analysis</button>
+        <button class="nav-btn">📈 Market Data</button>
+    </nav>
+    <main class="main">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label"><span>📊</span>Total Properties</div>
+                <div class="kpi-value" id="kpi-total">12</div>
+                <div class="kpi-change up">↑ Last scan: Today</div>
+                <div class="kpi-expanded"><h4>Breakdown</h4><p>SFR: 8 | Duplex: 3 | Multi: 1</p><p>Under $300K: 4</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><span>💵</span>Under Budget</div>
+                <div class="kpi-value accent" id="kpi-underBudget">4</div>
+                <div class="kpi-change">Properties under $250K</div>
+                <div class="kpi-expanded"><h4>Price Range</h4><p>$100K-$150K: 0</p><p>$150K-$200K: 2</p><p>$200K-$250K: 2</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><span>✅</span>Passing Criteria</div>
+                <div class="kpi-value success" id="kpi-passing">1</div>
+                <div class="kpi-change up">↑ $200+ CF & 8%+ CoC</div>
+                <div class="kpi-expanded"><h4>Criteria</h4><p>Cash Flow: ≥$200/mo</p><p>CoC Return: ≥8%</p><p>Beds: 2+</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><span>📈</span>Avg Cash Flow</div>
+                <div class="kpi-value danger" id="kpi-avgCF">-$324</div>
+                <div class="kpi-change down">↓ Per month</div>
+                <div class="kpi-expanded"><h4>Analysis</h4><p>Current market prices too high</p><p>Need: &lt;$150K for SFR</p><p>Need: &lt;$210K for duplex</p></div>
+            </div>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-header"><div><div class="chart-title">Price Distribution</div><div class="chart-subtitle">Click to filter</div></div></div>
+                <canvas id="priceChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header"><div><div class="chart-title">Investment Pass/Fail</div><div class="chart-subtitle">Click segment to filter</div></div></div>
+                <canvas id="passFailChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header"><div><div class="chart-title">Cash Flow by Type</div><div class="chart-subtitle">Click bar to filter</div></div></div>
+                <canvas id="cfByTypeChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header"><div><div class="chart-title">Price vs Cash Flow</div><div class="chart-subtitle">Hover for details</div></div></div>
+                <canvas id="scatterChart"></canvas>
+            </div>
+        </div>
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title">📋 Property Details</div>
+                <div class="table-filters">
+                    <button class="filter-btn active" onclick="filterTable('all')">All</button>
+                    <button class="filter-btn" onclick="filterTable('pass')">Passing</button>
+                    <button class="filter-btn" onclick="filterTable('fail')">Failing</button>
+                    <button class="filter-btn" onclick="filterTable('SFR')">SFR</button>
+                    <button class="filter-btn" onclick="filterTable('Duplex')">Duplex</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th onclick="sortTable(0)">Address</th><th onclick="sortTable(1)">Type</th><th onclick="sortTable(2)">Price</th><th onclick="sortTable(3)">Beds</th><th onclick="sortTable(4)">Rent</th><th onclick="sortTable(5)">Cash Flow</th><th onclick="sortTable(6)">CoC</th><th>Status</th></tr></thead>
+                    <tbody id="propertiesTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    <footer class="footer">
+        <p>Fort Worth Property Scout | Data sources: Fort Worth Focused, YourHomeSearchDFW | Updated: Feb 25, 2026</p>
+    </footer>
+    <div class="modal-overlay" id="propertyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div><div class="modal-title" id="modalAddress">Property Address</div><div class="modal-subtitle" id="modalLocation">Area</div></div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-card"><div class="detail-label">Price</div><div class="detail-value" id="modalPrice">$0</div></div>
+                    <div class="detail-card"><div class="detail-label">Type</div><div class="detail-value" id="modalType">-</div></div>
+                    <div class="detail-card"><div class="detail-label">Beds</div><div class="detail-value" id="modalBeds">0</div></div>
+                    <div class="detail-card"><div class="detail-label">Baths</div><div class="detail-value" id="modalBaths">0</div></div>
+                    <div class="detail-card"><div class="detail-label">SqFt</div><div class="detail-value" id="modalSqft">0</div></div>
+                    <div class="detail-card"><div class="detail-label">Est. Rent</div><div class="detail-value" id="modalRent">$0</div></div>
+                </div>
+                <div class="analysis-section">
+                    <h4>💰 Investment Analysis</h4>
+                    <div class="analysis-row"><span class="analysis-label">Down Payment</span><span class="analysis-value" id="modalDown">$100,000</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Loan Amount</span><span class="analysis-value" id="modalLoan">$0</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Mortgage (7%, 30yr)</span><span class="analysis-value" id="modalMortgage">$0</span></div>
+                    <div class="analysis-row"><span class="analysis-label">OpEx (50%)</span><span class="analysis-value" id="modalOpEx">$0</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Tax (1.9%)</span><span class="analysis-value" id="modalTax">$0</span></div>
+                </div>
+                <div class="analysis-section">
+                    <h4>📊 Returns</h4>
+                    <div class="analysis-row"><span class="analysis-label">Monthly Cash Flow</span><span class="analysis-value" id="modalCF">$0</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Annual Cash Flow</span><span class="analysis-value" id="modalAnnualCF">$0</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Cash on Cash</span><span class="analysis-value" id="modalCoC">0%</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Cap Rate</span><span class="analysis-value" id="modalCap">0%</span></div>
+                </div>
+                <div class="analysis-section"><h4>✅ Verdict</h4><div id="modalVerdict" style="padding: 0.75rem; border-radius: 8px; text-align: center; font-weight: 600;"></div></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const properties = [
+            { address: "4516 Rutland Ave, Fort Worth 76133", price: 215000, beds: 2, baths: 1, sqft: 1080, type: "SFR", rent: 1200, zip: "76133", area: "Wedgwood" },
+            { address: "5521 Lubbock Ave, Fort Worth 76133", price: 250000, beds: 3, baths: 2, sqft: 1295, type: "SFR", rent: 1500, zip: "76133", area: "Wedgwood" },
+            { address: "2847 W Seminary Dr, Fort Worth", price: 285000, beds: 4, baths: 2, sqft: 2400, type: "Duplex", rent: 2800, zip: "76134", area: "South Worth" },
+            { address: "7652 Colorado Creek, Fort Worth", price: 212000, beds: 4, baths: 2, sqft: 2400, type: "Duplex", rent: 2602, zip: "76133", area: "Wedgwood" },
+            { address: "8812 Texas Risinger, Fort Worth", price: 203000, beds: 3, baths: 2, sqft: 1800, type: "SFR", rent: 2400, zip: "76134", area: "South Worth" },
+            { address: "168 Bovine Dr, Newark", price: 315000, beds: 3, baths: 2, sqft: 1658, type: "SFR", rent: 1600, zip: "76071", area: "Newark" },
+            { address: "6520 Kary Lynn Dr, Watauga", price: 320000, beds: 3, baths: 2, sqft: 1481, type: "SFR", rent: 1500, zip: "76148", area: "Watauga" },
+            { address: "144 Wenham Way, Forney", price: 368000, beds: 3, baths: 2, sqft: 1884, type: "SFR", rent: 1800, zip: "75126", area: "Forney" },
+            { address: "5113 Bob Dr, Fort Worth", price: 170000, beds: 2, baths: 1, sqft: 950, type: "SFR", rent: 1407, zip: "76112", area: "Meadowbrook" },
+            { address: "9201 Apache, Fort Worth", price: 195000, beds: 3, baths: 2, sqft: 1400, type: "SFR", rent: 1600, zip: "76133", area: "Wedgwood" },
+            { address: "3456 Parker Rd, Crowley", price: 245000, beds: 3, baths: 2, sqft: 1600, type: "SFR", rent: 1700, zip: "76036", area: "Crowley" },
+            { address: "7800 Eter Dr, Fort Worth", price: 275000, beds: 4, baths: 2.5, sqft: 2200, type: "Multi", rent: 3200, zip: "76134", area: "South Worth" }
+        ];
+        const DOWN_PAYMENT = 100000, INTEREST_RATE = 0.07, TAX_RATE = 0.019;
+        properties.forEach(p => {
+            const loan = p.price > DOWN_PAYMENT ? p.price - DOWN_PAYMENT : 0;
+            const m = INTEREST_RATE / 12, n = 360;
+            const mortgage = loan > 0 ? loan * (m * Math.pow(1+m,n)) / (Math.pow(1+m,n) - 1) : 0;
+            const opEx = p.rent * 0.5, tax = p.price * TAX_RATE / 12;
+            const cf = p.rent - opEx - tax - mortgage;
+            p.cashFlow = cf; p.coc = (cf * 12 / DOWN_PAYMENT) * 100;
+            p.cap = ((p.rent - opEx - tax) * 12 / p.price) * 100;
+            p.passes = cf >= 200 && p.coc >= 8;
+            p.loan = loan; p.mortgage = mortgage; p.opEx = opEx; p.tax = tax;
+        });
+        let currentFilter = 'all', sortCol = -1, sortAsc = true;
+        function updateKPIs() {
+            const total = properties.length, under = properties.filter(p => p.price <= 250000).length;
+            const pass = properties.filter(p => p.passes).length, avg = properties.reduce((s,p)=>s+p.cashFlow,0)/total;
+            document.getElementById('kpi-total').textContent = total;
+            document.getElementById('kpi-underBudget').textContent = under;
+            document.getElementById('kpi-passing').textContent = pass;
+            document.getElementById('kpi-avgCF').textContent = (avg>=0?'+':'') + '$' + Math.round(avg);
+            document.getElementById('kpi-avgCF').className = 'kpi-value ' + (avg>=0?'success':'danger');
+        }
+        function renderCharts() {
+            const ranges = ['<$150K','$150K-$200K','$200K-$250K','$250K-$300K','>$300K'], counts = [0,0,0,0,0];
+            properties.forEach(p => { if(p.price<150000) counts[0]++; else if(p.price<200000) counts[1]++; else if(p.price<250000) counts[2]++; else if(p.price<300000) counts[3]++; else counts[4]++; });
+            new Chart(document.getElementById('priceChart'), { type:'bar', data:{labels:ranges, datasets:[{data:counts,backgroundColor:counts.map((c,i)=>i<3?'#2E7D32':'#FF6B35',borderRadius:6}]}, options:{responsive:true,plugins:{legend:{display:false}},onClick:e=>{const el=Chart.getElementAtEvent(e);if(el.length)filterTable(ranges[el[0].index].replace('$',''))},scales:{y:{beginAtZero:true,ticks:{color:'#8B949E'},grid:{color:'#30363D'}},x:{ticks:{color:'#8B949E'},grid:{display:false}}}}});
+            const pc = properties.filter(p=>p.passes).length;
+            new Chart(document.getElementById('passFailChart'),{type:'doughnut',data:{labels:['Pass','Fail'],datasets:[{data:[pc,properties.length-pc],backgroundColor:['#2E7D32','#F44336'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#E6EDF3'}}},onClick:e=>{const el=Chart.getElementAtEvent(e);if(el.length)filterTable(el[0].index===0?'pass':'fail')}}});
+            const types=['SFR','Duplex','Multi'],cfBy=types.map(t=>{const ps=properties.filter(p=>p.type===t);return ps.length?ps.reduce((s,p)=>s+p.cashFlow,0)/ps.length:0});
+            new Chart(document.getElementById('cfByTypeChart'),{type:'bar',data:{labels:types,datasets:[{data:cfBy,backgroundColor:cfBy.map(c=>c>=0?'#2E7D32':'#F44336'),borderRadius:6}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},onClick:e=>{const el=Chart.getElementAtEvent(e);if(el.length)filterTable(types[el[0].index])},scales:{x:{ticks:{color:'#8B949E'},grid:{color:'#30363D'}},y:{ticks:{color:'#8B949E'},grid:{display:false}}}}});
+            new Chart(document.getElementById('scatterChart'),{type:'scatter',data:{datasets:[{label:'Props',data:properties.map(p=>({x:p.price,y:p.cashFlow})),backgroundColor:properties.map(p=>p.passes?'#2E7D32':'#F44336'),pointRadius:10,pointHoverRadius:14}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const p=properties[c.dataIndex];return[p.address.split(',')[0],'$'+p.price,'CF: $'+Math.round(p.cashFlow)]}}},scales:{x:{title:{display:true,text:'Price',color:'#8B949E'},ticks:{color:'#8B949E'},grid:{color:'#30363D'}},y:{title:{display:true,text:'Cash Flow',color:'#8B949E'},ticks:{color:'#8B949E'},grid:{color:'#30363D'}}}}});
+        }
+        function renderTable() {
+            const tbody = document.getElementById('propertiesTable');
+            let ps = [...properties];
+            if(currentFilter === 'pass') ps = ps.filter(p=>p.passes);
+            else if(currentFilter === 'fail') ps = ps.filter(p=>!p.passes);
+            else if(currentFilter === 'SFR' || currentFilter === 'Duplex') ps = ps.filter(p=>p.type===currentFilter);
+            if(sortCol>=0) ps.sort((a,b)=>{const k=['address','type','price','beds','rent','cashFlow','coc'][sortCol];return sortAsc?a[k]-b[k]:b[k]-a[k]});
+            tbody.innerHTML = ps.map(p=>`<tr onclick="openModal(${properties.indexOf(p)})"><td><div class="property-address">${p.address.split(',')[0]}</div><div class="property-area">${p.area}</div></td><td>${p.type}</td><td>$${p.price.toLocaleString()}</td><td>${p.beds}</td><td>$${p.rent}</td><td class="cf-value ${p.cashFlow>=0?'positive':'negative'}">$${Math.round(p.cashFlow)}</td><td>${p.coc.toFixed(1)}%</td><td><span class="status-badge ${p.passes?'pass':'fail'}">${p.passes?'PASS':'FAIL'}</span></td></tr>`).join('');
+        }
+        function filterTable(f) { currentFilter=f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); event.target.classList.add('active'); renderTable(); }
+        function sortTable(c) { if(sortCol===c) sortAsc=!sortAsc; else {sortCol=c; sortAsc=true} renderTable(); }
+        function openModal(i) {
+            const p = properties[i];
+            document.getElementById('modalAddress').textContent = p.address.split(',')[0];
+            document.getElementById('modalLocation').textContent = p.area + ' (' + p.zip + ')';
+            document.getElementById('modalPrice').textContent = '$' + p.price.toLocaleString();
+            document.getElementById('modalType').textContent = p.type;
+            document.getElementById('modalBeds').textContent = p.beds;
+            document.getElementById('modalBaths').textContent = p.baths;
+            document.getElementById('modalSqft').textContent = p.sqft.toLocaleString();
+            document.getElementById('modalRent').textContent = '$' + p.rent;
+            document.getElementById('modalDown').textContent = '$' + DOWN_PAYMENT.toLocaleString();
+            document.getElementById('modalLoan').textContent = '$' + Math.round(p.loan).toLocaleString();
+            document.getElementById('modalMortgage').textContent = '$' + Math.round(p.mortgage);
+            document.getElementById('modalOpEx').textContent = '$' + Math.round(p.opEx);
+            document.getElementById('modalTax').textContent = '$' + Math.round(p.tax);
+            document.getElementById('modalCF').textContent = '$' + Math.round(p.cashFlow);
+            document.getElementById('modalCF').className = 'detail-value ' + (p.cashFlow>=0?'success':'danger');
+            document.getElementById('modalAnnualCF').textContent = '$' + Math.round(p.cashFlow*12).toLocaleString();
+            document.getElementById('modalCoC').textContent = p.coc.toFixed(1) + '%';
+            document.getElementById('modalCap').textContent = p.cap.toFixed(1) + '%';
+            const v = document.getElementById('modalVerdict');
+            if(p.passes) { v.textContent = '✅ PASSES - Meets investment criteria'; v.style.background = 'rgba(76,175,80,0.2)'; v.style.color = '#4CAF50'; }
+            else { v.textContent = '❌ FAILS - Does not meet investment criteria'; v.style.background = 'rgba(244,67,54,0.2)'; v.style.color = '#F44336'; }
+            document.getElementById('propertyModal').classList.add('active');
+        }
+        function closeModal() { document.getElementById('propertyModal').classList.remove('active'); }
+        function refreshData() { alert('Data refreshed! (Demo mode)'); }
+        document.addEventListener('DOMContentLoaded',()=>{updateKPIs();renderCharts();renderTable();});
+    </script>
+</body>
+</html>
