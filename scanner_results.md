@@ -1,53 +1,55 @@
 # Scanner Results - 2026-02-25
 
-Checking HAR.com...
+## Sources Successfully Scraped
 
-## Active Listings (Manual Entry - $(date '+%Y-%m-%d'))
+### 1. Fort Worth Focused (renn.fortworthfocused.com)
+✓ Active - MLS data
 
-Based on market research, here's what's available in Fort Worth:
+### 2. Your Home Search DFW (yourhomesearchdfw.com)
+✓ Active - Multiple listings
 
-### Recent Market Observations:
+---
 
-| Area | Price Range | Notes |
-|------|--------------|-------|
-| Fort Worth (76133) | $200K-$250K | Decent inventory, 3BR/2BA typical |
-| Crowley | $180K-$220K | Good for rentals |
-| Mid Cities | $190K-$280K | Mixed SFR and multi-family |
+## Active Listings Under $350K (Fort Worth Area)
 
+| Address | Price | Beds | Baths | SqFt | Status |
+|---------|-------|------|-------|------|--------|
+| 4516 Rutland Ave, Fort Worth 76133 | $215,000 | 2 | 1 | 1,080 | Active |
+| 5521 Lubbock Ave, Fort Worth 76133 | $250,000 | 3 | 2 | 1,295 | Active Option Contract |
+| 168 Bovine Drive, Newark | $315,000 | 3 | 2 | 1,658 | Active |
+| 6520 Kary Lynn Dr, S Watauga | $320,000 | 3 | 2 | 1,481 | Active |
+| 144 Wenham Way, Forney | $368,000 | 3 | 2 | 1,884 | Active |
 
+---
 
-## Rental Market Snapshot
+## Investment Analysis Needed
 
-### Fort Worth Metro Rental Data (from RentCafe):
-- Average Rent: ~$1,407/mo
-- Mid Cities: ~$1,361/mo
-- Good neighborhoods for rental: 76133, 76134, 76123
-
-
-
-## Investment Criteria Match
-
-### Target Investment Criteria:
-- Price: $100K-$250K
+Properties to analyze for investment criteria:
+- Price: $100K-$250K target
 - Min Cash Flow: +$200/mo
-- Min CoC Return: 8%+
-- Beds: 2+
-- Types: SFR, Duplex, Multi-family
+- Min CoC: 8%+
 
-### Currently Passing Properties (from last analysis):
-1. 7652 Colorado Creek (duplex) - $212K, $2,602 rent, +$308 CF
-2. 8812 Texas Risinger - $203K, $2,400 rent, +$227 CF
-3. 5113 Bob Dr - $170K, $1,407 rent, +$26 CF (marginal)
+### Quick Estimates:
+| Property | Est. Rent | Est. Cash Flow | Notes |
+|----------|-----------|----------------|-------|
+| 4516 Rutland | $1,200/mo | TBD | 2/1 - tight |
+| 5521 Lubbock | $1,500/mo | TBD | 3/2 - better |
+| 168 Bovine | $1,600/mo | TBD | 3/2 - Newark |
+| 6520 Kary Lynn | $1,500/mo | TBD | 3/2 - Watauga |
 
+---
 
+## Data Sources Working:
+- ✓ renn.fortworthfocused.com
+- ✓ yourhomesearchdfw.com
+- ✗ zillow.com (403 blocked)
+- ✗ rentcafe.com (403 blocked)
+- ✗ realtor.com (429 blocked)
 
-## New Listings Check
+---
 
+*Last Updated: 2026-02-25 09:30 AM*
 
-## Notes
-
-- Last full scan: 2026-02-25 09:24
-- Note: Major sites (Zillow, Realtor.com) block automated scrapers
-- Consider: Manual search weekly or use agent MLS access
-- Alternative: Check Fort Worth Focused listings manually
-
+## Source Check - 2026-02-25 09:30
+- https://renn.fortworthfocused.com/listing: OK
+- https://www.yourhomesearchdfw.com/: OK
