@@ -1,80 +1,82 @@
-# Finding Distressed Properties & Seller Financing
+# Seller Financing: Pre-Foreclosure & Probate Only
 
-## Strategy 1: Distressed Properties (<$150K)
-
-### Online Sources
-| Source | URL | Notes |
-|--------|-----|-------|
-| RealtyTrac | realtytrac.com | Foreclosures, pre-foreclosure |
-| HAR Foreclosures | har.com/foreclosure | Texas-specific |
-| Zillow Foreclosures | zillow.com/foreclosure | REO properties |
-| Auction.com | auction.com | Online auctions |
-| HomePath | homerepath.com | Fannie Mae REO |
-
-### County Tax Sales (Texas)
-| County | URL | Notes |
-|--------|-----|-------|
-| Tarrant | tax.tarrantcountytx.gov | Tax lien auctions |
-| Denton | dentoncounty.gov | Annual tax sales |
-| Dallas | dallascounty.org | Tax assessor sales |
-
-### Local Wholesalers
-- Search "Fort Worth real estate wholesaler"
-- Join local investment clubs (BiggerPockets Texas)
-- Facebook Marketplace "fixer upper" Fort Worth
+## Focus: Options 3 & 4 Only
 
 ---
 
-## Strategy 2: Seller Financing
+## Option 3: Pre-Foreclosure Lists
 
-### How to Find Seller Financing
-1. **Direct mail** - Send letters to underwater homeowners
-2. **Drive for dollars** - Look for distressed properties
-3. **Pre-foreclosure list** - County clerk records
-4. **Probate properties** - County probate court
+### What to Look For:
+- **Notice of Default** - Homeowner missed payments
+- **Lis Pendens** - Lawsuit filed against property
+- **Notice of Trustee Sale** - Foreclosure auction pending
 
-### Magic Words to Use
-- "Will you carry financing?"
-- "Owner financing available?"
-- "Flexible payment terms?"
-- "Can I assume your loan?"
+### How to Find:
 
-### Sample Letter to Sellers
-```
-Dear Homeowner,
+**Tarrant County:**
+- County Clerk Records Search
+- Search: "tarrantcounty.gov county clerk records"
+- Look for documents: "Notice of Default", "Lis Pendens"
 
-I'm a local investor interested in buying homes in your area. 
-If you're considering selling or know someone who is, I'd love to 
-discuss flexible options including seller financing.
+**Target ZIPs (cheap areas):**
+- 76133 (Wedgwood)
+- 76112 (Meadowbrook)
+- 76036 (Crowley)
+- 76114 (Sansome Park)
 
-No bank needed. Quick closing. 
-Contact: [your phone]
-
-Thanks!
-```
+**Free Search:**
+- Go to county clerk website
+- Search by ZIP code or street name
+- Filter by last 30 days
 
 ---
 
-## Action Checklist
+## Option 4: Probate Properties
 
-- [ ] Register on RealtyTrac (free trial)
-- [ ] Set alerts for Fort Worth 2-3BR under $150K
-- [ ] Check Tarrant County tax sale calendar
-- [ ] Drive target neighborhoods (76133, 76134, Crowley)
-- [ ] Send 50 direct mail letters to underwater homeowners
-- [ ] Join BiggerPockets Dallas/Fort Worth group
+### Why They Work:
+- Heirs often live out of state, don't want the property
+- Motivated to sell fast
+- Usually below market value
+
+### How to Find:
+
+**1. County Probate Court:**
+- Tarrant County Probate: tarrantcounty.gov/probate
+- Search for "Inventory and Appraisement" filed
+
+**2. Texas Courts Online:**
+- txcourts.gov
+- Search: "Tarrant County Probate"
+
+**3. Estate Sale Sites:**
+- estatesale.net
+- local Estate Attorneys
+
+**4. Direct Outreach:**
+- Call probate attorneys in Fort Worth
+- Ask: "Do you have any clients looking to sell quickly?"
+
+### What to Say:
+> "Hi, I'm a local real estate investor. If you have any probate properties that need to be sold, I'd love to make a quick cash offer. No hassle."
 
 ---
 
-## Target Areas (Cheapest in Fort Worth)
+## Action Checklist This Week
 
-| Area | ZIP | Avg Price | Notes |
-|------|-----|-----------|-------|
-| Wedgwood | 76133 | $180K | Good rentals |
-| Meadowbrook | 76112 | $170K | Up and coming |
-| Crowley | 76036 | $175K | Family area |
-| Sansom Park | 76114 | $160K | Lower cost |
-| Lake Worth | 76135 | $185K | Near lake |
+- [ ] **Tarrant County Clerk** - Go to tarrantcounty.gov > County Clerk > Records Search
+- [ ] **Search Notice of Default** - Look for properties in 76133, 76112, 76036
+- [ ] **Check Probate Court** - Go to tarrantcounty.gov/probate > Court Records
+- [ ] **Call 3 probate attorneys** - Ask about motivated sellers
+
+---
+
+## Contact Info
+
+| Resource | Phone | Website |
+|----------|-------|---------|
+| Tarrant County Clerk | (817) 884-1194 | tarrantcounty.gov |
+| Tarrant County Probate | (817) 884-2742 | tarrantcounty.gov/probate |
+| Texas Courts | - | txcourts.gov |
 
 ---
 
