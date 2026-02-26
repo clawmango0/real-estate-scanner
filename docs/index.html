@@ -225,13 +225,13 @@
             {address:"3456 Parker Rd, Crowley",price:245000,beds:3,baths:2,sqft:1600,type:"SFR",rent:1700,area:"Crowley"}
         ];
 
-        const DOWN=100000,RATE=0.07,TAX=0.019;
+        const DOWN=100000,RATE=0.0525,TAX=0.019;
         
         function calc(p) {
             const loan=p.price>DOWN?p.price-DOWN:0;
             const m=RATE/12,n=360;
             p.loan=loan;p.mortgage=loan>0?loan*m*Math.pow(1+m,n)/(Math.pow(1+m,n)-1):0;
-            p.opEx=p.rent*0.5;p.tax=p.price*TAX/12;
+            p.opEx=p.rent*0.1;p.tax=p.price*TAX/12;
             p.cf=p.rent-p.opEx-p.tax-p.mortgage;p.coc=p.cf*12/DOWN*100;
             p.cap=((p.rent-p.opEx-p.tax)*12/p.price)*100;
             p.passes=p.cf>=200&&p.coc>=8;
