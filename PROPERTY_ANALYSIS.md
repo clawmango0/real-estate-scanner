@@ -1,92 +1,94 @@
-# Property Analysis - Updated with Real Rent Data
+# Real Estate Scout - Property Analysis
 
-**Rent Data Source:** RentCafe (actual Fort Worth market data, Feb 2026)
+**Updated:** 2026-02-25
+
+## SFR Rent Data (from RentCafe, adjusted for single-family homes)
+
+| Zip Code | Area | SFR Rent Est. |
+|----------|------|---------------|
+| 76133 | Fort Worth SW | $1,761/mo |
+| 76248 | Keller | $2,277/mo |
+| 76180 | NRH | $1,983/mo |
+
+*Note: SFR rents estimated at 25% premium over apartment rents*
 
 ---
 
-## Zip Code Rent Estimates
+## Current Property Analysis
 
-| Zip Code | Area | Avg Rent | Notes |
-|----------|------|----------|-------|
-| 76133 | Fort Worth (SW) | $1,409/mo | Near Crowley |
-| 76248 | Keller | $1,822/mo | Nicer suburb |
-| 76180 | North Richland Hills | $1,587/mo | Mid-cities |
+### Model Assumptions
+- Down Payment: $100,000
+- Interest Rate: 5.25%
+- Expenses: 50% rule
+- Property Taxes: 1.9% annually
 
 ---
-
-## Updated Property Analysis
 
 ### Property 1: 2713 Cordone St, Fort Worth 76133
 - **Price:** $200,000
-- **Beds/Baths:** 3/2
-- **Sqft:** 1,278
-- **Area Rent:** $1,409/mo (76133)
-- **Analysis:**
-  - Down Payment: $100,000
-  - Loan: $100,000 @ 5.25% = $552/mo
-  - Property Tax (1.9%): $317/mo
-  - Insurance: $100/mo
-  - Expenses (50%): $705/mo
-  - **Total Cost:** $1,674/mo
-  - **Rent:** $1,409/mo
-  - **Cash Flow:** -$265/mo ❌
+- **Details:** 3bd/2ba, 1,278 sqft
+- **SFR Rent:** $1,761/mo
+- **Cash Flow:** -$86/mo ❌
+
+| Item | Amount |
+|------|--------|
+| Mortgage | $550/mo |
+| Property Tax | $317/mo |
+| Insurance | $100/mo |
+| Expenses (50%) | $880/mo |
+| **Total** | **$1,847/mo** |
 
 ---
 
 ### Property 2: 3213 Leith Ave, Fort Worth 76133
 - **Price:** $265,600
-- **Beds/Baths:** 3/2
-- **Sqft:** 1,648
-- **Area Rent:** $1,409/mo (76133)
-- **Analysis:**
-  - Down Payment: $100,000
-  - Loan: $165,600 @ 5.25% = $915/mo
-  - Property Tax (1.9%): $421/mo
-  - Insurance: $100/mo
-  - Expenses (50%): $705/mo
-  - **Total Cost:** $2,141/mo
-  - **Rent:** $1,409/mo
-  - **Cash Flow:** -$732/mo ❌
+- **Details:** 3bd/2ba, 1,648 sqft
+- **SFR Rent:** $1,761/mo
+- **Cash Flow:** -$551/mo ❌
 
 ---
 
 ### Property 3: 216 Rodeo Dr, Keller 76248
 - **Price:** $255,000
-- **Beds/Baths:** 3/1
-- **Sqft:** 1,177
-- **Area Rent:** $1,822/mo (Keller - nicer area!)
-- **Analysis:**
-  - Down Payment: $100,000
-  - Loan: $155,000 @ 5.25% = $857/mo
-  - Property Tax (1.9%): $404/mo
-  - Insurance: $120/mo
-  - Expenses (50%): $911/mo
-  - **Total Cost:** $2,292/mo
-  - **Rent:** $1,822/mo
-  - **Cash Flow:** -$470/mo ❌
+- **Details:** 3bd/1ba, 1,177 sqft
+- **SFR Rent:** $2,277/mo
+- **Cash Flow:** -$218/mo ❌
+
+---
+
+### Property 4: 5801 Wessex Ave, Fort Worth 76133
+- **Price:** $259,999
+- **Details:** 3bd/3ba, 1,812 sqft
+- **SFR Rent:** $1,761/mo
+- **Cash Flow:** -$511/mo ❌
 
 ---
 
 ## Summary
 
-| Property | Price | Rent (Real) | Cash Flow | Status |
-|----------|-------|-------------|-----------|--------|
-| 2713 Cordone St | $200,000 | $1,409/mo | -$265/mo | ❌ |
-| 3213 Leith Ave | $265,600 | $1,409/mo | -$732/mo | ❌ |
-| 216 Rodeo Dr | $255,000 | $1,822/mo | -$470/mo | ❌ |
+| Property | Price | SFR Rent | Cash Flow | Status |
+|----------|-------|----------|-----------|--------|
+| 2713 Cordone St | $200,000 | $1,761/mo | -$86/mo | ❌ Near break-even |
+| 3213 Leith Ave | $265,600 | $1,761/mo | -$551/mo | ❌ |
+| 216 Rodeo Dr | $255,000 | $2,277/mo | -$218/mo | ❌ |
+| 5801 Wessex Ave | $259,999 | $1,761/mo | -$511/mo | ❌ |
 
-## Key Insight
+---
 
-Even with real market rent data, these SFR prices are too high for cash flow. The math:
+## Key Finding
 
-- Need rent-to-price ratio of ~0.8-1% for positive cash flow
-- These areas: 0.65-0.72% rent/price ratio
-- **Would need 30-40% price reduction to work**
+Even with SFR rents, these properties are **20-30% too expensive** for cash flow.
 
-## What Works
+**2713 Cordone St** is the closest - only $86/mo negative. If you can get it for **$180K-$185K**, it would cash flow positive.
 
-The duplexes that passed before (from earlier analysis):
-- 7652 Colorado Creek: $212K @ $2,602 rent = +$343/mo ✅
-- 8812 Texas Risinger: $203K @ $2,400 rent = +$309/mo ✅
+**Target price for positive cash flow in 76133:** ~$185,000
+**Target price for positive cash flow in 76248:** ~$225,000
 
-Multi-unit properties work because rent > mortgage + expenses.
+---
+
+## Previously Passing Properties (Multi-Unit)
+
+| Property | Price | Rent | Cash Flow | Status |
+|----------|-------|------|-----------|--------|
+| 7652 Colorado Creek (duplex) | $212,500 | $2,602/mo | +$343/mo | ✅ |
+| 8812 Texas Risinger (leased) | $203,150 | $2,400/mo | +$309/mo | ✅ |
