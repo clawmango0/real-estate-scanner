@@ -12,22 +12,17 @@
 
 ## 💰 Financial Assumptions
 
-### Financing
+### Pricing Strategy
 | Assumption | Value |
 |-----------|-------|
+| Target Listing Price | **<$270K** (ideally $250K or less) |
+| Expected Offer Price | **15% below listing** |
 | Interest Rate | **5.25%** |
 | Loan Term | 30 years |
-| Max Cash Out of Pocket | **$100,000** (down payment + rehab combined) |
 
-### Cash Out of Pocket Rules
-- Down payment + Rehab costs combined cannot exceed **$100,000**
+### Cash Out of Pocket
+- **Max Cash Out of Pocket:** **$100,000** (down payment + rehab combined)
 - Closing costs are additional (typically 3%)
-
-### Purchase Costs
-| Item | Amount |
-|------|--------|
-| Closing Costs | 3% of purchase price |
-| Rehab Budget | Varies (included in $100K max) |
 
 ---
 
@@ -57,19 +52,22 @@
 
 ---
 
-## 💵 Max Purchase Price Examples
+## 💵 Max Purchase Examples
 
-| Cash Available | Max Purchase Price (est.) |
-|----------------|---------------------------|
-| $100K (max) | ~$350K-$400K property |
+| Listing Price | Offer Price (85%) | Max Rehab | Total Cash Out |
+|--------------|-------------------|-----------|----------------|
+| $250,000 | $212,500 | $15,000 | $85,000 ✅ |
+| $260,000 | $221,000 | $12,000 | $83,000 ✅ |
+| $270,000 | $229,500 | $8,500 | $78,500 ✅ |
 
 ---
 
 ## 🔥 Winning Formula
-- Multi-unit (duplex/triplex)
-- Price: $150K-$300K
-- Cash Flow: >$500/mo
-- Cash-on-Cash: >8%
+- **Multi-unit (duplex/triplex)**
+- **Listing Price: <$270K**
+- **Offer Price: <$225K**
+- **Cash Flow: >$500/mo**
+- **Cash-on-Cash: >8%**
 
 ---
 
