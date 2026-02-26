@@ -2,20 +2,19 @@
 
 **Updated:** 2026-02-25
 
-## SFR Rent Data (Fort Worth Area)
-
-| Zip Code | Area | SFR Rent Est. |
-|----------|------|---------------|
-| 76133 | Fort Worth SW | $1,761/mo |
-| 76248 | Keller | $2,277/mo |
-| 76123 | Crowley | $1,800/mo |
-| 76180 | NRH | $1,983/mo |
-
 ## Analysis Model
 - Down Payment: $100,000
 - Interest Rate: 5.25%
 - Expenses: 50% rule
 - Property Taxes: 1.9% annually
+
+## SFR Rent Estimates (by Zip)
+| Zip | Area | SFR Rent |
+|-----|------|----------|
+| 76133 | Fort Worth SW | $1,761/mo |
+| 76248 | Keller | $2,277/mo |
+| 76123 | Crowley | $1,800/mo |
+| 76180 | NRH | $1,983/mo |
 
 ---
 
@@ -23,56 +22,43 @@
 
 | # | Property | Price | Rent | Cash Flow | Status |
 |---|----------|-------|------|-----------|--------|
-| 1 | 2713 Cordone St (76133) | $200,000 | $1,761/mo | -$86/mo | ❌ |
-| 2 | 3213 Leith Ave (76133) | $265,600 | $1,761/mo | -$551/mo | ❌ |
-| 3 | 216 Rodeo Dr (Keller) | $255,000 | $2,277/mo | -$218/mo | ❌ |
-| 4 | 5801 Wessex Ave (76133) | $259,999 | $1,761/mo | -$511/mo | ❌ |
-| 5 | 7652 Colorado Creek (Duplex) | $212,500 | $2,602/mo | +$246/mo | ✅ |
-| 6 | 8812 Texas Risinger (Leased) | $203,150 | $2,400/mo | +$211/mo | ✅ |
+| 1 | 7652 Colorado Creek Ct (Duplex) | $212,500 | $2,602/mo | +$246/mo | ✅ PASS |
+| 2 | 8812 Texas Risinger Dr (Leased) | $203,150 | $2,400/mo | +$211/mo | ✅ PASS |
+| 3 | 4516 Rutland Ave (Duplex) | $215,000 | $2,400/mo | +$127/mo | ✅ PASS |
+| 4 | 2933 Sycamore School Rd (Duplex) | $449,900 | $3,091/mo | -$1,191/mo | ❌ FAIL |
+| 5 | 5113 Bob Dr, NRH | $170,000 | $1,983/mo | -$51/mo | ❌ FAIL |
+| 6 | 2713 Cordone St | $200,000 | $1,761/mo | -$86/mo | ❌ FAIL |
+| 7 | 3213 Leith Ave | $265,600 | $1,761/mo | -$551/mo | ❌ FAIL |
+| 8 | 216 Rodeo Dr, Keller | $255,000 | $2,277/mo | -$218/mo | ❌ FAIL |
+| 9 | 5801 Wessex Ave | $259,999 | $1,761/mo | -$511/mo | ❌ FAIL |
 
 ---
 
-## Passing: 2/6
+## PASSING: 3/9 ✅
 
-### ✅ 7652 Colorado Creek Ct (Duplex)
-- Price: $212,500
-- Rent: $2,602/mo
-- Cash Flow: **+$246/mo**
-
-### ✅ 8812 Texas Risinger Dr (Already Leased)
-- Price: $203,150
-- Rent: $2,400/mo  
-- Cash Flow: **+$211/mo**
+| Property | Price | Rent | Cash Flow |
+|----------|-------|------|-----------|
+| 7652 Colorado Creek Ct (Duplex) | $212,500 | $2,602/mo | +$246/mo |
+| 8812 Texas Risinger Dr | $203,150 | $2,400/mo | +$211/mo |
+| 4516 Rutland Ave (Duplex) | $215,000 | $2,400/mo | +$127/mo |
 
 ---
 
-## Failing: 4/6
+## FAILING: 6/9 ❌
 
-### ❌ 2713 Cordone St (Closest to Passing!)
-- Price: $200,000
-- Rent: $1,761/mo
-- Cash Flow: -$86/mo
-- **Needs price drop to ~$185K to pass**
-
-### ❌ 3213 Leith Ave
-- Price: $265,600
-- Rent: $1,761/mo
-- Cash Flow: -$551/mo
-
-### ❌ 216 Rodeo Dr (Keller)
-- Price: $255,000
-- Rent: $2,277/mo
-- Cash Flow: -$218/mo
-
-### ❌ 5801 Wessex Ave
-- Price: $259,999
-- Rent: $1,761/mo
-- Cash Flow: -$511/mo
+| Property | Price | Rent | Cash Flow | Notes |
+|----------|-------|------|-----------|-------|
+| 2933 Sycamore School Rd | $449,900 | $3,091/mo | -$1,191/mo | Too expensive |
+| 5113 Bob Dr, NRH | $170,000 | $1,983/mo | -$51/mo | Close! Needs ~$155K |
+| 2713 Cordone St | $200,000 | $1,761/mo | -$86/mo | Close! Needs ~$185K |
+| 216 Rodeo Dr, Keller | $255,000 | $2,277/mo | -$218/mo | Needs ~$230K |
+| 5801 Wessex Ave | $259,999 | $1,761/mo | -$511/mo | Needs ~$195K |
+| 3213 Leith Ave | $265,600 | $1,761/mo | -$551/mo | Needs ~$195K |
 
 ---
 
 ## Key Insights
 
-1. **Multi-unit is the way to go** - Duplexes pass because rent > expenses
-2. **SFRs at these prices fail** - Need 30-40% price reduction
-3. **2713 Cordone is closest** - Only $86/mo negative, doable at $180K
+1. **Duplexes work** - 3/3 passing because rent > expenses
+2. **SFRs fail** - All 6 SFRs fail at current prices
+3. **Target prices for SFRs:** ~$150K-$185K depending on area

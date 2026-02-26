@@ -1,0 +1,65 @@
+[
+  {
+    "address": "7652 Colorado Creek Ct (Duplex)",
+    "price": 212500,
+    "rent": 2602,
+    "cash_flow": 245.79166666666697,
+    "status": "PASS"
+  },
+  {
+    "address": "8812 Texas Risinger Dr (Leased)",
+    "price": 203150,
+    "rent": 2400,
+    "cash_flow": 211.02083333333348,
+    "status": "PASS"
+  },
+  {
+    "address": "4516 Rutland Ave (Duplex)",
+    "price": 215000,
+    "rent": 2400,
+    "cash_flow": 127.08333333333303,
+    "status": "PASS"
+  },
+  {
+    "address": "2933 Sycamore School Rd (Duplex)",
+    "price": 449900,
+    "rent": 3091,
+    "cash_flow": -1191.291666666666,
+    "status": "FAIL"
+  },
+  {
+    "address": "5113 Bob Dr, NRH",
+    "price": 170000,
+    "rent": 1407,
+    "cash_flow": -50.66666666666674,
+    "status": "FAIL"
+  },
+  {
+    "address": "2713 Cordone St",
+    "price": 200000,
+    "rent": 1761,
+    "cash_flow": -86.16666666666674,
+    "status": "FAIL"
+  },
+  {
+    "address": "3213 Leith Ave",
+    "price": 265600,
+    "rent": 1761,
+    "cash_flow": -550.833333333333,
+    "status": "FAIL"
+  },
+  {
+    "address": "216 Rodeo Dr, Keller",
+    "price": 255000,
+    "rent": 2277,
+    "cash_flow": -217.75,
+    "status": "FAIL"
+  },
+  {
+    "address": "5801 Wessex Ave",
+    "price": 259999,
+    "rent": 1761,
+    "cash_flow": -511.1595833333331,
+    "status": "FAIL"
+  }
+]
