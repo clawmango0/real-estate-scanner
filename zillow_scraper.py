@@ -12,7 +12,8 @@ from datetime import datetime
 from typing import List, Dict, Optional
 
 # API Key from Mr. Kelly
-API_KEY = "0b281e9035c595a332e175b172d8b36e"
+import os
+API_KEY = os.environ.get('SCRAPER_API_KEY', '')
 
 class ZillowScraper:
     def __init__(self, api_key: str):

@@ -11,7 +11,8 @@ import time
 from datetime import datetime
 from typing import List, Dict
 
-API_KEY = "0b281e9035c595a332e175b172d8b36e"
+import os
+API_KEY = os.environ.get('SCRAPER_API_KEY', '')
 
 def scrape_zillow(location: str = "Fort Worth, TX", filters: dict = None):
     """Scrape Zillow for property listings"""
