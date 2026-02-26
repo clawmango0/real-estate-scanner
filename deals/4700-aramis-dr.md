@@ -33,7 +33,7 @@
 |------|--------|
 | Down Payment (25%) | $13,750 |
 | Loan Amount | $41,250 |
-| Interest Rate | 7.0% |
+| Interest Rate | 5.25% |
 | Loan Term | 30 years |
 | Monthly P&I | $274 |
 
