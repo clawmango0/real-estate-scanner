@@ -304,25 +304,42 @@
             const btn = document.getElementById('analyzeBtn');
             const status = document.getElementById('analyzeStatus');
             
+            if(!url){
+                status.innerHTML = '⚠️ Paste a URL first';
+                return;
+            }
+            
             btn.disabled = true;
-            status.innerHTML = '🔄 Analyzing URL...';
+            status.innerHTML = '🔄 Fetching property data...';
             
-            // Try to parse data from URL
-            const data = parseURLData(url);
-            
-            // Pre-fill form
-            if(data.price) document.getElementById('mPrice').value = data.price;
-            if(data.address) document.getElementById('mAddress').value = data.address;
-            if(data.beds) document.getElementById('mBeds').value = data.beds;
-            if(data.baths) document.getElementById('mBaths').value = data.baths;
-            
-            // Show manual form with pre-filled data
-            document.getElementById('manualForm').classList.add('show');
-            
-            if(data.found){
-                status.innerHTML = '✅ Extracted: ' + (data.price ? '$'+data.price : '') + ' ' + (data.address || '') + '<br>Please review and click "Add Property"';
-            } else {
-                status.innerHTML = '⚠️ Could not auto-extract. Please fill in details below.';
+            try{
+                // Call local API (server must be running)
+                const apiUrl = 'http://localhost:3000/api/scrape?url=' + encodeURIComponent(url);
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                if(data.found || data.price || data.address){
+                    // Pre-fill form
+                    if(data.address) document.getElementById('mAddress').value = data.address.replace(' - MLS#.*', '');
+                    if(data.price) document.getElementById('mPrice').value = data.price;
+                    if(data.beds) document.getElementById('mBeds').value = data.beds;
+                    if(data.baths) document.getElementById('mBaths').value = data.baths;
+                    if(data.sqft) document.getElementById('mSqft').value = data.sqft;
+                    
+                    document.getElementById('manualForm').classList.add('show');
+                    
+                    const info = (data.price ? '$'+data.price : '') + ' ' + (data.address || '');
+                    status.innerHTML = '✅ Found: ' + info + '<br>Add rent and click "Add Property"';
+                } else {
+                    status.innerHTML = '⚠️ Could not extract. Try manual entry.';
+                }
+            } catch(err){
+                console.error(err);
+                // Fallback to URL parsing
+                const data = parseURLData(url);
+                if(data.address) document.getElementById('mAddress').value = data.address;
+                document.getElementById('manualForm').classList.add('show');
+                status.innerHTML = '⚠️ API unavailable. Using URL data. Enter details manually.';
             }
             
             btn.disabled = false;
