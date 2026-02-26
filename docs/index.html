@@ -107,10 +107,11 @@
         <div class="url-analyzer">
             <h3>🔍 <strong>Add Property from URL</strong></h3>
             <form class="url-form" onsubmit="analyzeURL(event)">
-                <input type="url" id="propertyUrl" class="url-input" placeholder="Paste property URL to analyze..." required>
-                <button type="submit" class="analyze-btn" id="analyzeBtn">Analyze URL</button>
+                <input type="url" id="propertyUrl" class="url-input" placeholder="Paste property URL..." required>
+                <button type="submit" class="analyze-btn" id="analyzeBtn">Analyze</button>
+                <button type="button" class="analyze-btn" style="background:var(--accent)" onclick="askMango()">Ask Mango 🤠</button>
             </form>
-            <div class="analyze-status" id="analyzeStatus"></div>
+            <div class="analyze-status" id="analyzeStatus">Paste a URL from Fort Worth Focused or Zillow, or click "Ask Mango" for help</div>
             
             <div class="manual-add">
                 <button class="manual-toggle" onclick="document.getElementById('manualForm').classList.toggle('show')">
@@ -212,8 +213,9 @@
     <script>
         // Starting properties
         let properties = [
-            {address:"4516 Rutland Ave, Fort Worth",price:215000,beds:2,baths:1,sqft:1080,type:"SFR",rent:1200,area:"Wedgwood"},
+            {address:"2264 Lipscomb St, Fort Worth",price:730000,beds:3,baths:3,sqft:3088,type:"SFR",rent:3500,area:"Fairmount"},
             {address:"5521 Lubbock Ave, Fort Worth",price:250000,beds:3,baths:2,sqft:1295,type:"SFR",rent:1500,area:"Wedgwood"},
+            {address:"4516 Rutland Ave, Fort Worth",price:215000,beds:2,baths:1,sqft:1080,type:"SFR",rent:1200,area:"Wedgwood"},
             {address:"2847 W Seminary Dr, Fort Worth",price:285000,beds:4,baths:2,sqft:2400,type:"Duplex",rent:2800,area:"South Worth"},
             {address:"7652 Colorado Creek, Fort Worth",price:212000,beds:4,baths:2,sqft:2400,type:"Duplex",rent:2602,area:"Wedgwood"},
             {address:"8812 Texas Risinger, Fort Worth",price:203000,beds:3,baths:2,sqft:1800,type:"SFR",rent:2400,area:"South Worth"},
@@ -327,40 +329,52 @@
         
         // Parse property data from URL
         function parseURLData(url){
-            const data = {found: false, price: '', address: '', beds: '', baths: ''};
+            const data = {found: false, price: '', address: '', beds: '', baths: '', sqft: ''};
             
-            // Look for price (5-7 digit numbers)
-            const priceMatch = url.match(/(\d{5,7})/);
+            // Fort Worth Focused: /listing-detail/ID/ADDRESS-CITY-STATE
+            const fwfMatch = url.match(/listing-detail\/\d+\/([^\/]+)/);
+            if(fwfMatch){
+                let addr = fwfMatch[1]
+                    .replace(/-/g, ' ')
+                    .trim();
+                // Remove trailing state
+                addr = addr.replace(/\s+TX\s*$/i, '').replace(/\s+TX$/i, '');
+                data.address = addr;
+                data.found = true;
+            }
+            
+            // Zillow: /homedetails/ADDRESS-CITY-STATE-ZIP/ID_zpid/
+            const zillowMatch = url.match(/\/homedetails\/([^\/]+)/);
+            if(zillowMatch){
+                let addr = zillowMatch[1]
+                    .replace(/-/g, ' ')
+                    .replace(/TX\s+\d{5}/i, '')
+                    .trim();
+                data.address = addr;
+                data.found = true;
+            }
+            
+            // Look for price in query string or after domain
+            const priceMatch = url.match(/[?&]price=(\d+)/i);
             if(priceMatch){
-                const p = parseInt(priceMatch[0]);
-                if(p > 20000 && p < 1000000){
-                    data.price = p;
-                    data.found = true;
-                }
-            }
-            
-            // Look for beds
-            const bedsMatch = url.match(/(\d+)bed/i);
-            if(bedsMatch){
-                data.beds = bedsMatch[1];
-                data.found = true;
-            }
-            
-            // Look for baths
-            const bathsMatch = url.match(/(\d+\.?\d*)bath/i);
-            if(bathsMatch){
-                data.baths = bathsMatch[1];
-                data.found = true;
-            }
-            
-            // Try to extract address from URL path
-            const pathMatch = url.match(/fort[\-\s]?worth[\-\s]?(\d+)/i);
-            if(pathMatch){
-                data.address = pathMatch[1] + ' Fort Worth';
+                data.price = priceMatch[1];
                 data.found = true;
             }
             
             return data;
+        }
+        
+        // Ask Mango to analyze URL
+        function askMango(){
+            const url = document.getElementById('propertyUrl').value;
+            if(!url){
+                document.getElementById('analyzeStatus').innerHTML = '⚠️ Paste a URL first, then click Ask Mango';
+                return;
+            }
+            // Copy to clipboard
+            navigator.clipboard.writeText(url).then(()=>{
+                document.getElementById('analyzeStatus').innerHTML = '✅ URL copied! <a href="?send=' + encodeURIComponent(url) + '">Click here to send to Mango</a> - or just paste the URL here and I\'ll extract what I can';
+            });
         }
         
         // Manual add
