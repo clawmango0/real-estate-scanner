@@ -365,18 +365,18 @@
             return data;
         }
         
-        // Ask Mango to analyze URL - copy and instruct user to send to Mango
+        // Ask Mango to analyze URL - copies and opens chat with Mango
         function askMango(){
             const url = document.getElementById('propertyUrl').value;
             if(!url){
                 document.getElementById('analyzeStatus').innerHTML = '⚠️ Paste a URL first';
                 return;
             }
-            // Copy URL to clipboard
+            // Copy URL and instruct user
             navigator.clipboard.writeText(url).then(()=>{
-                document.getElementById('analyzeStatus').innerHTML = '✅ URL copied! <strong>Send it to Mango here in chat</strong> and I\'ll fetch the property data and add it to the dashboard.';
+                document.getElementById('analyzeStatus').innerHTML = '✅ URL copied! <strong>Now paste it in chat to Mango</strong> and I\'ll fetch the data and add it automatically.';
             }).catch(()=>{
-                document.getElementById('analyzeStatus').innerHTML = '📋 Copy this URL and <strong>send to Mango in chat</strong>: ' + url.substring(0,50)+'...';
+                document.getElementById('analyzeStatus').innerHTML = '📋 Send this URL to Mango: ' + url.substring(0,40)+'...';
             });
         }
         
