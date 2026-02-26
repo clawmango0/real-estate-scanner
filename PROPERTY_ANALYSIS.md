@@ -1,114 +1,92 @@
-# Real Estate Scout - Complete Property Analysis
+# Property Analysis - Updated with Real Rent Data
 
-**Updated:** 2026-02-24
-
-## Analysis Model
-
-| Factor | Value |
-|--------|-------|
-| Down Payment | $100,000 |
-| Market Discount | 5% (30-59 days), 15% (60+ days) |
-| Interest Rate | **5.25%** |
-| Expenses | 50% rule |
-| Property Taxes | 1.9% annually |
-| HOA | When listed |
+**Rent Data Source:** RentCafe (actual Fort Worth market data, Feb 2026)
 
 ---
 
-## Rankings (Best to Worst)
+## Zip Code Rent Estimates
 
-| Rank | Property | Source Link | Days | Offer | Rent | CF | Status |
-|------|----------|--------------|------|-------|------|-----|--------|
-| 🥇 | 7652 Colorado Creek Ct (duplex) | [View](https://www.zillow.com/homedetails/7652-Colorado-Creek-Ct-Fort-Worth-TX-76133/29176661_zpid/) | 104 | $212,500 | $2,602 | +$343 | ✅ |
-| 🥈 | 8812 Texas Risinger Dr | [View](https://www.zillow.com/homedetails/8812-Texas-Risinger-Dr-UNIT-70-Fort-Worth-TX-76123/340860410_zpid/) | 121 | $203,150 | $2,400 | +$309 | ✅ |
-| 🥉 | 4516 Rutland Ave (Duplex) | [View](https://renn.fortworthfocused.com/properties) | 25 | $215,000 | $2,400 | +$225 | ✅ |
-| 4 | 2933 Sycamore School Rd (Duplex) | [View](https://www.dfwrealestatesource.com/property-search/results/) | - | $449,900 | $3,091 | +$82 | ✅ |
-| 5 | 5113 Bob Dr, NRH | [View](https://www.zillow.com/homedetails/5113-Bob-Dr-North-Richland-Hills-TX-76180/28956130_zpid/) | 136 | $170,000 | $1,407 | +$48 | ✅ |
+| Zip Code | Area | Avg Rent | Notes |
+|----------|------|----------|-------|
+| 76133 | Fort Worth (SW) | $1,409/mo | Near Crowley |
+| 76248 | Keller | $1,822/mo | Nicer suburb |
+| 76180 | North Richland Hills | $1,587/mo | Mid-cities |
 
 ---
 
-## Property Details
+## Updated Property Analysis
 
-### 1. 🥇 7652 Colorado Creek Ct (Duplex)
-- **Link:** https://www.zillow.com/homedetails/7652-Colorado-Creek-Ct-Fort-Worth-TX-76133/29176661_zpid/
-- **Listed:** $249,999 → **Offer:** $212,500 (15% discount)
-- **Type:** Full Duplex (3BR/2BA + 2BR/2BA)
-- **Rent:** $2,602/mo
-- **Cash Flow:** +$343/mo ✅
-
-### 2. 🥈 8812 Texas Risinger Dr
-- **Link:** https://www.zillow.com/homedetails/8812-Texas-Risinger-Dr-UNIT-70-Fort-Worth-TX-76123/340860410_zpid/
-- **Listed:** $239,000 → **Offer:** $203,150 (15% discount)
-- **Type:** SFR, 2024 new construction, ALREADY LEASED
-- **Rent:** $2,400/mo
-- **Cash Flow:** +$309/mo ✅
-
-### 3. 🥉 4516 Rutland Ave (Duplex)
-- **Link:** https://renn.fortworthfocused.com/properties
-- **Listed:** $215,000 → **Offer:** $215,000
-- **Type:** Potential Duplex
-- **Rent:** $2,400/mo
-- **Cash Flow:** +$225/mo ✅
-
-### 4. 2933 Sycamore School Rd (Duplex)
-- **Link:** https://www.dfwrealestatesource.com/property-search/results/
-- **Price:** $449,900
-- **Type:** Duplex
-- **Rent:** $3,091/mo
-- **Cash Flow:** +$82/mo ✅
-
-### 5. 5113 Bob Dr, North Richland Hills
-- **Link:** https://www.zillow.com/homedetails/5113-Bob-Dr-North-Richland-Hills-TX-76180/28956130_zpid/
-- **Listed:** $200,000 → **Offer:** $170,000 (15% discount)
-- **Type:** 4BR/3BA SFR
-- **Rent:** $1,407/mo
-- **Cash Flow:** +$48/mo ✅
+### Property 1: 2713 Cordone St, Fort Worth 76133
+- **Price:** $200,000
+- **Beds/Baths:** 3/2
+- **Sqft:** 1,278
+- **Area Rent:** $1,409/mo (76133)
+- **Analysis:**
+  - Down Payment: $100,000
+  - Loan: $100,000 @ 5.25% = $552/mo
+  - Property Tax (1.9%): $317/mo
+  - Insurance: $100/mo
+  - Expenses (50%): $705/mo
+  - **Total Cost:** $1,674/mo
+  - **Rent:** $1,409/mo
+  - **Cash Flow:** -$265/mo ❌
 
 ---
 
-## Key Findings
-
-1. **Only duplexes/multi-unit work** - Single family homes fail due to rent-to-price ratio
-2. **5 properties now cash flow positive** - All are duplexes or already leased
-3. **Lower interest rate (5.25%)** helps significantly
-
----
-
-## Price per SqFt Analysis
-
-| Property | $/SqFt | vs Market ($195 avg) | Assessment |
-|---------|---------|---------------------|------------|
-| 7652 Colorado Creek | $85 | -56% | ✅ GOOD DEAL |
-| 5113 Bob Dr | $89 | -54% | ✅ GOOD DEAL |
-| 4516 Rutland | $100 | -49% | ✅ GOOD DEAL |
-| 8812 Texas Risinger | $113 | -42% | ✅ GOOD DEAL |
-| 2933 Sycamore | $167 | -14% | 🟡 Premium |
+### Property 2: 3213 Leith Ave, Fort Worth 76133
+- **Price:** $265,600
+- **Beds/Baths:** 3/2
+- **Sqft:** 1,648
+- **Area Rent:** $1,409/mo (76133)
+- **Analysis:**
+  - Down Payment: $100,000
+  - Loan: $165,600 @ 5.25% = $915/mo
+  - Property Tax (1.9%): $421/mo
+  - Insurance: $100/mo
+  - Expenses (50%): $705/mo
+  - **Total Cost:** $2,141/mo
+  - **Rent:** $1,409/mo
+  - **Cash Flow:** -$732/mo ❌
 
 ---
 
-## Refurbishment Estimates
-
-Based on year built and condition descriptions:
-
-| Property | Year | Condition | Rehab Est | % |
-|----------|------|-----------|-----------|---|
-| 7652 Colorado Creek | 2024 | NEW | $5,000 | 2% |
-| 8812 Texas Risinger | 2024 | NEW, leased | $5,000 | 2% |
-| 2933 Sycamore | 1985 | Established | $22,500 | 5% |
-| 4516 Rutland | 1960 | Older | $17,200 | 8% |
-| 5113 Bob Dr | 1959 | Diamond in rough | $20,000 | 10% |
-
----
-
-## Data Sources
-
-### Working Sources ✅
-| Source | URL |
-|--------|-----|
-| Zillow | zillow.com |
-| Fort Worth Focused | renn.fortworthfocused.com |
-| DFW Real Estate Source | dfwrealestatesource.com |
+### Property 3: 216 Rodeo Dr, Keller 76248
+- **Price:** $255,000
+- **Beds/Baths:** 3/1
+- **Sqft:** 1,177
+- **Area Rent:** $1,822/mo (Keller - nicer area!)
+- **Analysis:**
+  - Down Payment: $100,000
+  - Loan: $155,000 @ 5.25% = $857/mo
+  - Property Tax (1.9%): $404/mo
+  - Insurance: $120/mo
+  - Expenses (50%): $911/mo
+  - **Total Cost:** $2,292/mo
+  - **Rent:** $1,822/mo
+  - **Cash Flow:** -$470/mo ❌
 
 ---
 
-*Analysis: $100K down, 5.25% interest, 50% expense rule, 1.9% property taxes*
+## Summary
+
+| Property | Price | Rent (Real) | Cash Flow | Status |
+|----------|-------|-------------|-----------|--------|
+| 2713 Cordone St | $200,000 | $1,409/mo | -$265/mo | ❌ |
+| 3213 Leith Ave | $265,600 | $1,409/mo | -$732/mo | ❌ |
+| 216 Rodeo Dr | $255,000 | $1,822/mo | -$470/mo | ❌ |
+
+## Key Insight
+
+Even with real market rent data, these SFR prices are too high for cash flow. The math:
+
+- Need rent-to-price ratio of ~0.8-1% for positive cash flow
+- These areas: 0.65-0.72% rent/price ratio
+- **Would need 30-40% price reduction to work**
+
+## What Works
+
+The duplexes that passed before (from earlier analysis):
+- 7652 Colorado Creek: $212K @ $2,602 rent = +$343/mo ✅
+- 8812 Texas Risinger: $203K @ $2,400 rent = +$309/mo ✅
+
+Multi-unit properties work because rent > mortgage + expenses.
