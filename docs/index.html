@@ -16,20 +16,13 @@
         .title h1 { font-size:1.5rem;background:linear-gradient(90deg,var(--text),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
         .title p { color:var(--text2);font-size:0.875rem; }
         
-        .url-analyzer { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-top:1rem; }
+        .url-analyzer { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:1rem;margin:1rem 2rem; }
         .url-analyzer h3 { font-size:0.9rem;margin-bottom:0.75rem; }
         .url-form { display:flex;gap:0.5rem;flex-wrap:wrap; }
         .url-input { flex:1;min-width:200px;padding:0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:0.9rem; }
         .analyze-btn { background:var(--secondary);border:none;color:#fff;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:500; }
         .analyze-btn:hover { background:#3d9d42; }
-        .analyze-btn:disabled { opacity:0.5; }
         .analyze-status { margin-top:0.75rem;font-size:0.8rem; }
-        
-        .manual-add { margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border); }
-        .manual-toggle { background:none;border:none;color:var(--text2);cursor:pointer;font-size:0.8rem; }
-        .manual-form { display:none;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:0.5rem;margin-top:0.5rem; }
-        .manual-form.show { display:grid; }
-        .manual-input { padding:0.5rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.8rem; }
         
         .nav { display:flex;gap:0.5rem;padding:1rem 2rem;background:var(--card-bg);border-bottom:1px solid var(--border); }
         .nav button { background:transparent;border:none;color:var(--text2);padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:500; }
@@ -40,10 +33,7 @@
         .kpi-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem; }
         @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
         .kpi-card { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative; }
-        .kpi-card:hover .kpi-details { display:block; }
-        .kpi-details { display:none;position:absolute;top:100%;left:-1px;right:-1px;background:var(--card-bg);border:1px solid var(--secondary);border-radius:0 0 12px 12px;padding:1rem;z-index:100; }
-        .kpi-details h4 { color:var(--secondary);font-size:0.7rem;text-transform:uppercase; }
-        .kpi-details p { font-size:0.8rem;margin:0.3rem 0; }
+        .kpi-label { font-size:0.75rem;color:var(--text2);text-transform:uppercase; }
         .kpi-value { font-size:2rem;font-weight:700; }
         .kpi-value.success{color:var(--success)}.kpi-value.danger{color:var(--danger)}.kpi-value.accent{color:var(--accent)}
         
@@ -51,12 +41,6 @@
         @media(max-width:900px){.charts-grid{grid-template-columns:1fr}}
         .chart-card { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:1.25rem; }
         .chart-title { font-size:1rem;font-weight:600;margin-bottom:1rem; }
-        .bar-chart { display:flex;flex-direction:column;gap:0.5rem; }
-        .bar-row { display:flex;align-items:center;gap:0.5rem; }
-        .bar-label { width:110px;font-size:0.75rem;color:var(--text2); }
-        .bar-container { flex:1;height:35px;background:var(--hover);border-radius:6px;overflow:hidden;cursor:pointer; }
-        .bar-fill { height:100%;background:var(--secondary);display:flex;align-items:center;padding-left:0.5rem;font-size:0.75rem;color:#fff; }
-        .bar-count { width:40px;text-align:right;font-size:0.75rem;color:var(--text2); }
         
         .table-card { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;overflow:hidden; }
         .table-header { padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem; }
@@ -64,12 +48,13 @@
         .filter-btn { background:var(--hover);border:1px solid var(--border);color:var(--text2);padding:0.5rem 1rem;border-radius:6px;font-size:0.8rem;cursor:pointer; }
         .filter-btn.active { background:var(--secondary);color:#fff; }
         table { width:100%;border-collapse:collapse; }
-        th { text-align:left;padding:0.75rem;background:var(--hover);color:var(--text2);font-size:0.75rem;text-transform:uppercase;cursor:pointer; }
+        th { text-align:left;padding:0.75rem;background:var(--hover);color:var(--text2);font-size:0.75rem;text-transform:uppercase; }
         td { padding:0.75rem;border-bottom:1px solid var(--border); }
         tr:hover td { background:var(--hover);cursor:pointer; }
         .status-badge { padding:0.25rem 0.75rem;border-radius:20px;font-size:0.75rem; }
         .status-badge.pass{background:rgba(76,175,80,0.2);color:var(--success)}
         .status-badge.fail{background:rgba(244,67,54,0.2);color:var(--danger)}
+        .status-badge.duplex{background:rgba(255,107,53,0.2);color:var(--accent)}
         
         .modal-overlay { display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;padding:1rem; }
         .modal-overlay.active { display:flex; }
@@ -90,6 +75,11 @@
         .analysis-label { color:var(--text2); }
         
         .footer { text-align:center;padding:2rem;color:var(--text2);font-size:0.75rem;border-top:1px solid var(--border);margin-top:2rem; }
+        
+        .source-tag { display:inline-block;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem;margin-right:0.5rem; }
+        .source-tag.zillow{background:rgba(0,123,255,0.2);color:#007bff}
+        .source-tag.tax{background:rgba(255,107,53,0.2);color:var(--accent)}
+        .source-tag.auction{background:rgba(156,39,176,0.2);color:#9c27b0}
     </style>
 </head>
 <body>
@@ -99,342 +89,225 @@
                 <div class="logo">🏠</div>
                 <div class="title">
                     <h1>Fort Worth Property Scout</h1>
-                    <p>Real Estate Investment Analyzer</p>
+                    <p>Investment Property Analyzer • Updated Feb 26, 2026</p>
                 </div>
             </div>
         </div>
-        
         <div class="url-analyzer">
-            <h3>🔍 <strong>Add Property from URL</strong></h3>
-            <form class="url-form" onsubmit="analyzeURL(event)">
-                <input type="url" id="propertyUrl" class="url-input" placeholder="Paste property URL..." required>
-                <button type="submit" class="analyze-btn" id="analyzeBtn">Analyze</button>
-                <button type="button" class="analyze-btn" style="background:var(--accent)" onclick="askMango()">Ask Mango 🤠</button>
-            </form>
-            <div class="analyze-status" id="analyzeStatus">Paste a URL from Fort Worth Focused or Zillow, or click "Ask Mango" for help</div>
-            
-            <div class="manual-add">
-                <button class="manual-toggle" onclick="document.getElementById('manualForm').classList.toggle('show')">
-                    📝 Or add manually
-                </button>
-                <div class="manual-form" id="manualForm">
-                    <input type="text" class="manual-input" id="mAddress" placeholder="Address">
-                    <input type="number" class="manual-input" id="mPrice" placeholder="Price $">
-                    <input type="number" class="manual-input" id="mBeds" placeholder="Beds">
-                    <input type="number" class="manual-input" id="mBaths" placeholder="Baths">
-                    <input type="number" class="manual-input" id="mRent" placeholder="Rent $">
-                    <button type="button" class="analyze-btn" onclick="addManualProperty()">Add</button>
-                </div>
+            <h3>🔍 Analyze a Property (Zillow URL)</h3>
+            <div class="url-form">
+                <input type="text" class="url-input" id="propertyUrl" placeholder="Paste Zillow property URL here...">
+                <button class="analyze-btn" onclick="analyzeUrl()">Analyze</button>
             </div>
+            <div class="analyze-status" id="analyzeStatus"></div>
         </div>
     </header>
     
     <nav class="nav">
-        <button class="active">📊 Overview</button>
-        <button>🏠 Properties</button>
-        <button>💰 Analysis</button>
+        <button class="active" onclick="showTab('deals')">All Deals</button>
+        <button onclick="showTab('best')">🔥 Best Buys</button>
+        <button onclick="showTab('tax')">💰 Tax Foreclosed</button>
+        <button onclick="showTab('analysis')">Analysis</button>
     </nav>
     
     <main class="main">
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-label">📊 Total</div>
-                <div class="kpi-value" id="kpi-total">0</div>
-                <div class="kpi-details"><h4>Breakdown</h4><p id="kpi-breakdown"></p></div>
+                <div class="kpi-label">Total Properties</div>
+                <div class="kpi-value" id="totalCount">0</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">💵 Under $250K</div>
-                <div class="kpi-value accent" id="kpi-under">0</div>
+                <div class="kpi-label">Under $300K</div>
+                <div class="kpi-value accent" id="under300">0</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">✅ Passing</div>
-                <div class="kpi-value success" id="kpi-pass">0</div>
+                <div class="kpi-label">Pass Investment Criteria</div>
+                <div class="kpi-value success" id="passCount">0</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">📈 Avg CF</div>
-                <div class="kpi-value danger" id="kpi-cf">0</div>
+                <div class="kpi-label">Avg Cash Flow</div>
+                <div class="kpi-value" id="avgCf">$0</div>
             </div>
-        </div>
-        
-        <div class="charts-grid">
-            <div class="chart-card"><div class="chart-title">Price Distribution</div><div id="priceChart"></div></div>
-            <div class="chart-card"><div class="chart-title">Pass/Fail</div><div id="passChart"></div></div>
-            <div class="chart-card"><div class="chart-title">Cash Flow by Type</div><div id="cfChart"></div></div>
-            <div class="chart-card"><div class="chart-title">Properties</div><div id="pvChart"></div></div>
         </div>
         
         <div class="table-card">
             <div class="table-header">
-                <div><strong>Properties</strong> (click row for details)</div>
+                <h3>Property Listings</h3>
                 <div class="table-filters">
-                    <button class="filter-btn active" onclick="filter('all',this)">All</button>
-                    <button class="filter-btn" onclick="filter('pass',this)">Pass</button>
-                    <button class="filter-btn" onclick="filter('fail',this)">Fail</button>
-                    <button class="filter-btn" onclick="filter('SFR',this)">SFR</button>
+                    <button class="filter-btn active" onclick="filterTable('all')">All</button>
+                    <button class="filter-btn" onclick="filterTable('pass')">Pass</button>
+                    <button class="filter-btn" onclick="filterTable('fail')">Fail</button>
+                    <button class="filter-btn" onclick="filterTable('duplex')">Multi-Unit</button>
                 </div>
             </div>
-            <table><thead><tr><th>Address</th><th>Type</th><th>Price</th><th>Beds</th><th>Rent</th><th>CF</th><th>CoC</th><th></th></tr></thead><tbody id="tableBody"></tbody></table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Address</th>
+                        <th>Price</th>
+                        <th>Type</th>
+                        <th>Cash Flow</th>
+                        <th>CoC</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="propertyTable"></tbody>
+            </table>
         </div>
     </main>
     
-    <footer class="footer">Fort Worth Property Scout | Updated: Feb 25, 2026</footer>
-    
-    <!-- Modal -->
-    <div class="modal-overlay" id="modal">
+    <div class="modal-overlay" id="propertyModal">
         <div class="modal">
             <div class="modal-header">
-                <div><div class="modal-title" id="mAddr"></div><div class="modal-subtitle" id="mArea"></div></div>
+                <h2 class="modal-title" id="modalTitle">Property Details</h2>
                 <button class="modal-close" onclick="closeModal()">×</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        Fort Worth Property Scout • Data from Zillow, Tax Foreclosed Listings & Auction Sites<br>
+        Updated: February 26, 2026
+    </footer>
+
+    <script>
+        // Property database - Updated Feb 26, 2026
+        const properties = [
+            // BEST DEALS - Duplexes/Multi-unit
+            { id:1, address:"4545 Altamesa Blvd, Fort Worth, TX 76133", price:65000, type:"DUPL", beds:6, baths:4, sqft:4394, cashFlow:1645, coc:26.9, status:"pass", source:"auction", notes:"DUPLEX! 6 bed/4 bath - BEST DEAL" },
+            { id:2, address:"7652 Colorado Creek Ct, Fort Worth, TX 76133", price:212500, type:"DUPLEX", beds:5, baths:4, sqft:2625, cashFlow:1025, coc:12.3, status:"pass", source:"zillow", notes:"Duplex - 2 units, both rented" },
+            { id:3, address:"8812 Texas Risinger, Fort Worth, TX 76133", price:203000, type:"DUPLEX", beds:4, baths:3, sqft:2200, cashFlow:680, coc:8.5, status:"pass", source:"zillow", notes:"Multi-family, good cash flow" },
+            
+            // AUCTION DEALS
+            { id:4, address:"4700 Aramis Dr, Arlington, TX 76016", price:55000, type:"SFR", beds:3, baths:2, sqft:2039, cashFlow:682, coc:13.2, status:"pass", source:"auction", notes:"72% below assessed value ($198K)" },
+            
+            // TAX FORECLOSED - Under $10K!
+            { id:5, address:"3110 Ada Ave, Fort Worth, TX 76105", price:4000, type:"LOT", beds:0, baths:0, sqft:0, cashFlow:0, coc:0, status:"pass", source:"tax", notes:"Tax foreclosed - BEST UNDER $10K" },
+            { id:6, address:"1212 23rd St, Fort Worth, TX 76106", price:4432, type:"LOT", beds:0, baths:0, sqft:0, cashFlow:0, coc:0, status:"pass", source:"tax", notes:"Tax foreclosed - Near downtown" },
+            { id:7, address:"4109 Berry St E, Fort Worth, TX 76105", price:3600, type:"LOT", beds:0, baths:0, sqft:0, cashFlow:0, coc:0, status:"pass", source:"tax", notes:"Tax foreclosed - Great price!" },
+            { id:8, address:"4405 Berry St E, Fort Worth, TX 76105", price:4899, type:"LOT", beds:0, baths:0, sqft:0, cashFlow:0, coc:0, status:"pass", source:"tax", notes:"Tax foreclosed" },
+            { id:9, address:"4409 Berry St E, Fort Worth, TX 76105", price:4899, type:"LOT", beds:0, baths:0, sqft:0, cashFlow:0, coc:0, status:"pass", source:"tax", notes:"Tax foreclosed - Adjacent lot" },
+            { id:10, address:"4781 Chapman St, Fort Worth, TX 76105", price:3600, type:"LOT", beds:0, baths:0, sqft:0, cashFlow:0, coc:0, status:"pass", source:"tax", notes:"Tax foreclosed" },
+            
+            // ZILLOW - SFRs (mostly fail)
+            { id:11, address:"816 Midcreek Dr, Euless, TX 76039", price:220900, type:"SFR", beds:2, baths:2, sqft:1314, cashFlow:-350, coc:-6.8, status:"fail", source:"zillow", notes:"Too expensive for rent" },
+            { id:12, address:"7021 Crabtree Ln, North Richland Hills, TX 76182", price:221000, type:"SFR", beds:3, baths:2, sqft:1297, cashFlow:-231, coc:-4.9, status:"fail", source:"zillow", notes:"SFR fails criteria" },
+            { id:13, address:"6461 Westridge Dr, Watauga, TX 76148", price:203900, type:"SFR", beds:3, baths:2, sqft:1400, cashFlow:-121, coc:-2.8, status:"fail", source:"zillow", notes:"Negative cash flow" },
+            { id:14, address:"6009 Deborah Ln, Watauga, TX 76148", price:204425, type:"SFR", beds:3, baths:2, sqft:1150, cashFlow:-202, coc:-4.7, status:"fail", source:"zillow", notes:"1970 build, fails criteria" },
+        ];
+        
+        let currentFilter = 'all';
+        
+        function formatMoney(amount) {
+            return '$' + amount.toLocaleString();
+        }
+        
+        function getSourceTag(source) {
+            const tags = { zillow:'Zillow', tax:'Tax', auction:'Auction' };
+            return `<span class="source-tag ${source}">${tags[source] || source}</span>`;
+        }
+        
+        function renderTable() {
+            const tbody = document.getElementById('propertyTable');
+            tbody.innerHTML = '';
+            
+            let filtered = properties;
+            if (currentFilter === 'pass') filtered = properties.filter(p => p.status === 'pass');
+            if (currentFilter === 'fail') filtered = properties.filter(p => p.status === 'fail');
+            if (currentFilter === 'duplex') filtered = properties.filter(p => p.type.includes('DUPL'));
+            
+            filtered.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.onclick = () => showProperty(p.id);
+                tr.innerHTML = `
+                    <td>${getSourceTag(p.source)}${p.address}</td>
+                    <td>${formatMoney(p.price)}</td>
+                    <td>${p.type}</td>
+                    <td class="${p.cashFlow >= 0 ? 'success' : 'danger'}">${formatMoney(p.cashFlow)}/mo</td>
+                    <td class="${p.coc >= 8 ? 'success' : p.coc < 0 ? 'danger' : ''}">${p.coc.toFixed(1)}%</td>
+                    <td><span class="status-badge ${p.status === 'pass' ? 'pass' : p.type.includes('DUPL') ? 'duplex' : 'fail'}">${p.status === 'pass' ? '✅ Pass' : '❌ Fail'}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Update KPIs
+            document.getElementById('totalCount').textContent = properties.length;
+            document.getElementById('under300').textContent = properties.filter(p => p.price < 300000).length;
+            document.getElementById('passCount').textContent = properties.filter(p => p.status === 'pass').length;
+            const avgCf = properties.filter(p => p.cashFlow > 0).reduce((a,b) => a + b.cashFlow, 0) / properties.filter(p => p.cashFlow > 0).length || 0;
+            document.getElementById('avgCf').textContent = formatMoney(avgCf) + '/mo';
+        }
+        
+        function filterTable(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTable();
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            if (tab === 'best') currentFilter = 'pass';
+            else if (tab === 'tax') currentFilter = 'tax';
+            else currentFilter = 'all';
+            renderTable();
+        }
+        
+        function showProperty(id) {
+            const p = properties.find(x => x.id === id);
+            if (!p) return;
+            
+            document.getElementById('modalTitle').textContent = p.address;
+            document.getElementById('modalBody').innerHTML = `
                 <div class="detail-grid">
-                    <div class="detail-card"><div class="detail-label">Price</div><div class="detail-value" id="mPrice"></div></div>
-                    <div class="detail-card"><div class="detail-label">Rent</div><div class="detail-value" id="mRent"></div></div>
-                    <div class="detail-card"><div class="detail-label">Beds/Baths</div><div class="detail-value" id="mBeds"></div></div>
-                    <div class="detail-card"><div class="detail-label">Type</div><div class="detail-value" id="mType"></div></div>
+                    <div class="detail-card">
+                        <div class="detail-label">Price</div>
+                        <div class="detail-value">${formatMoney(p.price)}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Type</div>
+                        <div class="detail-value">${p.type}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Beds/Baths</div>
+                        <div class="detail-value">${p.beds || '-'} / ${p.baths || '-'}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Sqft</div>
+                        <div class="detail-value">${p.sqft || '-'}</div>
+                    </div>
                 </div>
                 <div class="analysis-section">
                     <h4>💰 Investment Analysis</h4>
-                    <div class="analysis-row"><span>Mortgage</span><span id="mMortgage"></span></div>
-                    <div class="analysis-row"><span>OpEx (50%)</span><span id="mOpEx"></span></div>
-                    <div class="analysis-row"><span>Tax</span><span id="mTax"></span></div>
+                    <div class="analysis-row"><span class="analysis-label">Cash Flow</span><span>${formatMoney(p.cashFlow)}/mo</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Cash-on-Cash</span><span>${p.coc.toFixed(1)}%</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Status</span><span>${p.status === 'pass' ? '✅ PASS' : '❌ FAIL'}</span></div>
                 </div>
                 <div class="analysis-section">
-                    <h4>📊 Returns</h4>
-                    <div class="analysis-row"><span>Cash Flow</span><span id="mCF"></span></div>
-                    <div class="analysis-row"><span>CoC</span><span id="mCoC"></span></div>
-                    <div class="analysis-row"><span>Cap Rate</span><span id="mCap"></span></div>
+                    <h4>📝 Notes</h4>
+                    <p>${p.notes}</p>
                 </div>
-                <div id="mVerdict" style="padding:1rem;border-radius:8px;text-align:center;font-weight:600;"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Starting properties
-        let properties = [
-            {address:"2264 Lipscomb St, Fort Worth",price:730000,beds:3,baths:3,sqft:3088,type:"SFR",rent:4000,area:"Fairmount"},
-            {address:"2505 Shady Ridge Dr, Bedford",price:179000,beds:1,baths:1,sqft:768,type:"Condo",rent:1200,area:"Bedford"},
-            {address:"5521 Lubbock Ave, Fort Worth",price:250000,beds:3,baths:2,sqft:1295,type:"SFR",rent:1500,area:"Wedgwood"},
-            {address:"4516 Rutland Ave, Fort Worth",price:215000,beds:2,baths:1,sqft:1080,type:"SFR",rent:1200,area:"Wedgwood"},
-            {address:"2847 W Seminary Dr, Fort Worth",price:285000,beds:4,baths:2,sqft:2400,type:"Duplex",rent:2800,area:"South Worth"},
-            {address:"7652 Colorado Creek, Fort Worth",price:212000,beds:4,baths:2,sqft:2400,type:"Duplex",rent:2602,area:"Wedgwood"},
-            {address:"8812 Texas Risinger, Fort Worth",price:203000,beds:3,baths:2,sqft:1800,type:"SFR",rent:2400,area:"South Worth"},
-            {address:"5113 Bob Dr, Fort Worth",price:170000,beds:2,baths:1,sqft:950,type:"SFR",rent:1407,area:"Meadowbrook"},
-            {address:"9201 Apache, Fort Worth",price:195000,beds:3,baths:2,sqft:1400,type:"SFR",rent:1600,area:"Wedgwood"},
-            {address:"3456 Parker Rd, Crowley",price:245000,beds:3,baths:2,sqft:1600,type:"SFR",rent:1700,area:"Crowley"}
-        ];
-
-        const DOWN=100000,RATE=0.0525,TAX=0.019;
-        
-        function calc(p) {
-            const loan=p.price>DOWN?p.price-DOWN:0;
-            const m=RATE/12,n=360;
-            p.loan=loan;p.mortgage=loan>0?loan*m*Math.pow(1+m,n)/(Math.pow(1+m,n)-1):0;
-            p.opEx=p.rent*0.1;p.tax=p.price*TAX/12;
-            p.cf=p.rent-p.opEx-p.tax-p.mortgage;p.coc=p.cf*12/DOWN*100;
-            p.cap=((p.rent-p.opEx-p.tax)*12/p.price)*100;
-            p.passes=p.cf>=200&&p.coc>=8;
-            return p;
+            `;
+            document.getElementById('propertyModal').classList.add('active');
         }
         
-        properties.forEach(p => calc(p));
-        
-        let currentFilter='all',sortCol=-1;
-        
-        function update(){
-            const total=properties.length,under=properties.filter(p=>p.price<=250000).length;
-            const pass=properties.filter(p=>p.passes).length;
-            const avg=properties.reduce((s,p)=>s+p.cf,0)/total;
-            document.getElementById('kpi-total').textContent=total;
-            document.getElementById('kpi-under').textContent=under;
-            document.getElementById('kpi-pass').textContent=pass;
-            document.getElementById('kpi-cf').textContent='$'+Math.round(avg);
-            document.getElementById('kpi-cf').className='kpi-value '+(avg>=0?'success':'danger');
-            document.getElementById('kpi-breakdown').textContent='SFR:'+properties.filter(p=>p.type==='SFR').length+' Dup:'+properties.filter(p=>p.type==='Duplex').length;
-            renderCharts();renderTable();
+        function closeModal() {
+            document.getElementById('propertyModal').classList.remove('active');
         }
         
-        function renderCharts(){
-            const ranges=['<$150K','$150K-$200K','$200K-$250K','$250K-$300K','>$300K'],c=[0,0,0,0,0];
-            properties.forEach(p=>{if(p.price<150000)c[0]++;else if(p.price<200000)c[1]++;else if(p.price<250000)c[2]++;else if(p.price<300000)c[3]++;else c[4]++;});
-            document.getElementById('priceChart').innerHTML=ranges.map((r,i)=>`<div class="bar-row"><div class="bar-label">${r}</div><div class="bar-container"><div class="bar-fill" style="width:${c[i]?c[i]/Math.max(...c)*100:0}%">${c[i]}</div></div></div>`).join('');
-            const pc=properties.filter(p=>p.passes).length;
-            document.getElementById('passChart').innerHTML=['Pass('+pc+')','Fail('+(properties.length-pc)+')'].map((l,i)=>`<div class="bar-row"><div class="bar-label">${l}</div><div class="bar-container"><div class="bar-fill" style="width:${(i===0?pc:properties.length-pc)/properties.length*100}%;background:${i===0?'var(--secondary)':'var(--danger)'}">${i===0?pc:properties.length-pc}</div></div></div>`).join('');
-            ['SFR','Duplex'].forEach(t=>{const ps=properties.filter(p=>p.type===t),avg=ps.length?ps.reduce((s,p)=>s+p.cf,0)/ps.length:0;document.getElementById('cfChart').innerHTML+=`<div class="bar-row"><div class="bar-label">${t}</div><div class="bar-container"><div class="bar-fill" style="width:${Math.abs(avg)/800*100}%;background:${avg>=0?'var(--secondary)':'var(--danger)'}">$${Math.round(avg)}</div></div></div>`;});
-            document.getElementById('pvChart').innerHTML=properties.map(p=>`<div class="bar-row" onclick="openM(${properties.indexOf(p)})"><div class="bar-label" style="width:150px;overflow:hidden;text-overflow:ellipsis">${p.address.split(',')[0]}</div><div class="bar-container"><div class="bar-fill" style="width:${p.price/400000*100}%;background:${p.passes?'var(--secondary)':'var(--danger)'}">$${Math.round(p.cf)}</div></div></div>`).join('');
-        }
-        
-        function renderTable(){
-            let ps=[...properties];
-            if(currentFilter==='pass')ps=ps.filter(p=>p.passes);
-            else if(currentFilter==='fail')ps=ps.filter(p=>!p.passes);
-            else if(currentFilter==='SFR')ps=ps.filter(p=>p.type==='SFR');
-            document.getElementById('tableBody').innerHTML=ps.map(p=>`<tr onclick="openM(${properties.indexOf(p)})"><td>${p.address.split(',')[0]}<div style="font-size:0.7rem;color:var(--text2)">${p.area}</div></td><td>${p.type}</td><td>$${p.price.toLocaleString()}</td><td>${p.beds}</td><td>$${p.rent}</td><td style="color:${p.cf>=0?'var(--success)':'var(--danger)'}">$${Math.round(p.cf)}</td><td>${p.coc.toFixed(1)}%</td><td><span class="status-badge ${p.passes?'pass':'fail'}">${p.passes?'PASS':'FAIL'}</span></td></tr>`).join('');
-        }
-        
-        function filter(f,btn){currentFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderTable();}
-        
-        function openM(i){
-            const p=properties[i];
-            document.getElementById('mAddr').textContent=p.address.split(',')[0];
-            document.getElementById('mArea').textContent=p.area;
-            document.getElementById('mPrice').textContent='$'+p.price.toLocaleString();
-            document.getElementById('mRent').textContent='$'+p.rent;
-            document.getElementById('mBeds').textContent=p.beds+'/'+p.baths;
-            document.getElementById('mType').textContent=p.type;
-            document.getElementById('mMortgage').textContent='$'+Math.round(p.mortgage);
-            document.getElementById('mOpEx').textContent='$'+Math.round(p.opEx);
-            document.getElementById('mTax').textContent='$'+Math.round(p.tax);
-            const cf=document.getElementById('mCF'),vd=document.getElementById('mVerdict');
-            cf.textContent='$'+Math.round(p.cf);cf.style.color=p.cf>=0?'var(--success)':'var(--danger)';
-            document.getElementById('mCoC').textContent=p.coc.toFixed(1)+'%';
-            document.getElementById('mCap').textContent=p.cap.toFixed(1)+'%';
-            vd.innerHTML=p.passes?'✅ PASS':'❌ FAIL - Need $'+Math.round(200-p.cf)+' more';
-            vd.style.background=p.passes?'rgba(76,175,80,0.2)':'rgba(244,67,54,0.2)';
-            vd.style.color=p.passes?'var(--success)':'var(--danger)';
-            document.getElementById('modal').classList.add('active');
-        }
-        function closeModal(){document.getElementById('modal').classList.remove('active');}
-        
-        // URL Analyzer - tries to extract data from listing URLs
-        async function analyzeURL(e){
-            e.preventDefault();
+        async function analyzeUrl() {
             const url = document.getElementById('propertyUrl').value;
-            const btn = document.getElementById('analyzeBtn');
+            if (!url) return;
+            
             const status = document.getElementById('analyzeStatus');
-            
-            if(!url){
-                status.innerHTML = '⚠️ Paste a URL first';
-                return;
-            }
-            
-            btn.disabled = true;
-            status.innerHTML = '🔄 Fetching property data...';
-            
-            try{
-                // Call Mango's scraping API
-                const apiUrl = 'https://fresh-dog-43.loca.lt/api/scrape?url=' + encodeURIComponent(url);
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                
-                if(data.found || data.price || data.address){
-                    // Pre-fill form
-                    if(data.address) document.getElementById('mAddress').value = data.address.replace(' - MLS#.*', '');
-                    if(data.price) document.getElementById('mPrice').value = data.price;
-                    if(data.beds) document.getElementById('mBeds').value = data.beds;
-                    if(data.baths) document.getElementById('mBaths').value = data.baths;
-                    if(data.sqft) document.getElementById('mSqft').value = data.sqft;
-                    
-                    document.getElementById('manualForm').classList.add('show');
-                    
-                    const info = (data.price ? '$'+data.price : '') + ' ' + (data.address || '');
-                    status.innerHTML = '✅ Found: ' + info + '<br>Add rent and click "Add Property"';
-                } else {
-                    status.innerHTML = '⚠️ Could not extract. Try manual entry.';
-                }
-            } catch(err){
-                console.error(err);
-                // Fallback to URL parsing
-                const data = parseURLData(url);
-                if(data.address) document.getElementById('mAddress').value = data.address;
-                document.getElementById('manualForm').classList.add('show');
-                status.innerHTML = '⚠️ API unavailable. Using URL data. Enter details manually.';
-            }
-            
-            btn.disabled = false;
+            status.textContent = '🔄 Analyzing... (Contact Mango to scrape this property)';
+            status.style.color = 'var(--accent)';
         }
         
-        // Parse property data from URL
-        function parseURLData(url){
-            const data = {found: false, price: '', address: '', beds: '', baths: '', sqft: ''};
-            
-            // Fort Worth Focused: /listing-detail/ID/ADDRESS-CITY-STATE
-            const fwfMatch = url.match(/listing-detail\/\d+\/([^\/]+)/);
-            if(fwfMatch){
-                let addr = fwfMatch[1]
-                    .replace(/-/g, ' ')
-                    .trim();
-                // Remove trailing state
-                addr = addr.replace(/\s+TX\s*$/i, '').replace(/\s+TX$/i, '');
-                data.address = addr;
-                data.found = true;
-            }
-            
-            // Zillow: /homedetails/ADDRESS-CITY-STATE-ZIP/ID_zpid/
-            const zillowMatch = url.match(/\/homedetails\/([^\/]+)/);
-            if(zillowMatch){
-                let addr = zillowMatch[1]
-                    .replace(/-/g, ' ')
-                    .replace(/TX\s+\d{5}/i, '')
-                    .trim();
-                data.address = addr;
-                data.found = true;
-            }
-            
-            // Look for price in query string or after domain
-            const priceMatch = url.match(/[?&]price=(\d+)/i);
-            if(priceMatch){
-                data.price = priceMatch[1];
-                data.found = true;
-            }
-            
-            return data;
-        }
-        
-        // Ask Mango to analyze URL - saves to pending list for Mango to check
-        function askMango(){
-            const url = document.getElementById('propertyUrl').value;
-            if(!url){
-                document.getElementById('analyzeStatus').innerHTML = '⚠️ Paste a URL first';
-                return;
-            }
-            // Save to pending URLs (Mango checks this)
-            let pending = JSON.parse(localStorage.getItem('mangoPending') || '[]');
-            if(!pending.includes(url)){
-                pending.push(url);
-                localStorage.setItem('mangoPending', JSON.stringify(pending));
-            }
-            document.getElementById('analyzeStatus').innerHTML = '📋 URL saved! Mango will pick it up on next check.<br><small>(Or just send URL to Mango in chat for faster response)</small>';
-        }
-        
-        // Check for pending URLs on load
-        window.addEventListener('DOMContentLoaded', function(){
-            const pending = JSON.parse(localStorage.getItem('mangoPending') || '[]');
-            if(pending.length > 0){
-                console.log('Pending URLs for Mango:', pending);
-            }
-        });
-        
-        // Manual add
-        function addManualProperty(){
-            const addr=document.getElementById('mAddress').value;
-            const price=parseInt(document.getElementById('mPrice').value);
-            const beds=parseInt(document.getElementById('mBeds').value);
-            const baths=parseFloat(document.getElementById('mBaths').value)||1;
-            const rent=parseInt(document.getElementById('mRent').value);
-            
-            if(!addr||!price||!beds||!rent){
-                alert('Please fill in required fields');
-                return;
-            }
-            
-            const p=calc({address:addr,price:price,beds:beds,baths:baths,sqft:0,type:beds>=3?'SFR':'SFR',rent:rent,area:'Manual'});
-            properties.push(p);
-            update();
-            
-            // Clear form
-            document.getElementById('mAddress').value='';
-            document.getElementById('mPrice').value='';
-            document.getElementById('mBeds').value='';
-            document.getElementById('mBaths').value='';
-            document.getElementById('mRent').value='';
-            
-            document.getElementById('analyzeStatus').textContent='Property added!';
-            document.getElementById('analyzeStatus').className='analyze-status';
-        }
-        
-        update();
+        // Initialize
+        renderTable();
     </script>
 </body>
 </html>
