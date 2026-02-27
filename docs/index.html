@@ -8,36 +8,39 @@
         :root { --primary:#1E3A5F; --secondary:#2E7D32; --accent:#FF6B35; --success:#4CAF50; --danger:#F44336; --bg:#0D1117; --card-bg:#161B22; --text:#E6EDF3; --text2:#8B949E; --border:#30363D; --hover:#21262D; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        
         .header { background:linear-gradient(135deg,var(--primary),var(--bg)); padding:1.5rem 2rem; border-bottom:1px solid var(--border); }
+        .header-top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;gap:1rem; }
         .logo-section { display:flex; align-items:center; gap:1rem; }
         .logo { width:48px;height:48px;background:var(--secondary);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px; }
         .title h1 { font-size:1.5rem; }
         .title p { color:var(--text2);font-size:0.875rem; }
+        
         .assumptions { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:1rem;margin:1rem 2rem; }
         .assumptions h3 { font-size:0.9rem;margin-bottom:0.75rem;color:var(--accent); }
         .assumptions-grid { display:flex;flex-wrap:wrap;gap:1rem; }
         .assumption { background:var(--hover);padding:0.5rem 1rem;border-radius:8px;font-size:0.8rem; }
         .assumption strong { color:var(--success); }
+        
         .url-analyzer { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:1rem;margin:0 2rem 1rem; }
         .url-analyzer h3 { font-size:0.9rem;margin-bottom:0.75rem; }
         .url-form { display:flex;gap:0.5rem;flex-wrap:wrap; }
         .url-input { flex:1;min-width:200px;padding:0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:0.9rem; }
         .analyze-btn { background:var(--secondary);border:none;color:#fff;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:500; }
+        
         .nav { display:flex;gap:0.5rem;padding:1rem 2rem;background:var(--card-bg);border-bottom:1px solid var(--border);flex-wrap:wrap; }
         .nav button { background:transparent;border:none;color:var(--text2);padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:500; }
         .nav button.active { background:var(--secondary);color:#fff; }
+        
         .main { padding:1.5rem 2rem;max-width:1600px;margin:0 auto; }
-        .best-deal { background:linear-gradient(135deg,rgba(255,107,53,0.1),rgba(76,175,80,0.1));border:2px solid var(--accent);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem; }
-        .best-deal h3 { color:var(--accent);margin-bottom:1rem; }
-        .best-deal-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem; }
-        .best-stat { text-align:center; }
-        .best-stat-label { font-size:0.7rem;color:var(--text2); }
-        .best-stat-value { font-size:1.5rem;font-weight:700;color:var(--success); }
+        
         .kpi-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem; }
         @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
         .kpi-card { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:1.25rem; }
         .kpi-label { font-size:0.75rem;color:var(--text2);text-transform:uppercase; }
         .kpi-value { font-size:2rem;font-weight:700; }
+        .kpi-value.success{color:var(--success)}.kpi-value.danger{color:var(--danger)}.kpi-value.accent{color:var(--accent)}
+        
         .table-card { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;overflow:hidden; }
         .table-header { padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem; }
         .table-filters { display:flex;gap:0.5rem;flex-wrap:wrap; }
@@ -48,6 +51,10 @@
         td { padding:0.75rem;border-bottom:1px solid var(--border); }
         tr:hover td { background:var(--hover);cursor:pointer; }
         .status-badge { padding:0.25rem 0.75rem;border-radius:20px;font-size:0.75rem; }
+        .status-badge.pass{background:rgba(76,175,80,0.2);color:var(--success)}
+        .status-badge.fail{background:rgba(244,67,54,0.2);color:var(--danger)}
+        .status-badge.duplex{background:rgba(255,107,53,0.2);color:var(--accent)}
+        
         .modal-overlay { display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;padding:1rem; }
         .modal-overlay.active { display:flex; }
         .modal { background:var(--card-bg);border:2px solid var(--border);border-radius:16px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto; }
@@ -60,17 +67,36 @@
         .detail-label { font-size:0.7rem;color:var(--text2);text-transform:uppercase; }
         .detail-value { font-size:1.25rem;font-weight:600; }
         .analysis-section { background:var(--hover);border-radius:8px;padding:1rem;margin-bottom:1rem; }
+        .analysis-section h4 { font-size:0.875rem;margin-bottom:0.75rem;color:var(--text2); }
         .analysis-row { display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border); }
-        .source-tag { display:inline-block;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem;margin-right:0.5rem; }
+        .analysis-row:last-child { border:none; }
+        
         .footer { text-align:center;padding:2rem;color:var(--text2);font-size:0.75rem;border-top:1px solid var(--border);margin-top:2rem; }
+        .source-tag { display:inline-block;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem;margin-right:0.5rem; }
+        .source-tag.zillow{background:rgba(0,123,255,0.2);color:#007bff}
+        .source-tag.tax{background:rgba(255,107,53,0.2);color:var(--accent)}
+        .source-tag.auction{background:rgba(156,39,176,0.2);color:#9c27b0}
+        
+        .best-deal { background:linear-gradient(135deg,rgba(255,107,53,0.1),rgba(76,175,80,0.1));border:2px solid var(--accent);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem; }
+        .best-deal h3 { color:var(--accent);margin-bottom:1rem; }
+        .best-deal-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem; }
+        .best-stat { text-align:center; }
+        .best-stat-label { font-size:0.7rem;color:var(--text2); }
+        .best-stat-value { font-size:1.5rem;font-weight:700;color:var(--success); }
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="logo-section">
-            <div class="logo">🏠</div>
-            <div class="title"><h1>Fort Worth Property Scout</h1><p>Investment Property Analyzer • Updated Feb 26, 2026</p></div>
+        <div class="header-top">
+            <div class="logo-section">
+                <div class="logo">🏠</div>
+                <div class="title">
+                    <h1>Fort Worth Property Scout</h1>
+                    <p>Investment Property Analyzer • Updated Feb 26, 2026</p>
+                </div>
+            </div>
         </div>
+        
         <div class="assumptions">
             <h3>📋 Investment Criteria (Feb 2026)</h3>
             <div class="assumptions-grid">
@@ -79,37 +105,71 @@
                 <div class="assumption">📈 Interest: <strong>5.25%</strong></div>
                 <div class="assumption">💵 Max Cash Out: <strong>$100K</strong></div>
                 <div class="assumption">✅ CoC Target: <strong>&gt;8%</strong></div>
+                <div class="assumption">📊 Cash Flow: <strong>&gt;$0/mo</strong></div>
             </div>
         </div>
+        
         <div class="url-analyzer">
             <h3>🔍 Analyze a Property (Paste Zillow URL)</h3>
-            <div class="url-form"><input type="text" class="url-input" id="propertyUrl" placeholder="Paste Zillow URL..."><button class="analyze-btn" onclick="analyzeUrl()">Analyze</button></div>
+            <div class="url-form">
+                <input type="text" class="url-input" id="propertyUrl" placeholder="Paste Zillow property URL here...">
+                <button class="analyze-btn" onclick="analyzeUrl()">Analyze</button>
+            </div>
         </div>
     </header>
+    
     <nav class="nav">
         <button class="active" onclick="showTab('all')">All Deals</button>
+        <button onclick="showTab('best')">🔥 Best Buys</button>
         <button onclick="showTab('pass')">✅ Pass</button>
         <button onclick="showTab('fail')">❌ Fail</button>
-        <button onclick="showTab('duplex')">🏢 Multi-Unit</button>
     </nav>
+    
     <main class="main">
         <div class="best-deal">
             <h3>🔥 TOP DEAL - 4545 Altamesa Blvd (DUPLEX)</h3>
             <div class="best-deal-grid">
-                <div class="best-stat"><div class="best-stat-label">Price</div><div class="best-stat-value">$65K</div></div>
-                <div class="best-stat"><div class="best-stat-label">Cash Flow</div><div class="best-stat-value">+$1,699/mo</div></div>
-                <div class="best-stat"><div class="best-stat-label">Cash-on-Cash</div><div class="best-stat-value">25.2%</div></div>
-                <div class="best-stat"><div class="best-stat-label">Total Cash Out</div><div class="best-stat-value">$80,950</div></div>
+                <div class="best-stat">
+                    <div class="best-stat-label">Price</div>
+                    <div class="best-stat-value">$65K</div>
+                </div>
+                <div class="best-stat">
+                    <div class="best-stat-label">Cash Flow</div>
+                    <div class="best-stat-value">+$1,699/mo</div>
+                </div>
+                <div class="best-stat">
+                    <div class="best-stat-label">Cash-on-Cash</div>
+                    <div class="best-stat-value">25.2%</div>
+                </div>
+                <div class="best-stat">
+                    <div class="best-stat-label">Total Cash Out</div>
+                    <div class="best-stat-value">$80,950</div>
+                </div>
             </div>
         </div>
+        
         <div class="kpi-grid">
-            <div class="kpi-card"><div class="kpi-label">Total Properties</div><div class="kpi-value" id="totalCount">0</div></div>
-            <div class="kpi-card"><div class="kpi-label">Under $270K</div><div class="kpi-value" id="under270">0</div></div>
-            <div class="kpi-card"><div class="kpi-label">Pass Criteria</div><div class="kpi-value" id="passCount">0</div></div>
-            <div class="kpi-card"><div class="kpi-label">Avg Cash Flow</div><div class="kpi-value" id="avgCf">$0</div></div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Properties</div>
+                <div class="kpi-value" id="totalCount">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Under $270K Listing</div>
+                <div class="kpi-value accent" id="under270">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Pass Criteria</div>
+                <div class="kpi-value success" id="passCount">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Avg Cash Flow</div>
+                <div class="kpi-value" id="avgCf">$0</div>
+            </div>
         </div>
+        
         <div class="table-card">
-            <div class="table-header"><h3>Property Listings</h3>
+            <div class="table-header">
+                <h3>Property Listings</h3>
                 <div class="table-filters">
                     <button class="filter-btn active" onclick="filterTable('all')">All</button>
                     <button class="filter-btn" onclick="filterTable('pass')">Pass</button>
@@ -117,66 +177,188 @@
                     <button class="filter-btn" onclick="filterTable('duplex')">Multi-Unit</button>
                 </div>
             </div>
-            <table><thead><tr><th>Address</th><th>Listed</th><th>Offer</th><th>Type</th><th>Cash Flow</th><th>CoC</th><th>Status</th></tr></thead><tbody id="propertyTable"></tbody></table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Address</th>
+                        <th>Listed</th>
+                        <th>Offer</th>
+                        <th>Type</th>
+                        <th>Cash Flow</th>
+                        <th>CoC</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="propertyTable"></tbody>
+            </table>
         </div>
     </main>
+    
     <div class="modal-overlay" id="propertyModal">
-        <div class="modal"><div class="modal-header"><h2 class="modal-title" id="modalTitle"></h2><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body" id="modalBody"></div></div>
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Property Details</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
     </div>
+    
+    <footer class="footer">
+        Fort Worth Property Scout • Investment Criteria: &lt;$270K listing, 5.25% interest, $100K max cash<br>
+        Updated: February 26, 2026
+    </footer>
+
     <script>
-    const properties = [
-        {id:1, address:"4545 Altamesa Blvd, Fort Worth, TX 76133", listed:129545, offer:65000, type:"DUPL", beds:6, baths:4, cashFlow:1699, coc:25.2, cashOut:80950, status:"pass", source:"auction", notes:"DUPLEX! TOP PICK"},
-        {id:2, address:"7652 Colorado Creek Ct, Fort Worth, TX 76133", listed:212500, offer:180625, type:"DUPLEX", beds:5, baths:4, cashFlow:1025, coc:12.3, cashOut:100000, status:"pass", source:"zillow", notes:"Duplex"},
-        {id:3, address:"8812 Texas Risinger, Fort Worth, TX 76133", listed:203000, offer:172550, type:"DUPLEX", beds:4, baths:3, cashFlow:680, coc:8.5, cashOut:95000, status:"pass", source:"zillow", notes:"Duplex"},
-        {id:4, address:"4700 Aramis Dr, Arlington, TX 76016", listed:55000, offer:55000, type:"SFR", beds:3, baths:2, cashFlow:682, coc:13.2, cashOut:62000, status:"pass", source:"auction", notes:"Auction"},
-        {id:5, address:"3110 Ada Ave, Fort Worth, TX 76105", listed:4000, offer:4000, type:"LOT", cashFlow:0, coc:0, cashOut:5000, status:"pass", source:"tax", notes:"Tax foreclosed"},
-        {id:6, address:"816 Midcreek Dr, Euless, TX 76039", listed:259900, offer:220900, type:"SFR", beds:2, baths:2, cashFlow:-350, coc:-6.8, cashOut:95000, status:"fail", source:"zillow"},
-        {id:7, address:"7021 Crabtree Ln, North Richland Hills, TX 76182", listed:260000, offer:221000, type:"SFR", beds:3, baths:2, cashFlow:-231, coc:-4.9, cashOut:95000, status:"fail", source:"zillow"},
-        {id:8, address:"6461 Westridge Dr, Watauga, TX 76148", listed:239900, offer:203900, type:"SFR", beds:3, baths:2, cashFlow:-121, coc:-2.8, cashOut:90000, status:"fail", source:"zillow"},
-        {id:9, address:"6009 Deborah Ln, Watauga, TX 76148", listed:240500, offer:204425, type:"SFR", beds:3, baths:2, cashFlow:-202, coc:-4.7, cashOut:90000, status:"fail", source:"zillow"},
-        {id:10, address:"6204 Brookside Dr, Watauga, TX 76148", listed:255000, offer:216750, type:"SFR", beds:3, baths:2, cashFlow:-284, coc:-5.8, cashOut:95000, status:"fail", source:"zillow"},
-        {id:11, address:"609 Norwood Dr, Hurst, TX 76053", listed:259000, offer:220150, type:"SFR", beds:3, baths:2, cashFlow:-300, coc:-6.2, cashOut:95000, status:"fail", source:"zillow"},
-        {id:12, address:"2520 Lasalle Dr, Irving, TX 75062", listed:250000, offer:212500, type:"SFR", beds:3, baths:2, cashFlow:-250, coc:-5.0, cashOut:90000, status:"fail", source:"zillow", notes:"Irving"},
-        {id:13, address:"1144 Woodmere Dr, Lewisville, TX 75067", listed:215000, offer:182750, type:"SFR", beds:3, baths:2, cashFlow:-250, coc:-5.0, cashOut:85000, status:"fail", source:"zillow", notes:"Lewisville"},
-        {id:14, address:"2713 Cordone St, Fort Worth, TX 76133", listed:200000, offer:170000, type:"SFR", beds:3, baths:2, cashFlow:46, coc:0.5, cashOut:72000, status:"pass", source:"zillow"},
-        {id:15, address:"2933 Sycamore School Rd, Fort Worth, TX", listed:449900, offer:382415, type:"DUPLEX", beds:4, baths:3, cashFlow:-284, coc:-4.2, cashOut:100000, status:"fail", source:"zillow", notes:"Above $270K"},
-        {id:16, address:"4516 Rutland Ave, Fort Worth, TX", listed:215000, offer:215000, type:"DUPLEX", beds:4, baths:2, cashFlow:-50, coc:-0.8, cashOut:85000, status:"fail", source:"zillow", notes:"No discount"},
-        {id:17, address:"5113 Bob Dr, North Richland Hills, TX 76180", listed:200000, offer:170000, type:"SFR", beds:3, baths:2, cashFlow:-180, coc:-3.5, cashOut:80000, status:"fail", source:"zillow"},
-    ];
-    let currentFilter = 'all';
-    function formatMoney(amount) { return '$' + amount.toLocaleString(); }
-    function getSourceTag(source) { const tags = {zillow:'Zillow', tax:'Tax', auction:'Auction'}; return `<span class="source-tag" style="background:rgba(0,123,255,0.2);color:#007bff;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem">${tags[source]}</span>`; }
-    function renderTable() {
-        const tbody = document.getElementById('propertyTable');
-        tbody.innerHTML = '';
-        let filtered = properties;
-        if (currentFilter === 'pass') filtered = properties.filter(p => p.status === 'pass');
-        if (currentFilter === 'fail') filtered = properties.filter(p => p.status === 'fail');
-        if (currentFilter === 'duplex') filtered = properties.filter(p => p.type.includes('DUPL'));
-        filtered.forEach(p => {
-            const tr = document.createElement('tr');
-            tr.onclick = () => showProperty(p.id);
-            tr.innerHTML = `<td>${getSourceTag(p.source)}${p.address}</td><td>${formatMoney(p.listed)}</td><td>${formatMoney(p.offer)}</td><td>${p.type}</td><td style="color:${p.cashFlow >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(p.cashFlow)}/mo</td><td style="color:${p.coc >= 8 ? 'var(--success)' : 'var(--danger)'}">${p.coc.toFixed(1)}%</td><td><span class="status-badge" style="background:${p.status === 'pass' ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)'};color:${p.status === 'pass' ? 'var(--success)' : 'var(--danger)'}">${p.status === 'pass' ? '✅ Pass' : '❌ Fail'}</span></td>`;
-            tbody.appendChild(tr);
-        });
-        document.getElementById('totalCount').textContent = properties.length;
-        document.getElementById('under270').textContent = properties.filter(p => p.listed <= 270000).length;
-        document.getElementById('passCount').textContent = properties.filter(p => p.status === 'pass').length;
-        const cfVals = properties.filter(p => p.cashFlow > 0).map(p => p.cashFlow);
-        document.getElementById('avgCf').textContent = cfVals.length ? formatMoney(Math.round(cfVals.reduce((a,b) => a + b, 0) / cfVals.length)) + '/mo' : '$0';
-    }
-    function filterTable(filter) { currentFilter = filter; document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); renderTable(); }
-    function showTab(tab) { document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); if (tab === 'pass') currentFilter = 'pass'; else if (tab === 'fail') currentFilter = 'fail'; else if (tab === 'duplex') currentFilter = 'duplex'; else currentFilter = 'all'; renderTable(); }
-    function showProperty(id) {
-        const p = properties.find(x => x.id === id);
-        if (!p) return;
-        document.getElementById('modalTitle').textContent = p.address;
-        document.getElementById('modalBody').innerHTML = `<div class="detail-grid"><div class="detail-card"><div class="detail-label">Listed</div><div class="detail-value">${formatMoney(p.listed)}</div></div><div class="detail-card"><div class="detail-label">Offer</div><div class="detail-value">${formatMoney(p.offer)}</div></div><div class="detail-card"><div class="detail-label">Type</div><div class="detail-value">${p.type}</div></div><div class="detail-card"><div class="detail-label">Cash Out</div><div class="detail-value">${formatMoney(p.cashOut)}</div></div></div><div class="analysis-section"><div class="analysis-row"><span>Cash Flow</span><span>${formatMoney(p.cashFlow)}/mo</span></div><div class="analysis-row"><span>Cash-on-Cash</span><span>${p.coc.toFixed(1)}%</span></div><div class="analysis-row"><span>Status</span><span>${p.status === 'pass' ? '✅ PASS' : '❌ FAIL'}</span></div></div>${p.notes ? `<div class="analysis-section"><div class="analysis-row"><span>Notes</span><span>${p.notes}</span></div></div>` : ''}`;
-        document.getElementById('propertyModal').classList.add('active');
-    }
-    function closeModal() { document.getElementById('propertyModal').classList.remove('active'); }
-    function analyzeUrl() { alert('Send URL to Mango to analyze!'); }
-    renderTable();
+        // Property database - Updated Feb 26, 2026
+        const properties = [
+            // BEST DEALS - Duplexes
+            { id:1, address:"4545 Altamesa Blvd, Fort Worth, TX 76133", listed:129545, offer:65000, type:"DUPL", beds:6, baths:4, sqft:4394, cashFlow:1699, coc:25.2, cashOut:80950, status:"pass", source:"auction", url:"https://www.zillow.com/homedetails/4545-Altamesa-Blvd-Fort-Worth-TX-76133/", notes:"DUPLEX! 6/4 - TOP PICK" },
+            { id:2, address:"7652 Colorado Creek Ct, Fort Worth, TX 76133", listed:212500, offer:180625, type:"DUPLEX", beds:5, baths:4, sqft:2625, cashFlow:1025, coc:12.3, cashOut:100000, status:"pass", source:"zillow", url:"https://www.zillow.com/homedetails/7652-Colorado-Creek-Ct-Fort-Worth-TX-76133/", notes:"Duplex - solid" },
+            
+            // AUCTION DEALS
+            { id:3, address:"8812 Texas Risinger, Fort Worth, TX 76133", listed:203000, offer:172550, type:"DUPLEX", beds:4, baths:3, sqft:2200, cashFlow:680, coc:8.5, cashOut:95000, status:"pass", source:"zillow", url:"https://www.zillow.com/homedetails/8812-Texas-Risinger-Dr-Fort-Worth-TX-76133/", notes:"Duplex" },
+            { id:4, address:"4700 Aramis Dr, Arlington, TX 76016", listed:55000, offer:55000, type:"SFR", beds:3, baths:2, sqft:2039, cashFlow:682, coc:13.2, cashOut:62000, status:"pass", source:"auction", url:"https://www.zillow.com/homedetails/4700-Aramis-Dr-Arlington-TX-76016/", notes:"Auction - 72% discount" },
+            
+            // TAX FORECLOSED
+            { id:5, address:"3110 Ada Ave, Fort Worth, TX 76105", listed:4000, offer:4000, type:"LOT", beds:0, baths:0, sqft:0, cashFlow:0, coc:0, cashOut:5000, status:"pass", source:"tax", url:"https://www.zillow.com/homedetails/3110-Ada-Ave-Fort-Worth-TX-76105/", notes:"Tax foreclosed" },
+            
+            // ZILLOW - Mostly FAIL
+            { id:6, address:"816 Midcreek Dr, Euless, TX 76039", listed:259900, offer:220900, type:"SFR", beds:2, baths:2, sqft:1314, cashFlow:-350, coc:-6.8, cashOut:95000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/816-Midcreek-Dr-Euless-TX-76039/" },
+            { id:7, address:"7021 Crabtree Ln, North Richland Hills, TX 76182", listed:260000, offer:221000, type:"SFR", beds:3, baths:2, sqft:1297, cashFlow:-231, coc:-4.9, cashOut:95000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/7021-Crabtree-Ln-North-Richland-Hills-TX-76182/" },
+            { id:8, address:"6461 Westridge Dr, Watauga, TX 76148", listed:239900, offer:203900, type:"SFR", beds:3, baths:2, sqft:1400, cashFlow:-121, coc:-2.8, cashOut:90000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/6461-Westridge-Dr-Watauga-TX-76148/" },
+            { id:9, address:"6009 Deborah Ln, Watauga, TX 76148", listed:240500, offer:204425, type:"SFR", beds:3, baths:2, sqft:1150, cashFlow:-202, coc:-4.7, cashOut:90000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/6009-Deborah-Ln-Watauga-TX-76148/" },
+            { id:10, address:"6204 Brookside Dr, Watauga, TX 76148", listed:255000, offer:216750, type:"SFR", beds:3, baths:2, sqft:1099, cashFlow:-284, coc:-5.8, cashOut:95000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/6204-Brookside-Dr-Watauga-TX-76148/" },
+            { id:11, address:"609 Norwood Dr, Hurst, TX 76053", listed:259000, offer:220150, type:"SFR", beds:3, baths:2, sqft:1092, cashFlow:-300, coc:-6.2, cashOut:95000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/609-Norwood-Dr-Hurst-TX-76053/" },
+            { id:12, address:"2520 Lasalle Dr, Irving, TX 75062", listed:250000, offer:212500, type:"SFR", beds:3, baths:2, sqft:1313, cashFlow:-250, coc:-5.0, cashOut:90000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/2520-Lasalle-Dr-Irving-TX-75062/", notes:"Irving (outside area)" },
+            { id:13, address:"1144 Woodmere Dr, Lewisville, TX 75067", listed:215000, offer:182750, type:"SFR", beds:3, baths:2, sqft:1314, cashFlow:-250, coc:-5.0, cashOut:85000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/1144-Woodmere-Dr-Lewisville-TX-75067/", notes:"Lewisville (outside area)" },
+            
+            // NEW ANALYZED PROPERTIES - Feb 26
+            { id:14, address:"2713 Cordone St, Fort Worth, TX 76133", listed:200000, offer:200000, type:"SFR", beds:3, baths:2, sqft:1278, cashFlow:-86, coc:-2.0, cashOut:100000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/2713-Cordone-St-Fort-Worth-TX-76133/" },
+            { id:15, address:"3213 Leith Ave, Fort Worth, TX 76133", listed:265600, offer:265600, type:"SFR", beds:3, baths:2, sqft:1648, cashFlow:-551, coc:-8.0, cashOut:100000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/3213-Leith-Ave-Fort-Worth-TX-76133/" },
+            { id:16, address:"216 Rodeo Dr, Keller, TX 76248", listed:255000, offer:255000, type:"SFR", beds:3, baths:1, sqft:1177, cashFlow:-218, coc:-4.0, cashOut:100000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/216-Rodeo-Dr-Keller-TX-76248/" },
+            { id:17, address:"5801 Wessex Ave, Fort Worth, TX 76133", listed:259999, offer:259999, type:"SFR", beds:3, baths:3, sqft:1812, cashFlow:-511, coc:-8.0, cashOut:100000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/5801-Wessex-Ave-Fort-Worth-TX-76133/" },
+            { id:18, address:"3817 Longmeadow Way, Fort Worth, TX 76133", listed:175000, offer:190000, type:"SFR", beds:3, baths:2, sqft:1262, cashFlow:8, coc:0.2, cashOut:100000, status:"pass", source:"zillow", url:"https://www.zillow.com/homedetails/3817-Longmeadow-Way-Fort-Worth-TX-76133/", notes:"Needs 15K rehab - PASSES!" },
+            { id:19, address:"4120 River Birch Rd, Fort Worth, TX 76137", listed:209900, offer:224900, type:"SFR", beds:3, baths:2, sqft:1741, cashFlow:-269, coc:-4.0, cashOut:100000, status:"fail", source:"zillow", url:"https://www.zillow.com/homedetails/4120-River-Birch-Rd-Fort-Worth-TX-76137/", notes:"Needs 15K rehab" },
+        ];
+        
+        let currentFilter = 'all';
+        
+        function formatMoney(amount) {
+            return '$' + amount.toLocaleString();
+        }
+        
+        function getSourceTag(source) {
+            const tags = { zillow:'Zillow', tax:'Tax', auction:'Auction' };
+            return `<span class="source-tag ${source}">${tags[source] || source}</span>`;
+        }
+        
+        function renderTable() {
+            const tbody = document.getElementById('propertyTable');
+            tbody.innerHTML = '';
+            
+            let filtered = properties;
+            if (currentFilter === 'pass') filtered = properties.filter(p => p.status === 'pass');
+            if (currentFilter === 'fail') filtered = properties.filter(p => p.status === 'fail');
+            if (currentFilter === 'duplex') filtered = properties.filter(p => p.type.includes('DUPL'));
+            
+            filtered.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.onclick = () => showProperty(p.id);
+                const addressHtml = p.url 
+                    ? `<a href="${p.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);text-decoration:none;">${p.address} ↗</a>`
+                    : p.address;
+                tr.innerHTML = `
+                    <td>${getSourceTag(p.source)}${addressHtml}</td>
+                    <td>${formatMoney(p.listed)}</td>
+                    <td>${formatMoney(p.offer)}</td>
+                    <td>${p.type}</td>
+                    <td class="${p.cashFlow >= 0 ? 'success' : 'danger'}">${formatMoney(p.cashFlow)}/mo</td>
+                    <td class="${p.coc >= 8 ? 'success' : p.coc < 0 ? 'danger' : ''}">${p.coc.toFixed(1)}%</td>
+                    <td><span class="status-badge ${p.status === 'pass' ? 'pass' : p.type.includes('DUPL') ? 'duplex' : 'fail'}">${p.status === 'pass' ? '✅ Pass' : '❌ Fail'}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Update KPIs
+            document.getElementById('totalCount').textContent = properties.length;
+            document.getElementById('under270').textContent = properties.filter(p => p.listed <= 270000).length;
+            document.getElementById('passCount').textContent = properties.filter(p => p.status === 'pass').length;
+            const cfVals = properties.filter(p => p.cashFlow > 0).map(p => p.cashFlow);
+            const avgCf = cfVals.length ? cfVals.reduce((a,b) => a + b, 0) / cfVals.length : 0;
+            document.getElementById('avgCf').textContent = formatMoney(avgCf) + '/mo';
+        }
+        
+        function filterTable(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTable();
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            if (tab === 'best') currentFilter = 'pass';
+            else if (tab === 'pass') currentFilter = 'pass';
+            else if (tab === 'fail') currentFilter = 'fail';
+            else currentFilter = 'all';
+            renderTable();
+        }
+        
+        function showProperty(id) {
+            const p = properties.find(x => x.id === id);
+            if (!p) return;
+            
+            const viewBtn = p.url ? `<a href="${p.url}" target="_blank" class="analyze-btn" style="display:inline-block;text-decoration:none;margin-bottom:1rem;">🔗 View on Zillow</a>` : '';
+            
+            document.getElementById('modalTitle').textContent = p.address;
+            document.getElementById('modalBody').innerHTML = `
+                ${viewBtn}
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <div class="detail-label">Listed Price</div>
+                        <div class="detail-value">${formatMoney(p.listed)}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Offer Price</div>
+                        <div class="detail-value">${formatMoney(p.offer)}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Type</div>
+                        <div class="detail-value">${p.type}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Total Cash Out</div>
+                        <div class="detail-value">${formatMoney(p.cashOut)}</div>
+                    </div>
+                </div>
+                <div class="analysis-section">
+                    <h4>💰 Investment Analysis</h4>
+                    <div class="analysis-row"><span class="analysis-label">Cash Flow</span><span>${formatMoney(p.cashFlow)}/mo</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Cash-on-Cash</span><span>${p.coc.toFixed(1)}%</span></div>
+                    <div class="analysis-row"><span class="analysis-label">Status</span><span>${p.status === 'pass' ? '✅ PASS' : '❌ FAIL'}</span></div>
+                </div>
+                ${p.notes ? `<div class="analysis-section"><h4>📝 Notes</h4><p>${p.notes}</p></div>` : ''}
+            `;
+            document.getElementById('propertyModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('propertyModal').classList.remove('active');
+        }
+        
+        function analyzeUrl() {
+            const url = document.getElementById('propertyUrl').value;
+            if (!url) return;
+            alert('Send this URL to Mango to analyze: ' + url);
+        }
+        
+        renderTable();
     </script>
+    
+    <!-- New Features -->
+    <script src="storage.js"></script>
+    <script src="keyboard-shortcuts.js"></script>
 </body>
 </html>
