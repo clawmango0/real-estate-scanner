@@ -62,3 +62,12 @@
 1. **Duplexes work** - 3/3 passing because rent > expenses
 2. **SFRs fail** - All 6 SFRs fail at current prices
 3. **Target prices for SFRs:** ~$150K-$185K depending on area
+
+---
+
+### Property 10: 3817 Longmeadow Way, Fort Worth 76133
+- **Price:** $175,000 + $15,000 rehab = $190,000 total
+- **Details:** 3bd/2ba, 1,262sqft, 1981
+- **SFR Rent:** $1,761/mo
+- **Cash Flow:** +$8/mo ✅ PASS (barely!)
+- **Notes:** Sold AS-IS, investors/cash buyers, 20 min from downtown
