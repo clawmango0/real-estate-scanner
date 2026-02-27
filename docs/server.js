@@ -1,15 +1,30 @@
 // Property Scraper API Server
 // Run with: node server.js
 // Endpoint: GET /api/scrape?url=...
+// Uses ScraperAPI for blocked sites
 
 const http = require('http');
 const https = require('https');
 const url = require('url');
 
-// Simple HTTP GET request
+// ScraperAPI configuration
+const SCRAPER_API_KEY = '0b281e9035c595a332e175b172d8b36e';
+
+// Use ScraperAPI for blocked sites
 function fetchPage(pageUrl) {
     return new Promise((resolve, reject) => {
-        const parsedUrl = new URL(pageUrl);
+        // Use ScraperAPI for difficult sites
+        const useScraperAPI = pageUrl.includes('zillow') || 
+                             pageUrl.includes('autotrader') ||
+                             pageUrl.includes('cars.com') ||
+                             pageUrl.includes('facebook');
+        
+        let targetUrl = pageUrl;
+        if (useScraperAPI) {
+            targetUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(pageUrl)}`;
+        }
+        
+        const parsedUrl = new URL(targetUrl);
         const client = parsedUrl.protocol === 'https:' ? https : http;
         
         const options = {
@@ -17,11 +32,11 @@ function fetchPage(pageUrl) {
             path: parsedUrl.pathname + parsedUrl.search,
             method: 'GET',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Language': 'en-US,en;q=0.5',
             },
-            timeout: 30000
+            timeout: 60000
         };
         
         const req = client.request(options, (res) => {
@@ -90,10 +105,24 @@ function parseProperty(html, pageUrl) {
         else if (pageUrl.includes('zillow.com')) {
             data.source = 'Zillow';
             
-            // Zillow is harder - try various patterns
-            const priceMatch = html.match(/(\d{3},\d{3})/);
-            if (priceMatch) {
-                data.price = parseInt(priceMatch[1].replace(/,/g, ''));
+            // Try JSON-LD structured data first (most reliable)
+            const jsonLdMatch = html.match(/"price"\s*:\s*"?(\d{6,7})"?/);
+            if (jsonLdMatch) {
+                data.price = parseInt(jsonLdMatch[1]);
+            }
+            
+            // Try price in heading/listing price format
+            if (!data.price || data.price < 100000) {
+                const headingPrice = html.match(/<h1[^>]*data-testid[^>]*>.*?(\d{3},\d{3})/);
+                if (headingPrice) {
+                    data.price = parseInt(headingPrice[1].replace(/,/g, ''));
+                }
+            }
+            
+            // Fallback - look for common listing price range
+            if (!data.price || data.price < 100000) {
+                const priceRange = html.match(/\$(\d{2,3},\d{3})/);
+                if (priceRange) data.price = parseInt(priceRange[1].replace(/,/g, ''));
             }
             
             const bedsMatch = html.match(/(\d+)\s*(bed|beds|Bed|Beds)/i);
