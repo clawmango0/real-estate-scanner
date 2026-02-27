@@ -71,3 +71,12 @@
 - **SFR Rent:** $1,761/mo
 - **Cash Flow:** +$8/mo ✅ PASS (barely!)
 - **Notes:** Sold AS-IS, investors/cash buyers, 20 min from downtown
+
+---
+
+### Property 11: 4120 River Birch Rd, Fort Worth 76137
+- **Price:** $209,900 + $15,000 rehab = $224,900 total
+- **Details:** 3bd/2ba, 1,741sqft, 1985
+- **SFR Rent:** $1,700/mo
+- **Cash Flow:** -$269/mo ❌
+- **Notes:** Summerfields neighborhood, fireplace, curb appeal
