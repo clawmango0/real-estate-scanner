@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate Scanner - Live Dashboard</title>
+    <style>
+        :root { 
+            --primary:#1E3A5F; --secondary:#2E7D32; --accent:#FF6B35; 
+            --success:#4CAF50; --danger:#F44336; --warning:#FF9800;
+            --bg:#0D1117; --card-bg:#161B22; --text:#E6EDF3; --text2:#8B949E; 
+            --border:#30363D; --hover:#21262D;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        
+        .header { 
+            background:linear-gradient(135deg,var(--primary),#0d1b2a); 
+            padding:1rem 2rem; border-bottom:1px solid var(--border);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .logo { display:flex; align-items:center; gap:0.75rem; }
+        .logo-icon { 
+            width:40px;height:40px;background:var(--secondary);border-radius:10px;
+            display:flex;align-items:center;justify-content:center;font-size:20px; 
+        }
+        .logo h1 { font-size:1.25rem; }
+        .logo span { color:var(--text2);font-size:0.8rem; }
+        
+        .live-indicator {
+            display:flex; align-items:center; gap:0.5rem;
+            background:var(--hover);padding:0.5rem 1rem;border-radius:20px;
+        }
+        .live-dot {
+            width:10px;height:10px;background:var(--success);border-radius:50%;
+            animation:pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%,100%{opacity:1;} 50%{opacity:0.4;}
+        }
+        
+        .status-bar {
+            background:var(--card-bg);padding:0.75rem 2rem;
+            display:flex;gap:2rem;font-size:0.85rem;border-bottom:1px solid var(--border);
+        }
+        .status-item { display:flex;align-items:center;gap:0.5rem; }
+        .status-label { color:var(--text2); }
+        .status-value { font-weight:600; }
+        .status-value.ok{color:var(--success)}.status-value.error{color:var(--danger)}.status-value.warning{color:var(--warning)}
+        
+        .main { padding:1.5rem 2rem;max-width:1600px;margin:0 auto; }
+        
+        .grid { display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem; }
+        @media(max-width:1200px){.grid{grid-template-columns:repeat(2,1fr)}}
+        
+        .card { 
+            background:var(--card-bg);border:1px solid var(--border);border-radius:12px;
+            padding:1.25rem; position:relative;overflow:hidden;
+        }
+        .card-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem; }
+        .card-title { font-size:0.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px; }
+        .card-icon { font-size:1.25rem; }
+        
+        .metric { font-size:2rem;font-weight:700; }
+        .metric.success{color:var(--success)}.metric.danger{color:var(--danger)}.metric.accent{color:var(--accent)}
+        .metric small { font-size:0.9rem;color:var(--text2);font-weight:400; }
+        
+        .sub-metric { font-size:0.85rem;color:var(--text2);margin-top:0.5rem; }
+        .sub-metric span { color:var(--text);font-weight:600; }
+        
+        /* Telemetry Chart */
+        .chart-container { height:120px;display:flex;align-items:flex-end;gap:4px;padding-top:1rem; }
+        .chart-bar {
+            flex:1;background:var(--secondary);border-radius:4px 4px 0 0;
+            min-height:4px;transition:height 0.3s ease;
+            position:relative;
+        }
+        .chart-bar:hover { background:var(--accent); }
+        .chart-bar .tooltip {
+            display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+            background:var(--hover);padding:0.25rem 0.5rem;border-radius:4px;
+            font-size:0.7rem;white-space:nowrap;
+        }
+        .chart-bar:hover .tooltip { display:block; }
+        
+        /* Activity Feed */
+        .activity-list { max-height:300px;overflow-y:auto; }
+        .activity-item {
+            padding:0.75rem;border-bottom:1px solid var(--border);
+            display:flex;gap:0.75rem;align-items:flex-start;
+            animation:slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from{opacity:0;transform:translateX(-10px);} to{opacity:1;transform:translateX(0);}
+        }
+        .activity-icon { 
+            width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+            font-size:0.9rem;flex-shrink:0;
+        }
+        .activity-icon.success{background:rgba(76,175,80,0.2)}
+        .activity-icon.error{background:rgba(244,67,54,0.2)}
+        .activity-icon.info{background:rgba(255,107,53,0.2)}
+        
+        .activity-content { flex:1;min-width:0; }
+        .activity-title { font-size:0.85rem;margin-bottom:0.25rem; }
+        .activity-time { font-size:0.7rem;color:var(--text2); }
+        .activity-url { 
+            font-size:0.7rem;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        }
+        
+        /* Jobs Panel */
+        .job-item {
+            padding:0.75rem;background:var(--hover);border-radius:8px;margin-bottom:0.5rem;
+            display:flex;justify-content:space-between;align-items:center;
+        }
+        .job-info { display:flex;align-items:center;gap:0.75rem; }
+        .job-spinner {
+            width:20px;height:20px;border:2px solid var(--border);
+            border-top-color:var(--accent);border-radius:50%;
+            animation:spin 1s linear infinite;
+        }
+        @keyframes spin { to{transform:rotate(360deg);} }
+        .job-name { font-size:0.85rem; }
+        .job-status { 
+            font-size:0.7rem;padding:0.2rem 0.5rem;border-radius:4px;
+        }
+        .job-status.running{background:rgba(76,175,80,0.2);color:var(--success)}
+        .job-status.pending{background:rgba(255,152,0,0.2);color:var(--warning)}
+        .job-status.complete{background:rgba(33,150,243,0.2);color:#2196f3}
+        
+        /* Properties Table */
+        .prop-table { width:100%;border-collapse:collapse; }
+        .prop-table th { 
+            text-align:left;padding:0.75rem;background:var(--hover);
+            color:var(--text2);font-size:0.7rem;text-transform:uppercase;
+            position:sticky;top:0;
+        }
+        .prop-table td { padding:0.6rem 0.75rem;border-bottom:1px solid var(--border);font-size:0.85rem; }
+        .prop-table tr:hover td { background:var(--hover); }
+        
+        .status-badge { 
+            padding:0.2rem 0.6rem;border-radius:12px;font-size:0.7rem;
+        }
+        .status-badge.pass{background:rgba(76,175,80,0.2);color:var(--success)}
+        .status-badge.fail{background:rgba(244,67,54,0.2);color:var(--danger)}
+        .status-badge.duplex{background:rgba(255,107,53,0.2);color:var(--accent)}
+        
+        .cf-positive { color:var(--success); }
+        .cf-negative { color:var(--danger); }
+        
+        /* Footer */
+        .footer { 
+            text-align:center;padding:1rem;color:var(--text2);font-size:0.75rem;
+            border-top:1px solid var(--border);margin-top:2rem;
+        }
+        
+        /* Refresh button */
+        .refresh-btn {
+            background:var(--hover);border:1px solid var(--border);
+            color:var(--text);padding:0.4rem 0.8rem;border-radius:6px;
+            cursor:pointer;font-size:0.8rem;
+        }
+        .refresh-btn:hover { background:var(--secondary); }
+        
+        .two-col { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+        @media(max-width:900px){.two-col{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🏠</div>
+            <div>
+                <h1>Real Estate Scanner</h1>
+                <span>Fort Worth Investment Platform</span>
+            </div>
+        </div>
+        <div class="live-indicator">
+            <div class="live-dot"></div>
+            <span>LIVE</span>
+            <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
+        </div>
+    </header>
+    
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-label">API Server:</span>
+            <span class="status-value" id="apiStatus">Loading...</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Scraper:</span>
+            <span class="status-value" id="scraperStatus">Loading...</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Last Scan:</span>
+            <span class="status-value" id="lastScan">--</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Active Jobs:</span>
+            <span class="status-value" id="activeJobs">0</span>
+        </div>
+    </div>
+    
+    <main class="main">
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Properties Analyzed</span>
+                    <span class="card-icon">📊</span>
+                </div>
+                <div class="metric" id="totalProps">--</div>
+                <div class="sub-metric">
+                    <span id="passProps">0</span> pass criteria • <span id="failProps">0</span> fail
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Scrapes Today</span>
+                    <span class="card-icon">🕵️</span>
+                </div>
+                <div class="metric accent" id="scrapesToday">--</div>
+                <div class="sub-metric">
+                    <span id="scrapesSuccess">0</span> success • <span id="scrapesFail">0</span> failed
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Avg Response Time</span>
+                    <span class="card-icon">⚡</span>
+                </div>
+                <div class="metric" id="avgTime">--<small>ms</small></div>
+                <div class="sub-metric">
+                    Last 7 days: <span id="avgTime7d">0</span>ms avg
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Best Cash Flow</span>
+                    <span class="card-icon">💰</span>
+                </div>
+                <div class="metric success" id="bestCf">--<small>/mo</small></div>
+                <div class="sub-metric" id="bestCfAddr">--</div>
+            </div>
+        </div>
+        
+        <div class="two-col">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📈 Last 7 Days Activity</span>
+                </div>
+                <div class="chart-container" id="activityChart"></div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🔴 Live Activity Feed</span>
+                </div>
+                <div class="activity-list" id="activityFeed"></div>
+            </div>
+        </div>
+        
+        <div class="card" style="margin-top:1rem;">
+            <div class="card-header">
+                <span class="card-title">📋 Current Properties</span>
+                <span class="status-badge" id="propCount">0</span>
+            </div>
+            <div style="max-height:400px;overflow-y:auto;">
+                <table class="prop-table">
+                    <thead>
+                        <tr>
+                            <th>Address</th>
+                            <th>Listed</th>
+                            <th>Type</th>
+                            <th>Cash Flow</th>
+                            <th>CoC</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="propertyTable"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card" style="margin-top:1rem;">
+            <div class="card-header">
+                <span class="card-title">⚙️ Active Jobs</span>
+            </div>
+            <div id="jobsList"></div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        Last updated: <span id="lastUpdate">--</span> • Auto-refresh every 10s
+    </footer>
+    
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let properties = [];
+        let telemetry = {};
+        let jobs = [
+            { id: 1, name: 'Zillow Scraper', status: 'running', progress: 'Scanning 76133...' },
+            { id: 2, name: 'Foreclosure Monitor', status: 'pending', progress: 'Waiting for slot...' },
+            { id: 3, name: 'Rent Comps Updater', status: 'complete', progress: 'Updated 14 properties' },
+        ];
+        
+        // Format helpers
+        function fmtMoney(v) { return '$' + (v||0).toLocaleString(); }
+        function fmtPct(v) { return (v||0).toFixed(1) + '%'; }
+        function timeAgo(ts) {
+            if (!ts) return '--';
+            const s = Math.floor((Date.now() - new Date(ts)) / 1000);
+            if (s < 60) return s + 's ago';
+            if (s < 3600) return Math.floor(s/60) + 'm ago';
+            return Math.floor(s/3600) + 'h ago';
+        }
+        
+        // Load all data
+        async function refreshAll() {
+            await Promise.all([loadTelemetry(), loadProperties()]);
+            updateUI();
+        }
+        
+        async function loadTelemetry() {
+            try {
+                const res = await fetch(API_BASE + '/api/telemetry');
+                telemetry = await res.json();
+                
+                // Check API health
+                const health = await fetch(API_BASE + '/health').then(r => r.json()).catch(() => ({status:'error'}));
+                document.getElementById('apiStatus').textContent = health.status === 'ok' ? 'Online' : 'Offline';
+                document.getElementById('apiStatus').className = 'status-value ' + (health.status === 'ok' ? 'ok' : 'error');
+                
+                document.getElementById('scraperStatus').textContent = telemetry.today?.total > 0 ? 'Active' : 'Idle';
+                document.getElementById('scraperStatus').className = 'status-value ' + (telemetry.today?.total > 0 ? 'ok' : 'warning');
+                
+                document.getElementById('lastScan').textContent = telemetry.recentRuns?.[0] ? timeAgo(telemetry.recentRuns[0].timestamp) : 'Never';
+                
+            } catch (e) {
+                console.error('Telemetry error:', e);
+                document.getElementById('apiStatus').textContent = 'Error';
+                document.getElementById('apiStatus').className = 'status-value error';
+            }
+        }
+        
+        async function loadProperties() {
+            try {
+                const res = await fetch(API_BASE + '/api/properties');
+                const data = await res.json();
+                properties = data.properties || [];
+            } catch (e) {
+                console.error('Properties error:', e);
+            }
+        }
+        
+        function updateUI() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+            
+            // Metrics
+            document.getElementById('totalProps').textContent = properties.length;
+            const pass = properties.filter(p => p.status === 'pass' || p.status === 'duplex').length;
+            const fail = properties.length - pass;
+            document.getElementById('passProps').textContent = pass;
+            document.getElementById('failProps').textContent = fail;
+            
+            // Scrapes
+            const today = telemetry.today || {};
+            document.getElementById('scrapesToday').textContent = today.total || 0;
+            document.getElementById('scrapesSuccess').textContent = today.success || 0;
+            document.getElementById('scrapesFail').textContent = today.failed || 0;
+            document.getElementById('avgTime').innerHTML = (today.avgTime || 0) + '<small>ms</small>';
+            document.getElementById('avgTime7d').textContent = telemetry.last7days?.total 
+                ? Math.round(Object.values(telemetry.daily || {}).reduce((a,b)=>a+b.avgTime,0) / Object.keys(telemetry.daily || {}).length || 0) 
+                : 0;
+            
+            // Best CF
+            const best = properties.reduce((a,b) => (b.cashFlow > a.cashFlow ? b : a), {cashFlow:0});
+            document.getElementById('bestCf').innerHTML = fmtMoney(best.cashFlow) + '<small>/mo</small>';
+            document.getElementById('bestCf').className = 'metric ' + (best.cashFlow > 0 ? 'success' : 'danger');
+            document.getElementById('bestCfAddr').textContent = best.address || '--';
+            
+            // Activity chart
+            const chart = document.getElementById('activityChart');
+            chart.innerHTML = '';
+            const daily = telemetry.daily || {};
+            const maxVal = Math.max(...Object.values(daily).map(d => d.total), 1);
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(Date.now() - i*24*60*60*1000).toISOString().split('T')[0];
+                const data = daily[d] || { total: 0, success: 0 };
+                const h = data.total ? Math.max(10, (data.total / maxVal) * 100) : 4;
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = h + '%';
+                bar.style.background = data.success === data.total ? 'var(--success)' : 
+                                       data.success > 0 ? 'var(--accent)' : 'var(--border)';
+                bar.innerHTML = `<div class="tooltip">${d.slice(5)}: ${data.total} scrapes</div>`;
+                chart.appendChild(bar);
+            }
+            
+            // Activity feed
+            const feed = document.getElementById('activityFeed');
+            feed.innerHTML = '';
+            (telemetry.recentRuns || []).slice(0, 8).forEach(r => {
+                const iconClass = r.success ? 'success' : 'error';
+                const icon = r.success ? '✓' : '✗';
+                const item = document.createElement('div');
+                item.className = 'activity-item';
+                item.innerHTML = `
+                    <div class="activity-icon ${iconClass}">${icon}</div>
+                    <div class="activity-content">
+                        <div class="activity-title">${r.success ? 'Scrape successful' : 'Scrape failed'}</div>
+                        <div class="activity-url">${r.url?.slice(0,60)}...</div>
+                        <div class="activity-time">${timeAgo(r.timestamp)} • ${r.duration}ms</div>
+                    </div>
+                `;
+                feed.appendChild(item);
+            });
+            if (!telemetry.recentRuns?.length) {
+                feed.innerHTML = '<div style="padding:1rem;color:var(--text2);text-align:center;">No activity yet</div>';
+            }
+            
+            // Properties table
+            const table = document.getElementById('propertyTable');
+            table.innerHTML = '';
+            properties.slice(0, 15).forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.address?.replace(/\|$/,'')}</td>
+                    <td>${fmtMoney(p.listed)}</td>
+                    <td>${p.type?.replace(/\|$/,'') || 'SFR'}</td>
+                    <td class="${p.cashFlow >= 0 ? 'cf-positive' : 'cf-negative'}">${fmtMoney(p.cashFlow)}/mo</td>
+                    <td>${fmtPct(p.coc)}</td>
+                    <td><span class="status-badge ${p.status}">${p.status}</span></td>
+                `;
+                table.appendChild(tr);
+            });
+            document.getElementById('propCount').textContent = properties.length + ' properties';
+            
+            // Jobs
+            document.getElementById('activeJobs').textContent = jobs.filter(j => j.status === 'running').length;
+            const jobsList = document.getElementById('jobsList');
+            jobsList.innerHTML = jobs.map(j => `
+                <div class="job-item">
+                    <div class="job-info">
+                        ${j.status === 'running' ? '<div class="job-spinner"></div>' : ''}
+                        <span class="job-name">${j.name}</span>
+                    </div>
+                    <span class="job-status ${j.status}">${j.progress}</span>
+                </div>
+            `).join('');
+        }
+        
+        // Auto-refresh
+        refreshAll();
+        setInterval(refreshAll, 10000);
+    </script>
+</body>
+</html>
