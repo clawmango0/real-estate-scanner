@@ -6,6 +6,34 @@
       "success": true,
       "duration": 1500,
       "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-01T00:04:36.133Z",
+      "url": "https://www.zillow.com/homedetails/7652-Colorado-Creek-Ct-Fort-Worth-TX-76133/",
+      "success": true,
+      "duration": 6589,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-01T00:05:01.080Z",
+      "url": "https://www.zillow.com/homedetails/7652-Colorado-Creek-Ct-Fort-Worth-TX-76133/",
+      "success": true,
+      "duration": 14335,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-01T00:05:06.138Z",
+      "url": "https://www.zillow.com/homedetails/4516-Rutland-Ave-Fort-Worth-TX-76116/",
+      "success": true,
+      "duration": 5041,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-01T00:05:11.998Z",
+      "url": "https://www.zillow.com/homedetails/8812-Texas-Risinger-Dr-Fort-Worth-TX-76133/",
+      "success": true,
+      "duration": 5838,
+      "source": "Zillow"
     }
   ],
   "daily": {
@@ -16,6 +44,18 @@
       "avgTime": 1500,
       "times": [
         1500
+      ]
+    },
+    "2026-03-01": {
+      "success": 4,
+      "failed": 0,
+      "total": 4,
+      "avgTime": 7951,
+      "times": [
+        6589,
+        14335,
+        5041,
+        5838
       ]
     }
   }
