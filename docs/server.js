@@ -6,6 +6,16 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// Load .env file if exists
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+        const match = line.match(/^([^=]+)=(.*)$/);
+        if (match) process.env[match[1].trim()] = match[2].trim();
+    });
+}
+
 // ScraperAPI configuration - use environment variable, never hardcode
 const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY || process.env.ZILLOW_API_KEY;
 if (!SCRAPER_API_KEY) {
