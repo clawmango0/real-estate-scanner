@@ -178,6 +178,16 @@
             { id:14, address:"2713 Cordone St, Fort Worth, TX 76133", listed:200000, offer:170000, type:"SFR", beds:3, baths:2, cashFlow:46, coc:0.5, cashOut:72000, status:"pass", source:"zillow" },
             { id:15, address:"5629 Madge Pl, Haltom City, TX 76117", listed:170000, offer:144500, type:"SFR", beds:3, baths:1.5, cashFlow:293, coc:12.2, cashOut:72000, status:"pass", source:"har" },
             { id:16, address:"7566 Kings Trl, Fort Worth, TX 76133", listed:189000, offer:179550, type:"DUPLEX", beds:3, baths:2.5, cashFlow:650, coc:21.7, cashOut:80000, status:"pass", source:"har" },
+            { id:17, address:"1236 E Powell Ave, Fort Worth, TX 76104", listed:130000, offer:30000, type:"SFR", beds:2, baths:1, cashFlow:871, coc:31.5, cashOut:30000, status:"pass", source:"realtor" },
+            { id:18, address:"3629 MT Vernon Ave, Fort Worth, TX 76103", listed:137500, offer:37500, type:"SFR", beds:2, baths:1, cashFlow:1057, coc:33.8, cashOut:37500, status:"pass", source:"realtor" },
+            { id:19, address:"3624 W Boyce Ave, Fort Worth, TX 76133", listed:147500, offer:47500, type:"SFR", beds:2, baths:1, cashFlow:825, coc:30.8, cashOut:47500, status:"pass", source:"realtor" },
+            { id:20, address:"7416 Gaston Ave, Fort Worth, TX 76116", listed:155028, offer:55028, type:"SFR", beds:2, baths:1, cashFlow:796, coc:27.9, cashOut:55028, status:"pass", source:"realtor" },
+            { id:21, address:"600 E Robert St, Fort Worth, TX 76104", listed:158000, offer:58000, type:"SFR", beds:2, baths:1, cashFlow:933, coc:29.0, cashOut:58000, status:"pass", source:"realtor" },
+            { id:22, address:"3297 Todd Ave, Fort Worth, TX 76110", listed:160000, offer:60000, type:"SFR", beds:2, baths:1, cashFlow:730, coc:26.4, cashOut:60000, status:"pass", source:"realtor" },
+            { id:23, address:"2004 Prairie Ave, Fort Worth, TX 76164", listed:168000, offer:68000, type:"SFR", beds:2, baths:1, cashFlow:803, coc:25.1, cashOut:68000, status:"pass", source:"realtor" },
+            { id:24, address:"3416 W Gambrell St, Fort Worth, TX 76133", listed:178000, offer:78000, type:"SFR", beds:2, baths:1, cashFlow:646, coc:22.7, cashOut:78000, status:"pass", source:"realtor" },
+            { id:25, address:"956 E Allen Ave, Fort Worth, TX 76104", listed:180000, offer:80000, type:"SFR", beds:2, baths:1, cashFlow:629, coc:21.8, cashOut:80000, status:"pass", source:"realtor" },
+            { id:26, address:"3809 May St, Fort Worth, TX 76110", listed:214950, offer:114950, type:"SFR", beds:2, baths:1, cashFlow:922, coc:21.4, cashOut:114950, status:"pass", source:"realtor" },
         ];
         
         let currentFilter = 'all';
@@ -185,7 +195,7 @@
         function formatMoney(amount) { return '$' + amount.toLocaleString(); }
         
         function getSourceTag(source) {
-            const tags = { zillow:'Zillow', tax:'Tax', auction:'Auction', har:'HAR.com' };
+            const tags = { zillow:'Zillow', tax:'Tax', auction:'Auction', har:'HAR.com', realtor:'Realtor.com' };
             return `<span class="source-tag" style="background:rgba(0,123,255,0.2);color:#007bff;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem">${tags[source]}</span>`;
         }
         
