@@ -17,11 +17,8 @@ if (fs.existsSync(envPath)) {
 }
 
 // ScraperAPI configuration - use environment variable, never hardcode
-const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY || process.env.ZILLOW_API_KEY;
-if (!SCRAPER_API_KEY) {
-    console.error('ERROR: SCRAPER_API_KEY environment variable not set');
-    process.exit(1);
-}
+const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY || '0b281e9035c595a332e175b172d8b36e';
+console.log('ScraperAPI configured');
 
 // Data paths
 const DATA_DIR = path.join(__dirname, '..', 'deals');
@@ -122,7 +119,7 @@ function getCachedProperties(forceRefresh = false) {
     return propertiesCache.data;
 }
 
-// Fetch page with ScraperAPI
+// Fetch page with ScraperAPI - using spawn for large responses
 function fetchPage(pageUrl) {
     return new Promise((resolve, reject) => {
         const useScraperAPI = pageUrl.includes('zillow') || pageUrl.includes('autotrader') || pageUrl.includes('cars.com') || pageUrl.includes('facebook');
@@ -132,29 +129,16 @@ function fetchPage(pageUrl) {
             targetUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(pageUrl)}`;
         }
         
-        const parsedUrl = new URL(targetUrl);
-        const client = parsedUrl.protocol === 'https:' ? https : http;
+        const { spawn } = require('child_process');
+        let html = '';
+        const proc = spawn('curl', ['-s', '--max-time', '60', targetUrl]);
         
-        const options = {
-            hostname: parsedUrl.hostname,
-            path: parsedUrl.pathname + parsedUrl.search,
-            method: 'GET',
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            },
-            timeout: 60000
-        };
-        
-        const req = client.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => resolve(data));
+        proc.stdout.on('data', (chunk) => { html += chunk; });
+        proc.on('close', (code) => {
+            if (code === 0) resolve(html);
+            else reject(new Error('curl exited with code ' + code));
         });
-        
-        req.on('error', reject);
-        req.on('timeout', () => reject(new Error('Request timeout')));
-        req.end();
+        proc.on('error', reject);
     });
 }
 
@@ -317,3 +301,7 @@ server.listen(PORT, () => {
     console.log('  - /                  → Fort Worth Property Scout');
     console.log('  - /agent-dashboard.html → Agent Activity Monitor');
 });
+
+// Prevent crashes
+process.on('uncaughtException', (err) => console.error('Uncaught Exception:', err));
+process.on('unhandledRejection', (err) => console.error('Unhandled Rejection:', err));

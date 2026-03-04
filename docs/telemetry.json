@@ -34,6 +34,55 @@
       "success": true,
       "duration": 5838,
       "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-03T17:39:11.341Z",
+      "url": "https://www.zillow.com/homes/5656-Conroy-St-Fort-Worth-TX-76134",
+      "success": true,
+      "duration": 5156,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-04T03:44:18.997Z",
+      "url": "https://www.zillow.com/homes/29218391_zpid",
+      "success": false,
+      "duration": 60346,
+      "error": "Request timeout"
+    },
+    {
+      "timestamp": "2026-03-04T04:38:41.671Z",
+      "url": "https://www.zillow.com/homes/29218391_zpid",
+      "success": true,
+      "duration": 46390,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-04T04:42:40.205Z",
+      "url": "https://www.zillow.com/homes/29160681_zpid",
+      "success": true,
+      "duration": 40745,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-04T05:09:26.533Z",
+      "url": "https://example.com",
+      "success": true,
+      "duration": 83,
+      "source": ""
+    },
+    {
+      "timestamp": "2026-03-04T05:14:04.318Z",
+      "url": "https://www.zillow.com/homes/97691095_zpid",
+      "success": true,
+      "duration": 7464,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-04T06:17:39.603Z",
+      "url": "https://www.zillow.com/homes/97691095_zpid",
+      "success": true,
+      "duration": 8983,
+      "source": "Zillow"
     }
   ],
   "daily": {
@@ -56,6 +105,29 @@
         14335,
         5041,
         5838
+      ]
+    },
+    "2026-03-03": {
+      "success": 1,
+      "failed": 0,
+      "total": 1,
+      "avgTime": 5156,
+      "times": [
+        5156
+      ]
+    },
+    "2026-03-04": {
+      "success": 5,
+      "failed": 1,
+      "total": 6,
+      "avgTime": 27335,
+      "times": [
+        60346,
+        46390,
+        40745,
+        83,
+        7464,
+        8983
       ]
     }
   }
