@@ -144,7 +144,7 @@
             </div>
             <table>
                 <thead>
-                    <tr><th>Address</th><th>Listed</th><th>Offer</th><th>Type</th><th>Cash Flow</th><th>CoC</th><th>Status</th></tr>
+                    <tr><th>Address</th><th>Listed</th><th>Loan</th><th>Offer</th><th>Type</th><th>Cash Flow</th><th>CoC</th><th>Status</th></tr>
                 </thead>
                 <tbody id="propertyTable"></tbody>
             </table>
@@ -218,6 +218,7 @@
                 tr.innerHTML = `
                     <td>${getSourceTag(p.source)}${p.address}</td>
                     <td>${formatMoney(p.listed)}</td>
+                    <td>${formatMoney(p.listed - p.cashOut)}</td>
                     <td>${formatMoney(p.offer)}</td>
                     <td>${p.type}</td>
                     <td style="color:${p.cashFlow >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(p.cashFlow)}/mo</td>
