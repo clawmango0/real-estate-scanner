@@ -169,14 +169,16 @@
             </div>
             <table>
                 <thead>
-                    <tr style="font-size:0.75rem;">
-                        <th onclick="sortTable('address')" style="cursor:pointer;min-width:200px;">Address</th>
-                        <th style="width:50px;">Link</th>
-                        <th onclick="sortTable('listed')" style="cursor:pointer;width:80px;">Price</th>
-                        <th style="width:50px;">Crime</th>
-                        <th onclick="sortTable('cashFlow')" style="cursor:pointer;width:70px;">CF</th>
-                        <th onclick="sortTable('coc')" style="cursor:pointer;width:45px;">CoC</th>
-                        <th onclick="sortTable('status')" style="cursor:pointer;width:45px;"></th>
+                    <tr style="font-size:0.7rem;">
+                        <th onclick="sortTable('address')" style="cursor:pointer;min-width:180px;">Address</th>
+                        <th style="width:45px;">Link</th>
+                        <th onclick="sortTable('listed')" style="cursor:pointer;width:70px;">Price</th>
+                        <th style="width:45px;">Crime</th>
+                        <th style="width:70px;">Loan</th>
+                        <th onclick="sortTable('cashFlow')" style="cursor:pointer;width:65px;">CF</th>
+                        <th onclick="sortTable('coc')" style="cursor:pointer;width:40px;">CoC</th>
+                        <th style="width:35px;"></th>
+                        <th style="width:70px;"></th>
                     </tr>
                 </thead>
                 <tbody id="propertyTable"></tbody>
@@ -245,7 +247,8 @@
             { id:48, address:"5544 Dunson Dr, Haltom City, TX 76148", listed:265000, offer:165000, type:"SFR", beds:3, baths:2.0, cashFlow:117, coc:1.4, cashOut:100000, status:"pass", source:"zillow", priceCut:true },
             { id:49, address:"5504 Wheaton Dr, Fort Worth, TX 76133", listed:265000, offer:165000, type:"SFR", beds:3, baths:2.0, cashFlow:77, coc:0.9, cashOut:100000, status:"pass", source:"zillow", new:true },
             { id:50, address:"1213 Oryx Dr, Crowley, TX 76036", listed:247999, offer:147999, type:"SFR", beds:3, baths:2.0, cashFlow:182, coc:2.2, cashOut:100000, status:"pass", source:"zillow", priceCut:true },
-            { id:51, address:"5613 Westcreek Dr, Fort Worth, TX 76133", listed:240000, offer:140000, type:"SFR", beds:4, baths:2.0, cashFlow:257, coc:3.1, cashOut:100000, status:"pass", source:"zillow", new:true }
+            { id:51, address:"5613 Westcreek Dr, Fort Worth, TX 76133", listed:240000, offer:140000, type:"SFR", beds:4, baths:2.0, cashFlow:257, coc:3.1, cashOut:100000, status:"pass", source:"zillow", new:true },
+            { id:52, address:"5917 Whispering Ln, Watauga, TX 76148", listed:269000, offer:169000, type:"SFR", beds:3, baths:2.0, cashFlow:183, coc:2.2, cashOut:100000, status:"pass", source:"zillow", new:true }
         ];
 
         // Crime data by ZIP code - compiled from FBI UCR, Texas Dept of Criminal Justice, local PD statistics
