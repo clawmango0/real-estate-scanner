@@ -239,14 +239,14 @@
             return `<span class="source-tag" style="background:rgba(0,123,255,0.2);color:#007bff;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem">${tags[source]}</span>`;
         }
         
-        function getPropertyLink(address, source) {
+        function getPropertyLink(address, source, id) {
             const encoded = encodeURIComponent(address);
             let url = '';
             if (source === 'zillow') url = `https://www.zillow.com/homes/${encoded}`;
             else if (source === 'realtor') url = `https://www.realtor.com/realestateandhomes-search/${encoded}`;
             else if (source === 'har') url = `https://www.har.com/${encoded.replace(/,/g,'').replace(/ /g,'-')}`;
             else url = `https://www.zillow.com/homes/${encoded}`;
-            return `<a href="${url}" target="_blank" class="property-link" onclick="event.stopPropagation()">🔗 View</a>`;
+            return `<a href="${url}" target="_blank" class="property-link" onclick="markAsViewed(${id}); event.stopPropagation();">🔗 View</a>`;
         }
         
         // LocalStorage helpers
@@ -278,6 +278,13 @@
             const deleted = getStorage('deleted');
             deleted[id] = true;
             setStorage('deleted', deleted);
+            renderTable();
+        }
+        
+        function markAsViewed(id) {
+            const viewed = getStorage('viewed');
+            viewed[id] = true;
+            setStorage('viewed', viewed);
             renderTable();
         }
         
@@ -336,9 +343,10 @@
             filtered.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.onclick = () => showProperty(p.id);
+                const viewed = getStorage('viewed');
                 tr.innerHTML = `
-                    <td>${p.new ? '<span class="new-badge">NEW</span>' : ''}${p.priceCut ? '<span class="pricecut-badge">💰 CUT</span>' : ''}${getSourceTag(p.source)}${p.address}</td>
-                    <td>${getPropertyLink(p.address, p.source)}</td>
+                    <td>${p.new && !viewed[p.id] ? '<span class="new-badge">NEW</span>' : ''}${p.priceCut ? '<span class="pricecut-badge">💰 CUT</span>' : ''}${getSourceTag(p.source)}${p.address}</td>
+                    <td>${getPropertyLink(p.address, p.source, p.id)}</td>
                     <td>${formatMoney(p.listed)}</td>
                     <td>${formatMoney(p.listed - p.cashOut)}</td>
                     <td>${p.type}</td>
@@ -386,7 +394,7 @@
             const p = properties.find(x => x.id === id);
             if (!p) return;
             document.getElementById('modalTitle').textContent = p.address;
-            const link = getPropertyLink(p.address, p.source);
+            const link = getPropertyLink(p.address, p.source, p.id);
             document.getElementById('modalBody').innerHTML = `
                 <div class="detail-grid">
                     <div class="detail-card"><div class="detail-label">Listed</div><div class="detail-value">${formatMoney(p.listed)}</div></div>
