@@ -132,6 +132,20 @@
       "success": true,
       "duration": 2989,
       "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T20:23:38.038Z",
+      "url": "https://www.zillow.com/homes/1213_Oryx_Dr_76036",
+      "success": true,
+      "duration": 3768,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T20:24:05.084Z",
+      "url": "https://www.zillow.com/homedetails/1213-Oryx-Dr-Crowley-TX-76036/29149459_zpid/",
+      "success": true,
+      "duration": 8553,
+      "source": "Zillow"
     }
   ],
   "daily": {
@@ -180,10 +194,10 @@
       ]
     },
     "2026-03-06": {
-      "success": 7,
+      "success": 9,
       "failed": 0,
-      "total": 7,
-      "avgTime": 7681,
+      "total": 9,
+      "avgTime": 7343,
       "times": [
         11047,
         4318,
@@ -191,7 +205,9 @@
         16259,
         4028,
         4869,
-        2989
+        2989,
+        3768,
+        8553
       ]
     }
   }
