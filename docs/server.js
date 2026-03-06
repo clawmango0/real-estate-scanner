@@ -144,18 +144,50 @@ function fetchPage(pageUrl) {
 
 // Parse property data from HTML
 function parseProperty(html, pageUrl) {
-    const data = { url: pageUrl, found: false, address: '', price: '', beds: '', baths: '', sqft: '', type: '', source: '' };
+    const data = { url: pageUrl, found: false, address: '', price: '', beds: '', baths: '', sqft: '', type: '', status: 'Active', source: '' };
     
     try {
         if (pageUrl.includes('zillow.com')) {
             data.source = 'Zillow';
-            const priceMatch = html.match(/"price"\s*:\s*"?(\d{6,7})"?/);
-            if (priceMatch) data.price = parseInt(priceMatch[1]);
-            const bedsMatch = html.match(/(\d+)\s*(bed|beds)/i);
+            
+            // Try to find address in multiple formats
+            const addressMatch = html.match(/"streetAddress"\s*:\s*"([^"]+)"/) || html.match(/<address[^>]*>([^<]+)<\/address>/i);
+            if (addressMatch) data.address = addressMatch[1].trim();
+            
+            // Price - try multiple patterns
+            const priceMatch = html.match(/"price"\s*:\s*"?(\d{6,7})"?/) || html.match(/\$(\d{3},\d{3})/);
+            if (priceMatch) {
+                data.price = parseInt(priceMatch[1].replace(/,/g, ''));
+            }
+            
+            // Beds
+            const bedsMatch = html.match(/"bedrooms"\s*:\s*(\d+)/) || html.match(/(\d+)\s*(bed|beds)/i);
             if (bedsMatch) data.beds = bedsMatch[1];
-            const bathsMatch = html.match(/(\d+\.?\d*)\s*(bath|baths)/i);
+            
+            // Baths
+            const bathsMatch = html.match(/"bathrooms"\s*:\s*(\d+\.?\d*)/) || html.match(/(\d+\.?\d*)\s*(bath|baths)/i);
             if (bathsMatch) data.baths = bathsMatch[1];
+            
+            // Sqft
+            const sqftMatch = html.match(/"livingArea"\s*:\s*"?(\d+)"?/) || html.match(/(\d{1,3},\d{3})\s*sqft/i);
+            if (sqftMatch) data.sqft = parseInt(sqftMatch[1].replace(/,/g, ''));
+            
+            // Status
+            if (html.includes('status":"Sold') || html.includes('"status":"Sold"')) data.status = 'Sold';
+            else if (html.includes('pending') || html.includes('Pending')) data.status = 'Pending';
+            
             if (data.price || data.address) data.found = true;
+        }
+        
+        if (pageUrl.includes('realtor.com')) {
+            data.source = 'Realtor';
+            const priceMatch = html.match(/\$\s*([\d,]+)/);
+            if (priceMatch) data.price = parseInt(priceMatch[1].replace(/,/g, ''));
+            const bedsMatch = html.match(/(\d+)\s*bed/i);
+            if (bedsMatch) data.beds = bedsMatch[1];
+            const bathsMatch = html.match(/(\d+\.?\d*)\s*bath/i);
+            if (bathsMatch) data.baths = bathsMatch[1];
+            if (data.price) data.found = true;
         }
     } catch (e) {
         console.error('Parse error:', e.message);

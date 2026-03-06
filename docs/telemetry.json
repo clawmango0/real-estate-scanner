@@ -83,6 +83,20 @@
       "success": true,
       "duration": 8983,
       "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T17:59:32.920Z",
+      "url": "https://www.zillow.com/homedetails/2713-Cordone-St-Fort-Worth-TX-76133/29157178_zpid/",
+      "success": true,
+      "duration": 11047,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T18:01:12.322Z",
+      "url": "https://www.zillow.com/homedetails/2713-Cordone-St-Fort-Worth-TX-76133/29157178_zpid/",
+      "success": true,
+      "duration": 4318,
+      "source": "Zillow"
     }
   ],
   "daily": {
@@ -128,6 +142,16 @@
         83,
         7464,
         8983
+      ]
+    },
+    "2026-03-06": {
+      "success": 2,
+      "failed": 0,
+      "total": 2,
+      "avgTime": 7683,
+      "times": [
+        11047,
+        4318
       ]
     }
   }
