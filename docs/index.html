@@ -56,6 +56,9 @@
         td { padding:0.75rem;border-bottom:1px solid var(--border); }
         tr:hover td { background:var(--hover);cursor:pointer; }
         .status-badge { padding:0.25rem 0.75rem;border-radius:20px;font-size:0.75rem; }
+        .new-badge { background:linear-gradient(135deg,#FF6B35,#FF8C42);color:#fff;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem;font-weight:600;margin-right:0.5rem; }
+        .property-link { color:#58a6ff;text-decoration:none;margin-left:0.5rem; }
+        .property-link:hover { text-decoration:underline; }
         
         .modal-overlay { display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;padding:1rem; }
         .modal-overlay.active { display:flex; }
@@ -137,6 +140,7 @@
                 <h3>Property Listings</h3>
                 <div class="table-filters">
                     <button class="filter-btn active" onclick="filterTable('all')">All</button>
+                    <button class="filter-btn" onclick="filterTable('new')">🆕 New</button>
                     <button class="filter-btn" onclick="filterTable('pass')">Pass</button>
                     <button class="filter-btn" onclick="filterTable('fail')">Fail</button>
                     <button class="filter-btn" onclick="filterTable('duplex')">Multi-Unit</button>
@@ -199,11 +203,11 @@
             { id:34, address:"5601 Oak Grove Rd W, Fort Worth, TX 76133", listed:240000, offer:228000, type:"SFR", beds:3, baths:2.0, cashFlow:244, coc:2.9, cashOut:100000, status:"pass", source:"zillow" },
             { id:35, address:"3613 Wedgworth Rd S, Fort Worth, TX 76133", listed:269900, offer:256405, type:"SFR", beds:3, baths:2.0, cashFlow:79, coc:0.9, cashOut:100000, status:"pass", source:"zillow" },
             { id:36, address:"4621 Riverpark Dr, Fort Worth, TX 76120", listed:239000, offer:139000, type:"SFR", beds:3, baths:2.0, cashFlow:107, coc:1.3, cashOut:100000, status:"pass", source:"zillow" },
-            { id:38, address:"456 Little Valley Ct, Fort Worth, TX 76131", listed:224900, offer:124900, type:"SFR", beds:2, baths:2.0, cashFlow:153, coc:1.8, cashOut:100000, status:"pass", source:"zillow" },
-            { id:39, address:"3010 McKinley Ave, Fort Worth, TX 76103", listed:270000, offer:170000, type:"SFR", beds:3, baths:2.0, cashFlow:16, coc:0.2, cashOut:100000, status:"pass", source:"zillow" },
-            { id:40, address:"3921 Seven Gables St, Fort Worth, TX 76111", listed:228000, offer:128000, type:"SFR", beds:3, baths:1.0, cashFlow:250, coc:3.0, cashOut:100000, status:"pass", source:"zillow" },
-            { id:41, address:"3544 Wosley Dr, Fort Worth, TX 76116", listed:335000, offer:235000, type:"SFR", beds:3, baths:2.0, cashFlow:-186, coc:-2.2, cashOut:100000, status:"fail", source:"zillow" },
-            { id:42, address:"4728 Trail Lake Dr, Fort Worth, TX 76134", listed:175000, offer:75000, type:"SFR", beds:2, baths:1.0, cashFlow:430, coc:5.2, cashOut:100000, status:"pass", source:"zillow" }
+            { id:38, address:"456 Little Valley Ct, Fort Worth, TX 76131", listed:224900, offer:124900, type:"SFR", beds:2, baths:2.0, cashFlow:153, coc:1.8, cashOut:100000, status:"pass", source:"zillow", new:true },
+            { id:39, address:"3010 McKinley Ave, Fort Worth, TX 76103", listed:270000, offer:170000, type:"SFR", beds:3, baths:2.0, cashFlow:16, coc:0.2, cashOut:100000, status:"pass", source:"zillow", new:true },
+            { id:40, address:"3921 Seven Gables St, Fort Worth, TX 76111", listed:228000, offer:128000, type:"SFR", beds:3, baths:1.0, cashFlow:250, coc:3.0, cashOut:100000, status:"pass", source:"zillow", new:true },
+            { id:41, address:"3544 Wosley Dr, Fort Worth, TX 76116", listed:335000, offer:235000, type:"SFR", beds:3, baths:2.0, cashFlow:-186, coc:-2.2, cashOut:100000, status:"fail", source:"zillow", new:true },
+            { id:42, address:"4728 Trail Lake Dr, Fort Worth, TX 76134", listed:175000, offer:75000, type:"SFR", beds:2, baths:1.0, cashFlow:430, coc:5.2, cashOut:100000, status:"pass", source:"zillow", new:true }
         ];
         
         let currentFilter = 'all';
@@ -215,6 +219,16 @@
             return `<span class="source-tag" style="background:rgba(0,123,255,0.2);color:#007bff;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem">${tags[source]}</span>`;
         }
         
+        function getPropertyLink(address, source) {
+            const encoded = encodeURIComponent(address);
+            let url = '';
+            if (source === 'zillow') url = `https://www.zillow.com/homes/${encoded}`;
+            else if (source === 'realtor') url = `https://www.realtor.com/realestateandhomes-search/${encoded}`;
+            else if (source === 'har') url = `https://www.har.com/${encoded.replace(/,/g,'').replace(/ /g,'-')}`;
+            else url = `https://www.zillow.com/homes/${encoded}`;
+            return `<a href="${url}" target="_blank" class="property-link" onclick="event.stopPropagation()">🔗</a>`;
+        }
+        
         function renderTable() {
             const tbody = document.getElementById('propertyTable');
             tbody.innerHTML = '';
@@ -222,12 +236,13 @@
             if (currentFilter === 'pass') filtered = properties.filter(p => p.status === 'pass');
             if (currentFilter === 'fail') filtered = properties.filter(p => p.status === 'fail');
             if (currentFilter === 'duplex') filtered = properties.filter(p => p.type.includes('DUPL'));
+            if (currentFilter === 'new') filtered = properties.filter(p => p.new === true);
             
             filtered.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.onclick = () => showProperty(p.id);
                 tr.innerHTML = `
-                    <td>${getSourceTag(p.source)}${p.address}</td>
+                    <td>${p.new ? '<span class="new-badge">NEW</span>' : ''}${getSourceTag(p.source)}${p.address}${getPropertyLink(p.address, p.source)}</td>
                     <td>${formatMoney(p.listed)}</td>
                     <td>${formatMoney(p.listed - p.cashOut)}</td>
                     <td>${formatMoney(p.offer)}</td>
@@ -267,6 +282,7 @@
             const p = properties.find(x => x.id === id);
             if (!p) return;
             document.getElementById('modalTitle').textContent = p.address;
+            const link = getPropertyLink(p.address, p.source);
             document.getElementById('modalBody').innerHTML = `
                 <div class="detail-grid">
                     <div class="detail-card"><div class="detail-label">Listed</div><div class="detail-value">${formatMoney(p.listed)}</div></div>
@@ -278,6 +294,7 @@
                     <div class="analysis-row"><span>Cash Flow</span><span>${formatMoney(p.cashFlow)}/mo</span></div>
                     <div class="analysis-row"><span>Cash-on-Cash</span><span>${p.coc.toFixed(1)}%</span></div>
                     <div class="analysis-row"><span>Status</span><span>${p.status === 'pass' ? '✅ PASS' : '❌ FAIL'}</span></div>
+                    <div class="analysis-row"><span>View Listing</span><span>${link}</span></div>
                 </div>
             `;
             document.getElementById('propertyModal').classList.add('active');
