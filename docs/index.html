@@ -241,12 +241,23 @@
         
         function getPropertyLink(address, source, id) {
             const encoded = encodeURIComponent(address);
-            let url = '';
-            if (source === 'zillow') url = `https://www.zillow.com/homes/${encoded}`;
-            else if (source === 'realtor') url = `https://www.realtor.com/realestateandhomes-search/${encoded}`;
-            else if (source === 'har') url = `https://www.har.com/${encoded.replace(/,/g,'').replace(/ /g,'-')}`;
-            else url = `https://www.zillow.com/homes/${encoded}`;
-            return `<a href="${url}" target="_blank" class="property-link" onclick="markAsViewed(${id}); event.stopPropagation();">🔗 View</a>`;
+            const zillowUrl = `https://www.zillow.com/homes/${encoded}`;
+            const googleUrl = `https://www.google.com/search?q=${encoded}+fort+worth+tx+real+estate`;
+            let url = zillowUrl;
+            let label = '🔗 View';
+            
+            if (source === 'zillow') {
+                url = zillowUrl;
+            } else if (source === 'realtor') {
+                // For realtor, show both Zillow and Google search options
+                return `<a href="${zillowUrl}" target="_blank" class="property-link" onclick="markAsViewed(${id}); event.stopPropagation();" title="View on Zillow">🏠</a>
+                        <a href="${googleUrl}" target="_blank" class="property-link" onclick="markAsViewed(${id}); event.stopPropagation();" title="Search on Google">🔍</a>`;
+            } else if (source === 'har') {
+                url = `https://www.har.com/${encoded.replace(/,/g,'').replace(/ /g,'-')}`;
+            } else {
+                url = zillowUrl;
+            }
+            return `<a href="${url}" target="_blank" class="property-link" onclick="markAsViewed(${id}); event.stopPropagation();">${label}</a>`;
         }
         
         // LocalStorage helpers
