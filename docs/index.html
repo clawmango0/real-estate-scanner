@@ -9,16 +9,15 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
         
-        .header { background:linear-gradient(135deg,var(--primary),var(--bg)); padding:1.5rem 2rem; border-bottom:1px solid var(--border); }
-        .logo-section { display:flex; align-items:center; gap:1rem; }
-        .logo { width:48px;height:48px;background:var(--secondary);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px; }
-        .title h1 { font-size:1.5rem; }
-        .title p { color:var(--text2);font-size:0.875rem; }
-        
-        .assumptions { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:1rem;margin:1rem 2rem; }
-        .assumptions h3 { font-size:0.9rem;margin-bottom:0.75rem;color:var(--accent); }
-        .assumptions-grid { display:flex;flex-wrap:wrap;gap:1rem; }
-        .assumption { background:var(--hover);padding:0.5rem 1rem;border-radius:8px;font-size:0.8rem; }
+        .header { background:linear-gradient(135deg,var(--primary),var(--bg)); padding:0.75rem 2rem; border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:1rem; }
+        .logo-section { display:flex; align-items:center; gap:0.75rem; }
+        .logo { width:36px;height:36px;background:var(--secondary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
+        .title h1 { font-size:1.1rem;white-space:nowrap; }
+        .title p { color:var(--text2);font-size:0.75rem;white-space:nowrap; }
+        .assumptions { background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:0.5rem 1rem;margin:0.5rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:nowrap;overflow-x:auto; }
+        .assumptions h3 { font-size:0.8rem;margin-bottom:0;margin-right:0.5rem;color:var(--accent);white-space:nowrap; }
+        .assumptions-grid { display:flex;gap:0.75rem;flex-wrap:nowrap; }
+        .assumption { background:var(--hover);padding:0.35rem 0.75rem;border-radius:6px;font-size:0.7rem;white-space:nowrap; }
         .assumption strong { color:var(--success); }
         
         .url-analyzer { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:1rem;margin:0 2rem 1rem; }
@@ -27,8 +26,8 @@
         .url-input { flex:1;min-width:200px;padding:0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:0.9rem; }
         .analyze-btn { background:var(--secondary);border:none;color:#fff;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:500; }
         
-        .nav { display:flex;gap:0.5rem;padding:1rem 2rem;background:var(--card-bg);border-bottom:1px solid var(--border);flex-wrap:wrap; }
-        .nav button { background:transparent;border:none;color:var(--text2);padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:500; }
+        .nav { display:flex;gap:0.25rem;padding:0.5rem 2rem;background:var(--card-bg);border-bottom:1px solid var(--border);flex-wrap:nowrap;overflow-x:auto; }
+        .nav button { background:transparent;border:none;color:var(--text2);padding:0.5rem 1rem;border-radius:6px;cursor:pointer;font-weight:500;font-size:0.85rem;white-space:nowrap; }
         .nav button.active { background:var(--secondary);color:#fff; }
         
         .main { padding:1.5rem 2rem;max-width:1600px;margin:0 auto; }
