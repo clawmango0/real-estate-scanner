@@ -146,6 +146,27 @@
       "success": true,
       "duration": 8553,
       "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T22:12:18.295Z",
+      "url": "https://www.zillow.com/homes/5613_Westcreek_Dr_76133",
+      "success": true,
+      "duration": 7960,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T22:12:45.086Z",
+      "url": "https://www.zillow.com/homedetails/5613-Westcreek-Dr-Fort-Worth-TX-76133",
+      "success": true,
+      "duration": 10060,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T22:15:18.699Z",
+      "url": "https://www.zillow.com/homedetails/5613-Westcreek-Dr-Fort-Worth-TX-76133/29108310_zpid/",
+      "success": true,
+      "duration": 2495,
+      "source": "Zillow"
     }
   ],
   "daily": {
@@ -194,10 +215,10 @@
       ]
     },
     "2026-03-06": {
-      "success": 9,
+      "success": 12,
       "failed": 0,
-      "total": 9,
-      "avgTime": 7343,
+      "total": 12,
+      "avgTime": 7217,
       "times": [
         11047,
         4318,
@@ -207,7 +228,10 @@
         4869,
         2989,
         3768,
-        8553
+        8553,
+        7960,
+        10060,
+        2495
       ]
     }
   }
