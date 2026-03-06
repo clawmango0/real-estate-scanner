@@ -68,6 +68,7 @@
         .action-btn.heart.active { color:#e91e63; }
         .action-btn.delete { color:var(--danger); }
         .action-btn.delete:hover { background:rgba(244,67,54,0.2); }
+        .action-btn.refresh { color:#2196f3; }
         
         .modal-overlay { display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;padding:1rem; }
         .modal-overlay.active { display:flex; }
@@ -276,6 +277,17 @@
             renderTable();
         }
         
+        function refreshProperty(e, source, address) {
+            e.stopPropagation();
+            const encoded = encodeURIComponent(address);
+            let url = '';
+            if (source === 'zillow') url = `https://www.zillow.com/homes/${encoded}`;
+            else if (source === 'realtor') url = `https://www.realtor.com/realestateandhomes-search/${encoded}`;
+            else if (source === 'har') url = `https://www.har.com/${encoded.replace(/,/g,'').replace(/ /g,'-')}`;
+            else url = `https://www.zillow.com/homes/${encoded}`;
+            window.open(url, '_blank');
+        }
+        
         function renderTable() {
             const tbody = document.getElementById('propertyTable');
             tbody.innerHTML = '';
@@ -305,6 +317,7 @@
                     <td><span class="status-badge" style="background:${p.status === 'pass' ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)'};\ncolor:${p.status === 'pass' ? 'var(--success)' : 'var(--danger)'}">${p.status === 'pass' ? '✅' : '❌'}</span></td>
                     <td>
                         <div class="action-btns">
+                            <button class="action-btn refresh" onclick="refreshProperty(event, '${p.source}', '${p.address.replace(/'/g, "\\'")}')" title="Check latest price">🔄</button>
                             <button class="action-btn reviewed" onclick="toggleReviewed(${p.id}, event)" title="Mark as reviewed">${reviewed[p.id] ? '✅' : '⭕'}</button>
                             <button class="action-btn heart ${hearts[p.id] ? 'active' : ''}" onclick="toggleHeart(${p.id}, event)" title="Save to favorites">${hearts[p.id] ? '❤️' : '🤍'}</button>
                             <button class="action-btn delete" onclick="deleteProperty(${p.id}, event)" title="Remove property">🗑️</button>
