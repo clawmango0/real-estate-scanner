@@ -285,7 +285,33 @@
             else if (source === 'realtor') url = `https://www.realtor.com/realestateandhomes-search/${encoded}`;
             else if (source === 'har') url = `https://www.har.com/${encoded.replace(/,/g,'').replace(/ /g,'-')}`;
             else url = `https://www.zillow.com/homes/${encoded}`;
-            window.open(url, '_blank');
+            
+            // Call the scraper API
+            const btn = e.target;
+            btn.textContent = '⏳';
+            btn.disabled = true;
+            
+            fetch(`/api/scrape?url=${encodeURIComponent(url)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.price) {
+                        alert(`📊 Latest Details for ${address}:\n\n💰 Price: $${data.price.toLocaleString()}\n🛏️ Beds: ${data.beds}\n🚿 Baths: ${data.baths}\n📐 Sqft: ${data.sqft ? data.sqft.toLocaleString() : 'N/A'}\n📍 Status: ${data.status || 'Active'}`);
+                    } else if (data.error) {
+                        alert('Scraper error: ' + data.error + '\n\nOpening listing in browser...');
+                        window.open(url, '_blank');
+                    } else {
+                        alert('Could not fetch details. Opening listing in browser...');
+                        window.open(url, '_blank');
+                    }
+                })
+                .catch(err => {
+                    alert('Error fetching data. Opening listing in browser...');
+                    window.open(url, '_blank');
+                })
+                .finally(() => {
+                    btn.textContent = '🔄';
+                    btn.disabled = false;
+                });
         }
         
         function renderTable() {
