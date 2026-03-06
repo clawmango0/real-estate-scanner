@@ -97,6 +97,41 @@
       "success": true,
       "duration": 4318,
       "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T19:57:22.828Z",
+      "url": "https://www.zillow.com/homes/5544_Dunson_Dr_76148",
+      "success": true,
+      "duration": 10256,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T19:58:02.532Z",
+      "url": "https://www.zillow.com/homes/5504_Wheaton_Dr_76133",
+      "success": true,
+      "duration": 16259,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T19:58:11.957Z",
+      "url": "https://www.zillow.com/homedetails/5544-Dunson-Dr-Haltom-City-TX-76148/29061487_zpid/",
+      "success": true,
+      "duration": 4028,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T19:58:23.289Z",
+      "url": "https://www.zillow.com/homedetails/5504-Wheaton-Dr-Fort-Worth-TX-76133/29149459_zpid/",
+      "success": true,
+      "duration": 4869,
+      "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-06T19:58:35.569Z",
+      "url": "https://www.zillow.com/homes/2333_N_Chandler_Dr_Fort_Worth_TX",
+      "success": true,
+      "duration": 2989,
+      "source": "Zillow"
     }
   ],
   "daily": {
@@ -145,13 +180,18 @@
       ]
     },
     "2026-03-06": {
-      "success": 2,
+      "success": 7,
       "failed": 0,
-      "total": 2,
-      "avgTime": 7683,
+      "total": 7,
+      "avgTime": 7681,
       "times": [
         11047,
-        4318
+        4318,
+        10256,
+        16259,
+        4028,
+        4869,
+        2989
       ]
     }
   }
