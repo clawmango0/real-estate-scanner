@@ -59,6 +59,14 @@
         .new-badge { background:linear-gradient(135deg,#FF6B35,#FF8C42);color:#fff;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem;font-weight:600;margin-right:0.5rem; }
         .property-link { color:#58a6ff;text-decoration:none;margin-left:0.5rem; }
         .property-link:hover { text-decoration:underline; }
+        .action-btns { display:flex;gap:0.25rem; }
+        .action-btn { background:transparent;border:none;cursor:pointer;font-size:1rem;padding:0.25rem;border-radius:4px;transition:all 0.2s; }
+        .action-btn:hover { background:var(--hover);transform:scale(1.1); }
+        .action-btn.reviewed { color:var(--success); }
+        .action-btn.heart { color:var(--text2); }
+        .action-btn.heart.active { color:#e91e63; }
+        .action-btn.delete { color:var(--danger); }
+        .action-btn.delete:hover { background:rgba(244,67,54,0.2); }
         
         .modal-overlay { display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;padding:1rem; }
         .modal-overlay.active { display:flex; }
@@ -141,14 +149,16 @@
                 <div class="table-filters">
                     <button class="filter-btn active" onclick="filterTable('all')">All</button>
                     <button class="filter-btn" onclick="filterTable('new')">🆕 New</button>
+                    <button class="filter-btn" onclick="filterTable('reviewed">✅ Reviewed</button>
+                    <button class="filter-btn" onclick="filterTable('hearts')">❤️ Saved</button>
                     <button class="filter-btn" onclick="filterTable('pass')">Pass</button>
                     <button class="filter-btn" onclick="filterTable('fail')">Fail</button>
-                    <button class="filter-btn" onclick="filterTable('duplex')">Multi-Unit</button>
+                    <button class="filter-btn" onclick="filterTable('duplex')">Multi</button>
                 </div>
             </div>
             <table>
                 <thead>
-                    <tr><th>Address</th><th>Listed</th><th>Loan</th><th>Offer</th><th>Type</th><th>Cash Flow</th><th>CoC</th><th>Status</th></tr>
+                    <tr><th>Address</th><th>Link</th><th>Listed</th><th>Loan</th><th>Type</th><th>Cash Flow</th><th>CoC</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="propertyTable"></tbody>
             </table>
@@ -229,38 +239,84 @@
             else if (source === 'realtor') url = `https://www.realtor.com/realestateandhomes-search/${encoded}`;
             else if (source === 'har') url = `https://www.har.com/${encoded.replace(/,/g,'').replace(/ /g,'-')}`;
             else url = `https://www.zillow.com/homes/${encoded}`;
-            return `<a href="${url}" target="_blank" class="property-link" onclick="event.stopPropagation()">🔗</a>`;
+            return `<a href="${url}" target="_blank" class="property-link" onclick="event.stopPropagation()">🔗 View</a>`;
+        }
+        
+        // LocalStorage helpers
+        function getStorage(key) {
+            try { return JSON.parse(localStorage.getItem('prop_' + key) || '{}'); } 
+            catch { return {}; }
+        }
+        function setStorage(key, val) { localStorage.setItem('prop_' + key, JSON.stringify(val)); }
+        
+        function toggleReviewed(id, e) {
+            e.stopPropagation();
+            const reviewed = getStorage('reviewed');
+            reviewed[id] = !reviewed[id];
+            setStorage('reviewed', reviewed);
+            renderTable();
+        }
+        
+        function toggleHeart(id, e) {
+            e.stopPropagation();
+            const hearts = getStorage('hearts');
+            hearts[id] = !hearts[id];
+            setStorage('hearts', hearts);
+            renderTable();
+        }
+        
+        function deleteProperty(id, e) {
+            e.stopPropagation();
+            if (!confirm('Remove this property from the list?')) return;
+            const deleted = getStorage('deleted');
+            deleted[id] = true;
+            setStorage('deleted', deleted);
+            renderTable();
         }
         
         function renderTable() {
             const tbody = document.getElementById('propertyTable');
             tbody.innerHTML = '';
-            let filtered = properties;
-            if (currentFilter === 'pass') filtered = properties.filter(p => p.status === 'pass');
-            if (currentFilter === 'fail') filtered = properties.filter(p => p.status === 'fail');
-            if (currentFilter === 'duplex') filtered = properties.filter(p => p.type.includes('DUPL'));
-            if (currentFilter === 'new') filtered = properties.filter(p => p.new === true);
+            const reviewed = getStorage('reviewed');
+            const hearts = getStorage('hearts');
+            const deleted = getStorage('deleted');
+            
+            let filtered = properties.filter(p => !deleted[p.id]);
+            if (currentFilter === 'pass') filtered = filtered.filter(p => p.status === 'pass');
+            if (currentFilter === 'fail') filtered = filtered.filter(p => p.status === 'fail');
+            if (currentFilter === 'duplex') filtered = filtered.filter(p => p.type.includes('DUPL'));
+            if (currentFilter === 'new') filtered = filtered.filter(p => p.new === true);
+            if (currentFilter === 'reviewed') filtered = filtered.filter(p => reviewed[p.id]);
+            if (currentFilter === 'hearts') filtered = filtered.filter(p => hearts[p.id]);
             
             filtered.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.onclick = () => showProperty(p.id);
                 tr.innerHTML = `
-                    <td>${p.new ? '<span class="new-badge">NEW</span>' : ''}${getSourceTag(p.source)}${p.address}${getPropertyLink(p.address, p.source)}</td>
+                    <td>${p.new ? '<span class="new-badge">NEW</span>' : ''}${getSourceTag(p.source)}${p.address}</td>
+                    <td>${getPropertyLink(p.address, p.source)}</td>
                     <td>${formatMoney(p.listed)}</td>
                     <td>${formatMoney(p.listed - p.cashOut)}</td>
-                    <td>${formatMoney(p.offer)}</td>
                     <td>${p.type}</td>
                     <td style="color:${p.cashFlow >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(p.cashFlow)}/mo</td>
                     <td style="color:${p.coc >= 8 ? 'var(--success)' : 'var(--danger)'}">${p.coc.toFixed(1)}%</td>
-                    <td><span class="status-badge" style="background:${p.status === 'pass' ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)'};\ncolor:${p.status === 'pass' ? 'var(--success)' : 'var(--danger)'}">${p.status === 'pass' ? '✅ Pass' : '❌ Fail'}</span></td>
+                    <td><span class="status-badge" style="background:${p.status === 'pass' ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)'};\ncolor:${p.status === 'pass' ? 'var(--success)' : 'var(--danger)'}">${p.status === 'pass' ? '✅' : '❌'}</span></td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn reviewed" onclick="toggleReviewed(${p.id}, event)" title="Mark as reviewed">${reviewed[p.id] ? '✅' : '⭕'}</button>
+                            <button class="action-btn heart ${hearts[p.id] ? 'active' : ''}" onclick="toggleHeart(${p.id}, event)" title="Save to favorites">${hearts[p.id] ? '❤️' : '🤍'}</button>
+                            <button class="action-btn delete" onclick="deleteProperty(${p.id}, event)" title="Remove property">🗑️</button>
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
             
-            document.getElementById('totalCount').textContent = properties.length;
-            document.getElementById('under270').textContent = properties.filter(p => p.listed <= 270000).length;
-            document.getElementById('passCount').textContent = properties.filter(p => p.status === 'pass').length;
-            const cfVals = properties.filter(p => p.cashFlow > 0).map(p => p.cashFlow);
+            const activeCount = properties.filter(p => !deleted[p.id]).length;
+            document.getElementById('totalCount').textContent = activeCount;
+            document.getElementById('under270').textContent = properties.filter(p => !deleted[p.id] && p.listed <= 270000).length;
+            document.getElementById('passCount').textContent = properties.filter(p => !deleted[p.id] && p.status === 'pass').length;
+            const cfVals = properties.filter(p => !deleted[p.id] && p.cashFlow > 0).map(p => p.cashFlow);
             document.getElementById('avgCf').textContent = cfVals.length ? formatMoney(Math.round(cfVals.reduce((a,b) => a + b, 0) / cfVals.length)) + '/mo' : '$0';
         }
         
