@@ -57,6 +57,7 @@
         tr:hover td { background:var(--hover);cursor:pointer; }
         .status-badge { padding:0.25rem 0.75rem;border-radius:20px;font-size:0.75rem; }
         .new-badge { background:linear-gradient(135deg,#FF6B35,#FF8C42);color:#fff;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem;font-weight:600;margin-right:0.5rem; }
+        .pricecut-badge { background:linear-gradient(135deg,#9c27b0,#ba68c8);color:#fff;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.65rem;font-weight:600;margin-right:0.5rem; }
         .property-link { color:#58a6ff;text-decoration:none;margin-left:0.5rem; }
         .property-link:hover { text-decoration:underline; }
         .action-btns { display:flex;gap:0.25rem; }
@@ -220,7 +221,8 @@
             { id:42, address:"4728 Trail Lake Dr, Fort Worth, TX 76134", listed:175000, offer:75000, type:"SFR", beds:2, baths:1.0, cashFlow:430, coc:5.2, cashOut:100000, status:"pass", source:"realtor", new:true },
             { id:43, address:"2206 Chestnut Ave, Fort Worth, TX 76164", listed:160000, offer:60000, type:"SFR", beds:2, baths:1.0, cashFlow:512, coc:6.1, cashOut:100000, status:"pass", source:"realtor", new:true },
             { id:44, address:"3608 Stanley Ave, Fort Worth, TX 76110", listed:149900, offer:49900, type:"SFR", beds:2, baths:1.0, cashFlow:595, coc:7.1, cashOut:100000, status:"pass", source:"realtor", new:true },
-            { id:45, address:"2705 NW 34th St, Fort Worth, TX 76106", listed:134000, offer:34000, type:"SFR", beds:2, baths:1.0, cashFlow:657, coc:7.9, cashOut:100000, status:"pass", source:"realtor", new:true }
+            { id:45, address:"2705 NW 34th St, Fort Worth, TX 76106", listed:134000, offer:34000, type:"SFR", beds:2, baths:1.0, cashFlow:657, coc:7.9, cashOut:100000, status:"pass", source:"realtor", new:true },
+            { id:46, address:"5220 Royal Burgess Dr, Fort Worth, TX 76135", listed:269900, offer:169900, type:"SFR", beds:3, baths:2.0, cashFlow:91, coc:1.1, cashOut:100000, status:"pass", source:"zillow", priceCut:true }
         ];
         
         let currentFilter = 'all';
@@ -293,7 +295,7 @@
                 const tr = document.createElement('tr');
                 tr.onclick = () => showProperty(p.id);
                 tr.innerHTML = `
-                    <td>${p.new ? '<span class="new-badge">NEW</span>' : ''}${getSourceTag(p.source)}${p.address}</td>
+                    <td>${p.new ? '<span class="new-badge">NEW</span>' : ''}${p.priceCut ? '<span class="pricecut-badge">💰 CUT</span>' : ''}${getSourceTag(p.source)}${p.address}</td>
                     <td>${getPropertyLink(p.address, p.source)}</td>
                     <td>${formatMoney(p.listed)}</td>
                     <td>${formatMoney(p.listed - p.cashOut)}</td>
