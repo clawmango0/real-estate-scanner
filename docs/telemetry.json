@@ -181,6 +181,13 @@
       "success": true,
       "duration": 11586,
       "source": "Zillow"
+    },
+    {
+      "timestamp": "2026-03-07T05:35:38.890Z",
+      "url": "https://www.zillow.com/homedetails/5828-Wales-Ave-Fort-Worth-TX-33109/29141640_zpid/",
+      "success": true,
+      "duration": 7403,
+      "source": "Zillow"
     }
   ],
   "daily": {
@@ -248,6 +255,15 @@
         2495,
         10800,
         11586
+      ]
+    },
+    "2026-03-07": {
+      "success": 1,
+      "failed": 0,
+      "total": 1,
+      "avgTime": 7403,
+      "times": [
+        7403
       ]
     }
   }
