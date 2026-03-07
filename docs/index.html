@@ -9,6 +9,29 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
         
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header { flex-direction:column; padding:0.5rem; text-align:center; }
+            .header > * { width:100%; }
+            .logo-section { justify-content:center; }
+            .assumptions { margin:0.5rem; padding:0.5rem; flex-direction:column; }
+            .assumptions-grid { flex-direction:column; width:100%; }
+            .table-wrapper { overflow-x:auto; }
+            table { font-size:0.7rem; }
+            th, td { padding:0.3rem !important; }
+            .filter-btn { padding:0.4rem 0.6rem; font-size:0.75rem; }
+            .modal { width:95% !important; padding:1rem !important; }
+            .stats-grid { grid-template-columns:repeat(2, 1fr) !important; }
+            .detail-grid { grid-template-columns:1fr !important; }
+        }
+        
+        @media (max-width: 480px) {
+            .title h1 { font-size:0.9rem; }
+            .assumption { font-size:0.65rem; padding:0.25rem 0.5rem; }
+            .stats-grid { grid-template-columns:1fr !important; }
+            .filter-btn { padding:0.3rem 0.5rem; font-size:0.7rem; }
+        }
+        
         .header { background:linear-gradient(135deg,var(--primary),var(--bg)); padding:0.75rem 2rem; border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:1rem; }
         .logo-section { display:flex; align-items:center; gap:0.75rem; }
         .logo { width:36px;height:36px;background:var(--secondary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
@@ -167,6 +190,7 @@
                     <button class="filter-btn" onclick="filterTable('duplex')">Multi</button>
                 </div>
             </div>
+            <div class="table-wrapper" style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr style="font-size:0.7rem;">
@@ -184,6 +208,7 @@
                 </thead>
                 <tbody id="propertyTable"></tbody>
             </table>
+            </div>
         </div>
     </main>
     
