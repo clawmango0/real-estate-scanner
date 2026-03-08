@@ -366,16 +366,9 @@
             const atcf = btcf + (taxSavings / 12);
             const capitalGain = year5Sale - buildingBasis - sellingCosts;
             
-            // Crime data (simulated - in production would call API)
-            const crimeScore = Math.floor(Math.random() * 30) + 40; // 40-70 score
-            const crimeRating = crimeScore >= 60 ? 'Low' : crimeScore >= 50 ? 'Moderate' : 'Elevated';
-            const crimes = [
-                {type: 'Property Crime', risk: Math.floor(Math.random() * 20) + 10},
-                {type: 'Violent Crime', risk: Math.floor(Math.random() * 10) + 1},
-                {type: 'Theft', risk: Math.floor(Math.random() * 15) + 5},
-                {type: 'Burglary', risk: Math.floor(Math.random() * 12) + 3},
-            ];
-            const overallCrime = crimes.reduce((a, b) => a + b.risk, 0) / 4;
+            // Crime data would come from real API - not simulating
+            const crimeScore = null; // TODO: Connect to crime API
+            const crimes = [];
             
             const statusHtml = p.status === 'pass' 
                 ? '<span style="color:var(--success)">✅ PASS</span>' 
@@ -479,11 +472,7 @@
                     <div class="analysis-row"><span>Monthly Buffer</span><span style="color:${btcf > rent * 0.06 ? 'var(--success)' : 'var(--danger)'}">${btcf > rent * 0.06 ? '✅ Safe (6%+)' : '⚠️ Tight (<6%)'}</span></div>
                 </div>
                 
-                <div class="section-title">📊 Crime & Safety</div>
-                <div class="analysis-section">
-                    <div class="analysis-row"><span>Overall Safety Score</span><span style="color:${crimeScore >= 60 ? 'var(--success)' : crimeScore >= 50 ? 'var(--accent)' : 'var(--danger)'}">${crimeScore}/100 (${crimeRating})</span></div>
-                    ${crimes.map(c => `<div class="analysis-row"><span>${c.type}</span><span style="color:${c.risk < 10 ? 'var(--success)' : c.risk < 15 ? 'var(--accent)' : 'var(--danger)'}">${c.risk}/100</span></div>`).join('')}
-                </div>
+                <!-- Crime data - TODO: Connect to real API -->
                 
                 <div class="section-title">📈 Advanced (5-Year Projection)</div>
                 <div class="analysis-section">
