@@ -174,30 +174,14 @@
         }
     };
 
-    // Load properties - prefers API on local server, falls back to static JSON on GitHub Pages
+    // Load properties - uses static JSON file (works on GitHub Pages and local server)
     let properties = [];
     async function loadProperties() {
         try {
-            // Check if running on local server (port 3000)
-            const isLocal = window.location.port === '3000' || window.location.hostname === 'localhost';
-            
-            let data;
-            if (isLocal) {
-                // Try API first
-                try {
-                    const res = await fetch('/api/properties');
-                    data = await res.json();
-                    if (!data.data || data.data.length === 0) throw new Error('No data');
-                } catch(e) {
-                    // Fall back to static JSON
-                    const res = await fetch('/properties.json');
-                    data = await res.json();
-                }
-            } else {
-                // GitHub Pages - use static JSON
-                const res = await fetch('/properties.json');
-                data = await res.json();
-            }
+            // Always load from static JSON file - works on both GitHub Pages and local server
+            const res = await fetch('/properties.json');
+            if (!res.ok) throw new Error('Failed to load');
+            const data = await res.json();
             properties = (data.data || []).map(p => ({
                 ...p,
                 beds: p.beds || '-',
