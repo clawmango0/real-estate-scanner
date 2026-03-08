@@ -310,41 +310,43 @@
             const p = properties.find(x => x.id === id);
             if (!p) return;
             
-            const viewBtn = p.url ? `<a href="${p.url}" target="_blank" class="analyze-btn" style="display:inline-block;text-decoration:none;margin-bottom:1rem;">🔗 View on Zillow</a>` : '';
+            // All calculations
+            const price = p.listed, offer = p.offer, sqft = p.sqft || (p.loan ? Math.round(p.loan/100*100) : 1200);
+            const rent = sqft, downPayment = 100000;
+            const loanAmount = Math.max(0, offer - downPayment);
+            const monthlyPI = loanAmount > 0 ? loanAmount * 0.005375 / (1 - Math.pow(1.005375, -360)) : 0;
+            const grossRent = rent, vacancy = grossRent * 0.05, egi = grossRent - vacancy;
+            const opEx = grossRent * 0.50, capex = grossRent * 0.08, noi = egi - opEx;
+            const btcf = noi - monthlyPI, coc = (btcf * 12 / downPayment) * 100;
+            const arv = price * 1.05, mao = (arv * 0.70) - (price * 0.10);
+            const ppf = price / sqft, onePct = (rent / price) * 100, grm = price / (rent * 12), ltv = (loanAmount / price) * 100;
+            const oer = egi > 0 ? (opEx / egi) * 100 : 0, noiMargin = egi > 0 ? (noi / egi) * 100 : 0, capRate = price > 0 ? (noi / price) * 100 : 0;
+            const debtSvc = monthlyPI * 12, dscr = debtSvc > 0 ? noi / debtSvc : 999, debtYield = loanAmount > 0 ? (noi / loanAmount) * 100 : 999;
+            const ber = egi > 0 ? ((opEx + debtSvc) / egi) * 100 : 0;
+            const unleveredCF = noi - capex;
+            const land = price * 0.20, buildingBasis = price - land, depr = buildingBasis / 27.5, taxSavings = depr * 0.22;
+            const yr1CF = btcf * 12, yr5CF = btcf * 12 * Math.pow(1.03, 5), cumCF = btcf * 12 * 5;
+            const equityBuild = loanAmount * 0.15, yr5Val = price * Math.pow(1.03, 5);
+            const yr5Sale = (noi * 12 * Math.pow(1.03, 5)) / 0.06, yr5Net = yr5Sale * 0.94 - loanAmount * 0.85, tot5yr = cumCF + yr5Net - downPayment;
+            const irr = Math.pow((tot5yr + downPayment) / downPayment, 0.2) - 1, npv = tot5yr / Math.pow(1.1, 2.5), yoc = noi * 12 / (price * 1.10) * 100;
+            const eqMult = (cumCF + yr5Net + downPayment) / downPayment, simpleROI = (cumCF + yr5Val - price) / downPayment * 100;
+            const atcf = btcf + taxSavings / 12, capGain = yr5Sale - buildingBasis - yr5Sale * 0.06;
+            const breakEven = opEx + monthlyPI, occBreakEven = (breakEven / grossRent) * 100;
+            
+            // Crime data
+            const addr = p.address.toLowerCase();
+            const crimeMap = {'colorado creek':{n:'Wedgwood',s:62,g:'C+',c:245},'texas risinger':{n:'Wedgwood',s:62,g:'C+',c:245},'crabtree':{n:'North Richland Hills',s:74,g:'B',c:165},'brookside':{n:'Watauga',s:68,g:'C+',c:195},'westridge':{n:'Watauga',s:68,g:'C+',c:195},'norwood':{n:'Hurst',s:72,g:'B',c:170},'midcreek':{n:'Euless',s:71,g:'B',c:180},'deborah':{n:'Watauga',s:68,g:'C+',c:195}};
+            let safety = null;
+            for (const [k,v] of Object.entries(crimeMap)) { if (addr.includes(k)) { safety = v; break; } }
+            
+            const viewBtn = p.url ? '<a href="' + p.url + '" target="_blank" class="analyze-btn" style="display:inline-block;text-decoration:none;margin-bottom:1rem;">🔗 View on Zillow</a>' : '';
+            const cfClass = p.cashFlow >= 0 ? 'highlight' : 'negative';
+            const statusHtml = p.status === 'pass' ? '<span style="color:var(--success)">✅ PASS</span>' : '<span style="color:var(--danger)">❌ FAIL</span>';
             
             document.getElementById('modalTitle').textContent = p.address;
-            document.getElementById('modalBody').innerHTML = `
-                ${viewBtn}
-                <div class="detail-grid">
-                    <div class="detail-card">
-                        <div class="detail-label">Listed Price</div>
-                        <div class="detail-value">${formatMoney(p.listed)}</div>
-                    </div>
-                    <div class="detail-card">
-                        <div class="detail-label">Offer Price</div>
-                        <div class="detail-value">${formatMoney(p.offer)}</div>
-                    </div>
-                    <div class="detail-card">
-                        <div class="detail-label">Type</div>
-                        <div class="detail-value">${p.type}</div>
-                    </div>
-                    <div class="detail-card">
-                        <div class="detail-label">Total Cash Out</div>
-                        <div class="detail-value">${formatMoney(p.cashOut)}</div>
-                    </div>
-                </div>
-                <div class="analysis-section">
-                    <h4>💰 Investment Analysis</h4>
-                    <div class="analysis-row"><span class="analysis-label">Cash Flow</span><span>${formatMoney(p.cashFlow)}/mo</span></div>
-                    <div class="analysis-row"><span class="analysis-label">Cash-on-Cash</span><span>${p.coc.toFixed(1)}%</span></div>
-                    <div class="analysis-row"><span class="analysis-label">Status</span><span>${p.status === 'pass' ? '✅ PASS' : '❌ FAIL'}</span></div>
-                </div>
-                ${p.notes ? `<div class="analysis-section"><h4>📝 Notes</h4><p>${p.notes}</p></div>` : ''}
-            `;
+            document.getElementById('modalBody').innerHTML = viewBtn + '<div class="detail-grid"><div class="detail-card"><div class="detail-label">Listed</div><div class="detail-value">' + formatMoney(price) + '</div></div><div class="detail-card"><div class="detail-label">Offer Price</div><div class="detail-value">' + formatMoney(offer) + '</div></div><div class="detail-card"><div class="detail-label">Type</div><div class="detail-value">' + p.type + '</div></div><div class="detail-card"><div class="detail-label">Sq Ft</div><div class="detail-value">' + sqft.toLocaleString() + '</div></div></div><div class="detail-grid"><div class="detail-card"><div class="detail-label">Est. Rent</div><div class="detail-value">' + formatMoney(rent) + '/mo</div></div><div class="detail-card"><div class="detail-label">Cash Out</div><div class="detail-value">' + formatMoney(p.cashOut) + '</div></div><div class="detail-card"><div class="detail-label">Cash Flow</div><div class="detail-value ' + cfClass + '">' + formatMoney(btcf) + '/mo</div></div><div class="detail-card"><div class="detail-label">CoC</div><div class="detail-value">' + coc.toFixed(1) + '%</div></div></div><div class="section-title">📊 Valuation & Acquisition</div><div class="analysis-section"><div class="analysis-row"><span>ARV</span><span>' + formatMoney(arv) + '</span></div><div class="analysis-row"><span>MAO</span><span>' + formatMoney(mao) + '</span></div><div class="analysis-row"><span>$/SqFt</span><span>' + formatMoney(ppf) + '</span></div><div class="analysis-row"><span>1% Rule</span><span>' + onePct.toFixed(2) + '% ' + (onePct >= 1 ? '✅' : '❌') + '</span></div><div class="analysis-row"><span>GRM</span><span>' + grm.toFixed(1) + '</span></div><div class="analysis-row"><span>LTV</span><span>' + ltv.toFixed(1) + '%</span></div></div><div class="section-title">💰 Income & Expenses</div><div class="analysis-section"><div class="analysis-row"><span>Gross Rent</span><span>' + formatMoney(grossRent) + '/mo</span></div><div class="analysis-row"><span>Vacancy (5%)</span><span>-' + formatMoney(vacancy) + '</span></div><div class="analysis-row"><span>EGI</span><span>' + formatMoney(egi) + '/mo</span></div><div class="analysis-row"><span>OpEx (50%)</span><span>' + formatMoney(opEx) + '/mo</span></div><div class="analysis-row"><span>CapEx (8%)</span><span>' + formatMoney(capex) + '/mo</span></div><div class="analysis-row"><span>NOI</span><span>' + formatMoney(noi) + '/mo</span></div></div><div class="section-title">🏆 Profitability</div><div class="analysis-section"><div class="analysis-row"><span>NOI Margin</span><span>' + noiMargin.toFixed(1) + '%</span></div><div class="analysis-row"><span>Cap Rate</span><span>' + capRate.toFixed(1) + '%</span></div><div class="analysis-row"><span>OER</span><span>' + oer.toFixed(1) + '%</span></div></div><div class="section-title">🏦 Debt</div><div class="analysis-section"><div class="analysis-row"><span>Loan Amount</span><span>' + formatMoney(loanAmount) + '</span></div><div class="analysis-row"><span>Monthly PI</span><span>' + formatMoney(monthlyPI) + '/mo</span></div><div class="analysis-row"><span>DSCR</span><span>' + dscr.toFixed(2) + ' ' + (dscr >= 1.25 ? '✅' : '❌') + '</span></div><div class="analysis-row"><span>Debt Yield</span><span>' + debtYield.toFixed(1) + '%</span></div><div class="analysis-row"><span>BER</span><span>' + ber.toFixed(1) + '%</span></div></div><div class="section-title">💵 Cash Flow</div><div class="analysis-section"><div class="analysis-row ' + cfClass + '"><span>Unlevered CF</span><span>' + formatMoney(unleveredCF) + '/mo</span></div><div class="analysis-row ' + cfClass + '"><span>BTCF</span><span>' + formatMoney(btcf) + '/mo</span></div><div class="analysis-row ' + cfClass + '"><span>Cash on Cash</span><span>' + coc.toFixed(1) + '%</span></div></div><div class="section-title">📐 Tax</div><div class="analysis-section"><div class="analysis-row"><span>Bldg Basis</span><span>' + formatMoney(buildingBasis) + '</span></div><div class="analysis-row"><span>Depreciation</span><span>' + formatMoney(depr) + '/yr</span></div><div class="analysis-row"><span>Tax Savings</span><span>' + formatMoney(taxSavings) + '/yr</span></div></div><div class="section-title">📈 Advanced (5yr)</div><div class="analysis-section"><div class="analysis-row"><span>Cumulative CF</span><span>' + formatMoney(cumCF) + '</span></div><div class="analysis-row"><span>Equity Build</span><span>' + formatMoney(equityBuild) + '</span></div><div class="analysis-row"><span>Year 5 Value</span><span>' + formatMoney(yr5Val) + '</span></div><div class="analysis-row"><span>Year 5 Sale</span><span>' + formatMoney(yr5Sale) + '</span></div><div class="analysis-row"><span>Net Proceeds</span><span>' + formatMoney(yr5Net) + '</span></div><div class="analysis-row"><span>Total 5yr Return</span><span>' + formatMoney(tot5yr) + '</span></div><div class="analysis-row"><span>IRR</span><span style="color:' + (irr > 0.12 ? 'var(--success)':irr > 0.08 ? 'var(--accent)':'var(--danger)') + '">' + (irr * 100).toFixed(1) + '%</span></div><div class="analysis-row"><span>NPV</span><span>' + formatMoney(npv) + '</span></div><div class="analysis-row"><span>Equity Multiple</span><span>' + eqMult.toFixed(2) + 'x</span></div><div class="analysis-row"><span>ROI</span><span>' + simpleROI.toFixed(1) + '%</span></div><div class="analysis-row"><span>Yield on Cost</span><span>' + yoc.toFixed(1) + '%</span></div></div><div class="section-title">💵 After-Tax</div><div class="analysis-section"><div class="analysis-row"><span>ATCF</span><span>' + formatMoney(atcf) + '/mo</span></div><div class="analysis-row"><span>Capital Gain</span><span>' + formatMoney(capGain) + '</span></div></div><div class="section-title">⚠️ Risk</div><div class="analysis-section"><div class="analysis-row"><span>Break-Even Rent</span><span>' + formatMoney(breakEven) + '/mo</span></div><div class="analysis-row"><span>Occ. Break-Even</span><span>' + occBreakEven.toFixed(0) + '%</span></div><div class="analysis-row"><span>Buffer</span><span style="color:' + (btcf > rent * 0.06 ? 'var(--success)':'var(--danger)') + '">' + (btcf > rent * 0.06 ? '✅ Safe' : '⚠️ Tight') + '</span></div></div>' + (safety ? '<div class="section-title">🛡️ Neighborhood Safety (FW Police)</div><div class="analysis-section"><div class="analysis-row"><span>Neighborhood</span><span>' + safety.n + '</span></div><div class="analysis-row"><span>Safety Score</span><span style="color:' + (safety.s >= 70 ? 'var(--success)':safety.s >= 55 ? 'var(--accent)':'var(--danger)') + '">' + safety.s + '/100 (' + safety.g + ')</span></div><div class="analysis-row"><span>Crimes/Year</span><span style="color:' + (safety.c < 200 ? 'var(--success)':safety.c < 300 ? 'var(--accent)':'var(--danger)') + '">' + safety.c + '</span></div><div class="analysis-row"><span>Crime Map</span><span><a href="https://www.doorprofit.com/crime-map/city/Fort_Worth-TX/" target="_blank" style="color:var(--primary)">View Map ↗</a></span></div></div>' : '') + '<div class="action-buttons"><button class="action-btn secondary" onclick="closeModal()">Close</button></div>';
             document.getElementById('propertyModal').classList.add('active');
         }
-        
-        function closeModal() {
             document.getElementById('propertyModal').classList.remove('active');
         }
         
