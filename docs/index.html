@@ -50,6 +50,33 @@
         .crime-low { background: rgba(63, 185, 80, 0.2); color: var(--success); }
         .crime-medium { background: rgba(210, 153, 34, 0.2); color: var(--accent); }
         .crime-high { background: rgba(248, 81, 73, 0.2); color: var(--danger); }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body { padding: 10px; font-size: 14px; }
+            h1 { font-size: 1.5rem; }
+            .stats-bar { flex-direction: column; gap: 10px; }
+            .stat-card { min-width: 80px; padding: 10px; }
+            .filters { flex-direction: column; gap: 10px; }
+            .filters select, .filters input { width: 100%; }
+            .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { font-size: 12px; min-width: 600px; }
+            th, td { padding: 8px 4px; }
+            .modal-content { max-width: 95vw; max-height: 85vh; margin: 10px; }
+            .detail-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .section-title { font-size: 14px; padding: 8px; }
+            .analysis-row { font-size: 12px; padding: 6px 0; }
+            .action-buttons { flex-direction: column; }
+            .action-btn { width: 100%; margin: 5px 0; }
+        }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.2rem; }
+            .stat-value { font-size: 1.2rem; }
+            .stat-label { font-size: 0.7rem; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .modal-content { max-width: 98vw; max-height: 80vh; }
+        }
+
     </style>
 </head>
 <body>
