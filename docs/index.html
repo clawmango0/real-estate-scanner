@@ -178,10 +178,23 @@
     let properties = [];
     async function loadProperties() {
         try {
-            // Always load from static JSON file - works on both GitHub Pages and local server
-            const res = await fetch('/properties.json');
-            if (!res.ok) throw new Error('Failed to load');
-            const data = await res.json();
+            // Try both paths for compatibility
+            let res;
+            let data;
+            
+            // Try root path first
+            res = await fetch('/properties.json');
+            if (res.ok) {
+                data = await res.json();
+            } else {
+                // Try subdirectory path
+                res = await fetch('/real-estate-scanner/properties.json');
+                if (res.ok) {
+                    data = await res.json();
+                } else {
+                    throw new Error('properties.json not found');
+                }
+            }
             properties = (data.data || []).map(p => ({
                 ...p,
                 beds: p.beds || '-',
