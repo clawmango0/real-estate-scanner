@@ -77,6 +77,11 @@
             .modal-content { max-width: 98vw; max-height: 80vh; }
         }
 
+
+            .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px; }
+            .badge.new { background: var(--success); color: white; }
+            .badge.cut { background: #ef4444; color: white; animation: pulse 2s infinite; }
+            @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -255,7 +260,7 @@
         const maxPrice = parseInt(document.getElementById('maxPrice').value) || Infinity;
         let filtered = properties.filter(p => (statusFilter === 'all' || p.status === statusFilter) && p.listed <= maxPrice);
         filtered.sort((a,b) => b[sortBy] - a[sortBy]);
-        tbody.innerHTML = filtered.map(p => `<tr onclick="showProperty('${p.id}')" style="cursor:pointer"><td>${p.address}</td><td>${formatMoney(p.listed)}</td><td>${p.beds}×${p.baths}</td><td>${p.sqft}</td><td>${p.type}</td><td class="${p.cashFlow >= 0 ? 'pass':'fail'}">${formatMoney(p.cashFlow)}</td><td class="${p.coc >= 5 ? 'pass':p.coc > 0 ? '':'fail'}">${p.coc.toFixed(1)}%</td><td style="color:${p.grade==='A'?'var(--success)':p.grade==='B'?'var(--accent)':p.grade==='C'?'#d29922':'var(--danger)'}">${p.grade}</td>
+        tbody.innerHTML = filtered.map(p => `<tr onclick="showProperty('${p.id}')" style="cursor:pointer"><td>${p.address}${p.isNew ? ' <span class="badge new">NEW</span>' : ''}${p.priceCut ? ' <span class="badge cut">PRICE CUT</span>' : ''}</td><td>${formatMoney(p.listed)}</td><td>${p.beds}×${p.baths}</td><td>${p.sqft}</td><td>${p.type}</td><td class="${p.cashFlow >= 0 ? 'pass':'fail'}">${formatMoney(p.cashFlow)}</td><td class="${p.coc >= 5 ? 'pass':p.coc > 0 ? '':'fail'}">${p.coc.toFixed(1)}%</td><td style="color:${p.grade==='A'?'var(--success)':p.grade==='B'?'var(--accent)':p.grade==='C'?'#d29922':'var(--danger)'}">${p.grade}</td>
             <td class="${p.status === 'pass' ? 'pass':'fail'}">${p.status === 'pass' ? '✅ PASS' : '❌ FAIL'}</td></tr>`).join('');
         document.getElementById('totalCount').textContent = filtered.length;
         document.getElementById('passCount').textContent = filtered.filter(p => p.status === 'pass').length;
