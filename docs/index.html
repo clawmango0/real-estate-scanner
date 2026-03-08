@@ -183,7 +183,7 @@
             let data;
             
             // Try root path first
-            res = await fetch('/properties.json');
+            res = await fetch('/real-estate-scanner/properties.json');
             if (res.ok) {
                 data = await res.json();
             } else {
@@ -482,7 +482,7 @@
             
             <div class="action-buttons">
                 <button class="action-btn secondary" onclick="closeModal()">Close</button>
-                <button class="action-btn primary" onclick="alert('Opening Zillow...')">View on Zillow</button>
+                <button class="action-btn primary" onclick="window.open('https://www.zillow.com/homes/' + encodeURIComponent('${p.address}'), '_blank')">View on Zillow</button>
             </div>
         `;
         document.getElementById('propertyModal').classList.add('active');
