@@ -352,7 +352,7 @@
                 <div class="detail-card"><div class="detail-label">Est. Rent</div><div class="detail-value">${formatMoney(rent)}/mo</div></div>
                 <div class="detail-card"><div class="detail-label">Beds</div><div class="detail-value">${p.beds}</div></div>
                 <div class="detail-card"><div class="detail-label">Baths</div><div class="detail-value">${p.baths}</div></div>
-                <div class="detail-card"><div class="detail-label">Source</div><div class="detail-value sm">${p.source.toUpperCase()}</div></div>
+                <div class="detail-card"><div class="detail-label">Source</div><div class="detail-value sm">${(p.source || "SCRAPER").toUpperCase()}</div></div>
             </div>
             
             <!-- SECTION 2: VALUATION & ACQUISITION -->
