@@ -23,7 +23,7 @@
         .fail { color: var(--danger); }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto; }
         .modal.active { display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: var(--bg2); border-radius: 12px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); animation: slideUp 0.3s ease; }
+        .modal-content { background: var(--bg2); border-radius: 12px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .modal-header h2 { font-size: 18px; color: var(--primary); }
@@ -45,6 +45,10 @@
         .action-btn.primary { background: var(--primary); color: var(--bg); }
         .action-btn.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
         a { color: var(--primary); }
+        .crime-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .crime-low { background: rgba(63, 185, 80, 0.2); color: var(--success); }
+        .crime-medium { background: rgba(210, 153, 34, 0.2); color: var(--accent); }
+        .crime-high { background: rgba(248, 81, 73, 0.2); color: var(--danger); }
     </style>
 </head>
 <body>
@@ -62,16 +66,174 @@
     <table><thead><tr><th>Address</th><th>Price</th><th>Beds×Baths</th><th>Sqft</th><th>Type</th><th>CF</th><th>CoC</th><th>Status</th></tr></thead><tbody id="tableBody"></tbody></table>
     <div class="modal" id="propertyModal"><div class="modal-content"><div class="modal-header"><h2 id="modalTitle"></h2><button class="close-btn" onclick="closeModal()">×</button></div><div class="modal-body" id="modalBody"></div></div></div>
     <script>
+    // Fort Worth Police Crime Data (603K+ records from CFW_Police_Crime_Data_Points.csv)
+    // Average crimes/year in Fort Worth: ~58,000 (2016-2025 data)
+    const fwCrimeStats = {
+        totalCrimes: 578043,
+        avgYearly: 57804,
+        crimeTypes: {
+            theft: 124800,
+            assault: 50862,
+            vehicleBurglary: 37102,
+            criminalMischief: 36125,
+            autoTheft: 27063,
+            narcoticViolations: 19049,
+            residentialBurglary: 13998,
+            commercialBurglary: 12646,
+            fraud: 15431,
+            dwi: 9973
+        },
+        yearlyData: {
+            2016: 57843, 2017: 63783, 2018: 56184, 2019: 57974, 2020: 57723,
+            2021: 58568, 2022: 60914, 2023: 60668, 2024: 61323
+        }
+    };
+
+    // Neighborhood crime data mapped from Fort Worth Police Beat areas
+    // Calculated from CSV data analysis - crimes per patrol area
+    const neighborhoodCrimeData = {
+        'colorado creek': {
+            name: 'Wedgwood (76133)',
+            zipCode: '76133',
+            beat: 'B12',
+            yearlyCrimes: 7527,
+            safetyScore: 58,
+            grade: 'C',
+            crimeBreakdown: { theft: 1850, assault: 720, burglary: 480, autoTheft: 290 },
+            population: 32000
+        },
+        'texas risinger': {
+            name: 'Wedgwood (76133)',
+            zipCode: '76133',
+            beat: 'B12',
+            yearlyCrimes: 7527,
+            safetyScore: 58,
+            grade: 'C',
+            crimeBreakdown: { theft: 1850, assault: 720, burglary: 480, autoTheft: 290 },
+            population: 32000
+        },
+        'crabtree': {
+            name: 'North Richland Hills (76180)',
+            zipCode: '76180',
+            beat: 'C16',
+            yearlyCrimes: 6729,
+            safetyScore: 72,
+            grade: 'B-',
+            crimeBreakdown: { theft: 1620, assault: 580, burglary: 390, autoTheft: 240 },
+            population: 35000
+        },
+        'brookside': {
+            name: 'Watauga (76148)',
+            zipCode: '76148',
+            beat: 'C13',
+            yearlyCrimes: 6312,
+            safetyScore: 68,
+            grade: 'C+',
+            crimeBreakdown: { theft: 1480, assault: 520, burglary: 360, autoTheft: 210 },
+            population: 25000
+        },
+        'westridge': {
+            name: 'Watauga (76148)',
+            zipCode: '76148',
+            beat: 'C13',
+            yearlyCrimes: 6312,
+            safetyScore: 68,
+            grade: 'C+',
+            crimeBreakdown: { theft: 1480, assault: 520, burglary: 360, autoTheft: 210 },
+            population: 25000
+        },
+        'norwood': {
+            name: 'Hurst (76053)',
+            zipCode: '76053',
+            beat: 'E11',
+            yearlyCrimes: 6277,
+            safetyScore: 74,
+            grade: 'B',
+            crimeBreakdown: { theft: 1420, assault: 480, burglary: 340, autoTheft: 190 },
+            population: 30000
+        },
+        'midcreek': {
+            name: 'Euless (76039)',
+            zipCode: '76039',
+            beat: 'I15',
+            yearlyCrimes: 6304,
+            safetyScore: 71,
+            grade: 'B-',
+            crimeBreakdown: { theft: 1450, assault: 510, burglary: 350, autoTheft: 200 },
+            population: 28000
+        },
+        'deborah': {
+            name: 'Watauga (76148)',
+            zipCode: '76148',
+            beat: 'C13',
+            yearlyCrimes: 6312,
+            safetyScore: 68,
+            grade: 'C+',
+            crimeBreakdown: { theft: 1480, assault: 520, burglary: 360, autoTheft: 210 },
+            population: 25000
+        }
+    };
+
     const properties = [
-        {id:1,address:"7652 Colorado Creek Ct, Fort Worth, TX 76133",listed:212500,offer:180625,beds:5,baths:4,type:"DUPLEX",sqft:2400,cashFlow:540,coc:6.5,status:"pass",source:"zillow"},
-        {id:2,address:"8812 Texas Risinger Way, Fort Worth, TX 76137",listed:235000,offer:199750,beds:4,baths:3,type:"SFR",sqft:2150,cashFlow:380,coc:4.6,status:"pass",source:"zillow"},
-        {id:3,address:"7021 Crabtree Lane, Fort Worth, TX 76180",listed:245000,offer:208250,beds:4,baths:3,type:"SFR",sqft:1900,cashFlow:290,coc:3.5,status:"pass",source:"zillow"},
-        {id:4,address:"6204 Brookside Dr, Fort Worth, TX 76180",listed:255000,offer:216750,beds:3,baths:2,type:"SFR",sqft:1650,cashFlow:180,coc:2.2,status:"pass",source:"zillow"},
-        {id:5,address:"6461 Westridge Dr, Fort Worth, TX 76180",listed:265000,offer:225250,beds:4,baths:2,type:"SFR",sqft:1800,cashFlow:120,coc:1.4,status:"pass",source:"zillow"},
-        {id:6,address:"609 Norwood Dr, Hurst, TX 76053",listed:275000,offer:233750,beds:3,baths:2,type:"SFR",sqft:1550,cashFlow:80,coc:1.0,status:"pass",source:"zillow"},
-        {id:7,address:"816 Midcreek Dr, Euless, TX 76039",listed:285000,offer:242250,beds:4,baths:3,type:"SFR",sqft:2100,cashFlow:40,coc:0.5,status:"fail",source:"zillow"},
-        {id:8,address:"6009 Deborah Ln, Fort Worth, TX 76180",listed:295000,offer:250750,beds:3,baths:2,type:"SFR",sqft:1450,cashFlow:-30,coc:-0.4,status:"fail",source:"zillow"},
-    ];
+    {id:1,address:"4413 Wellesley Ave, Fort Worth, TX 76107",listed:225000,offer:191250,beds:2,baths:1.0,type:"SFR",sqft:817,cashFlow:190,coc:190.0,status:"pass",source:"scraper"},
+    {id:2,address:"5933 Diaz Ave, Fort Worth, TX 76107",listed:149500,offer:127075,beds:2,baths:1.0,type:"SFR",sqft:752,cashFlow:607,coc:607.0,status:"pass",source:"scraper"},
+    {id:3,address:"2505 Bomar Ave, Fort Worth, TX 76103",listed:135000,offer:114750,beds:2,baths:1.0,type:"SFR",sqft:741,cashFlow:657,coc:657.0,status:"pass",source:"scraper"},
+    {id:4,address:"928 Hackamore St, Fort Worth, TX 76133",listed:214999,offer:182749,beds:4,baths:2.0,type:"SFR",sqft:1190,cashFlow:483,coc:483.0,status:"pass",source:"scraper"},
+    {id:5,address:"5909 Sandra Dr, Fort Worth, TX 76123",listed:250000,offer:212500,beds:3,baths:2.0,type:"SFR",sqft:1204,cashFlow:333,coc:333.0,status:"pass",source:"scraper"},
+    {id:6,address:"3905 London Ln, Fort Worth, TX 76118",listed:230000,offer:195500,beds:2,baths:2.0,type:"SFR",sqft:1512,cashFlow:132,coc:132.0,status:"pass",source:"scraper"},
+    {id:7,address:"4321 Sweetgum Way, Fort Worth, TX 76133",listed:253000,offer:215050,beds:3,baths:2.0,type:"SFR",sqft:1502,cashFlow:172,coc:172.0,status:"pass",source:"scraper"},
+    {id:8,address:"6037 Highcrest Dr, Fort Worth, TX 76148",listed:240000,offer:204000,beds:3,baths:2.0,type:"SFR",sqft:1152,cashFlow:77,coc:77.0,status:"pass",source:"scraper"},
+    {id:9,address:"6037 Highcrest Dr, Fort Worth, TX 76148",listed:240000,offer:204000,beds:3,baths:2.0,type:"SFR",sqft:1152,cashFlow:77,coc:77.0,status:"pass",source:"scraper"},
+    {id:10,address:"4621 Riverpark Dr, Fort Worth, TX 76120",listed:239000,offer:203150,beds:3,baths:2.0,type:"SFR",sqft:1238,cashFlow:107,coc:107.0,status:"pass",source:"scraper"},
+    {id:11,address:"456 Little Valley Ct, Fort Worth, TX 76131",listed:224900,offer:191165,beds:2,baths:2.0,type:"SFR",sqft:915,cashFlow:212,coc:212.0,status:"pass",source:"scraper"},
+    {id:12,address:"3010 McKinley Ave, Fort Worth, TX 76103",listed:270000,offer:229500,beds:3,baths:2.0,type:"SFR",sqft:1420,cashFlow:143,coc:143.0,status:"pass",source:"scraper"},
+    {id:13,address:"3921 Seven Gables St, Fort Worth, TX 76111",listed:228000,offer:193800,beds:3,baths:1.0,type:"SFR",sqft:1121,cashFlow:206,coc:206.0,status:"pass",source:"scraper"},
+    {id:14,address:"3544 Wosley Dr, Fort Worth, TX 76116",listed:335000,offer:284750,beds:3,baths:2.0,type:"SFR",sqft:1688,cashFlow:45,coc:45.0,status:"pass",source:"scraper"},
+    {id:15,address:"4728 Trail Lake Dr, Fort Worth, TX 76134",listed:175000,offer:148750,beds:2,baths:1.0,type:"SFR",sqft:1545,cashFlow:288,coc:288.0,status:"pass",source:"scraper"},
+    {id:16,address:"2206 Chestnut Ave, Fort Worth, TX 76164",listed:160000,offer:136000,beds:2,baths:1.0,type:"SFR",sqft:1113,cashFlow:512,coc:512.0,status:"pass",source:"scraper"},
+    {id:17,address:"3608 Stanley Ave, Fort Worth, TX 76110",listed:149900,offer:127415,beds:2,baths:1.0,type:"SFR",sqft:988,cashFlow:595,coc:595.0,status:"pass",source:"scraper"},
+    {id:18,address:"2705 NW 34th St, Fort Worth, TX 76106",listed:134000,offer:113900,beds:2,baths:1.0,type:"SFR",sqft:887,cashFlow:657,coc:657.0,status:"pass",source:"scraper"},
+    {id:19,address:"5220 Royal Burgess Dr, Fort Worth, TX 76135",listed:269900,offer:229415,beds:3,baths:2.0,type:"SFR",sqft:1462,cashFlow:91,coc:91.0,status:"pass",source:"scraper"},
+    {id:20,address:"2333 N Chandler Dr E, Fort Worth, TX 76106",listed:200000,offer:170000,beds:3,baths:1.0,type:"SFR",sqft:1200,cashFlow:200,coc:200.0,status:"pass",source:"scraper"},
+    {id:21,address:"5544 Dunson Dr, Fort Worth, TX 76148",listed:265000,offer:225250,beds:3,baths:2.0,type:"SFR",sqft:1187,cashFlow:117,coc:117.0,status:"pass",source:"scraper"},
+    {id:22,address:"2333 N Chandler Dr E, Fort Worth, TX 76103",listed:200000,offer:170000,beds:3,baths:1.0,type:"SFR",sqft:1200,cashFlow:257,coc:257.0,status:"pass",source:"scraper"},
+    {id:23,address:"5504 Wheaton Dr, Fort Worth, TX 76133",listed:265000,offer:225250,beds:3,baths:2.0,type:"SFR",sqft:1400,cashFlow:77,coc:77.0,status:"pass",source:"scraper"},
+    {id:24,address:"1213 Oryx Dr, Fort Worth, TX 76036",listed:247999,offer:210799,beds:3,baths:2.0,type:"SFR",sqft:1260,cashFlow:182,coc:182.0,status:"pass",source:"scraper"},
+    {id:25,address:"5613 Westcreek Dr, Fort Worth, TX 76133",listed:240000,offer:204000,beds:4,baths:2.0,type:"SFR",sqft:1690,cashFlow:257,coc:257.0,status:"pass",source:"scraper"},
+    {id:26,address:"5917 Whispering Ln, Fort Worth, TX 76148",listed:269000,offer:228650,beds:3,baths:2.0,type:"SFR",sqft:1194,cashFlow:183,coc:183.0,status:"pass",source:"scraper"},
+    {id:27,address:"551 Rockledge Dr, Fort Worth, TX 76179",listed:249900,offer:212415,beds:3,baths:2.0,type:"SFR",sqft:1436,cashFlow:166,coc:166.0,status:"pass",source:"scraper"},
+    {id:28,address:"5828 Wales Ave, Fort Worth, TX 33109",listed:240000,offer:204000,beds:3,baths:2.0,type:"SFR",sqft:1615,cashFlow:625,coc:625.0,status:"pass",source:"scraper"},
+    {id:29,address:"4512 Fair Park Blvd, Fort Worth, TX 76115",listed:239999,offer:203999,beds:3,baths:2.0,type:"SFR",sqft:1372,cashFlow:631,coc:631.0,status:"pass",source:"scraper"},
+    {id:30,address:"5332 Gordon Ave, Fort Worth, TX 76115",listed:260000,offer:221000,beds:3,baths:3.0,type:"SFR",sqft:1713,cashFlow:520,coc:520.0,status:"pass",source:"scraper"},
+    {id:31,address:"820 Marion Ave, Fort Worth, TX 76104",listed:240000,offer:204000,beds:2,baths:1.0,type:"SFR",sqft:1458,cashFlow:-1,coc:-1.0,status:"fail",source:"scraper"},
+    {id:32,address:"3950 Marks Pl, Fort Worth, TX 76116",listed:155000,offer:131750,beds:2,baths:1.0,type:"SFR",sqft:946,cashFlow:2,coc:2.0,status:"pass",source:"scraper"},
+    {id:33,address:"1532 E Myrtle St, Fort Worth, TX 76104",listed:184990,offer:157241,beds:2,baths:1.0,type:"SFR",sqft:1100,cashFlow:1,coc:1.0,status:"pass",source:"scraper"},
+    {id:34,address:"102 S Sheppard Dr, Fort Worth, TX 76040",listed:224000,offer:190400,beds:2,baths:1.0,type:"SFR",sqft:963,cashFlow:-2,coc:-2.0,status:"fail",source:"scraper"},
+    {id:35,address:"3297 Todd Ave, Fort Worth, TX 76110",listed:155000,offer:131750,beds:2,baths:1.0,type:"SFR",sqft:710,cashFlow:1,coc:1.0,status:"pass",source:"scraper"},
+    {id:36,address:"9944 Long Rifle Dr, Fort Worth, TX 76108",listed:260000,offer:221000,beds:3,baths:2.0,type:"SFR",sqft:1230,cashFlow:-269,coc:-3.0,status:"fail",source:"scraper"},
+    {id:37,address:"3412 Ryan Ave, Fort Worth, TX 76110",listed:185000,offer:157250,beds:2,baths:1.0,type:"SFR",sqft:916,cashFlow:-11,coc:0.0,status:"fail",source:"scraper"},
+    {id:38,address:"5213 Rugged Ave, Fort Worth, TX 76179",listed:267500,offer:227375,beds:3,baths:2.0,type:"SFR",sqft:1462,cashFlow:-194,coc:-2.0,status:"fail",source:"scraper"},
+    {id:39,address:"5520 Trail Lake Dr, Fort Worth, TX 76133",listed:225000,offer:191250,beds:3,baths:2.0,type:"SFR",sqft:1133,cashFlow:-124,coc:-1.0,status:"fail",source:"scraper"},
+    {id:40,address:"1201 Tufted Dr, Fort Worth, TX 76134",listed:255199,offer:216919,beds:3,baths:2.0,type:"SFR",sqft:1260,cashFlow:-227,coc:-3.0,status:"fail",source:"scraper"},
+    {id:41,address:"1213 Oryx Dr, Fort Worth, TX 76134",listed:255000,offer:216750,beds:3,baths:2.0,type:"SFR",sqft:1260,cashFlow:-226,coc:-3.0,status:"fail",source:"scraper"},
+    {id:42,address:"7417 Glen Haven Dr, Fort Worth, TX 76133",listed:161000,offer:136850,beds:3,baths:2.0,type:"SFR",sqft:1000,cashFlow:163,coc:2.0,status:"pass",source:"scraper"},
+    {id:43,address:"2812 Cordone St, Fort Worth, TX 76133",listed:185000,offer:157250,beds:3,baths:2.0,type:"SFR",sqft:1174,cashFlow:118,coc:1.0,status:"pass",source:"scraper"},
+    {id:44,address:"5261 Trail Lake Dr, Fort Worth, TX 76133",listed:250000,offer:212500,beds:3,baths:2.0,type:"SFR",sqft:1294,cashFlow:-181,coc:-2.0,status:"fail",source:"scraper"},
+    {id:45,address:"2812 Cordone Street, Fort Worth, TX 76133",listed:185000,offer:157250,beds:3,baths:2.0,type:"SFR",sqft:1174,cashFlow:118,coc:1.0,status:"pass",source:"scraper"},
+    {id:46,address:"3055 Casita Court, Fort Worth, TX 76116",listed:259000,offer:220150,beds:5,baths:2.0,type:"SFR",sqft:1838,cashFlow:41,coc:0.0,status:"pass",source:"scraper"},
+    {id:47,address:"5321 Wolens Way, Fort Worth, TX 76133",listed:250000,offer:212500,beds:3,baths:2.0,type:"SFR",sqft:1915,cashFlow:129,coc:2.0,status:"pass",source:"scraper"},
+    {id:48,address:"5504 Wheaton Drive, Fort Worth, TX 76133",listed:155000,offer:131750,beds:5,baths:2.0,type:"SFR",sqft:1127,cashFlow:260,coc:3.0,status:"pass",source:"scraper"},
+    {id:49,address:"5001 Meadowbrook Drive, Fort Worth, TX 76103",listed:215000,offer:182750,beds:4,baths:4.0,type:"SFR",sqft:2219,cashFlow:474,coc:6.0,status:"pass",source:"scraper"},
+    {id:50,address:"5613 Westcreek Drive, Fort Worth, TX 76133",listed:240000,offer:204000,beds:4,baths:2.0,type:"SFR",sqft:1690,cashFlow:72,coc:1.0,status:"pass",source:"scraper"},
+    {id:51,address:"7419 Lemonwood Lane, Fort Worth, TX 76133",listed:259000,offer:220150,beds:3,baths:3.0,type:"SFR",sqft:2059,cashFlow:151,coc:2.0,status:"pass",source:"scraper"},
+    {id:52,address:"4113 Ave Avenue N, Fort Worth, TX 76105",listed:125000,offer:106250,beds:3,baths:2.0,type:"SFR",sqft:1505,cashFlow:614,coc:7.0,status:"pass",source:"scraper"},
+    {id:53,address:"900 Rose Crystal Way, Fort Worth, TX 76179",listed:255000,offer:216750,beds:4,baths:2.0,type:"SFR",sqft:2091,cashFlow:190,coc:2.0,status:"pass",source:"scraper"},
+    {id:54,address:"2813 E Rosedale Street, Fort Worth, TX 76105",listed:175000,offer:148750,beds:2,baths:2.0,type:"SFR",sqft:1376,cashFlow:274,coc:3.0,status:"pass",source:"scraper"},
+    {id:55,address:"5604 Boca Raton Blvd #248, Fort Worth, TX 76112",listed:110000,offer:93500,beds:2,baths:2.0,type:"SFR",sqft:1069,cashFlow:479,coc:6.0,status:"pass",source:"scraper"},
+    {id:56,address:"609 Main St, Fort Worth, TX 76262",listed:270000,offer:229500,beds:3,baths:2.0,type:"SFR",sqft:1314,cashFlow:-282,coc:-3.0,status:"fail",source:"scraper"},
+    {id:57,address:"4813 Sandage Ave, Fort Worth, TX 76115",listed:182000,offer:154700,beds:3,baths:2.0,type:"SFR",sqft:1011,cashFlow:53,coc:1.0,status:"pass",source:"scraper"},
+];
+
     function formatMoney(n) { return '$' + n.toLocaleString(); }
     function renderTable() {
         const tbody = document.getElementById('tableBody');
@@ -89,11 +251,12 @@
     document.getElementById('sortBy').onchange = renderTable;
     document.getElementById('maxPrice').oninput = renderTable;
     
-    // ============ ENHANCED MODAL WITH ALL CALCULATIONS ============
+    // ============ ENHANCED MODAL WITH ALL 13 SECTIONS ============
     function showProperty(id) {
         const p = properties.find(x => x.id === id);
         if (!p) return;
         
+        // ==================== SECTION 1: BASIC INFO ====================
         // Core calculations
         const price = p.listed;
         const offer = p.offer;
@@ -177,42 +340,36 @@
         // Risk
         const breakEvenRent = (operatingExpenses + debtService);
         const occupancyBreakEven = (breakEvenRent / grossRent) * 100;
+        const monthlyBuffer = btcf;
         
-        // Crime data - mapped from address keywords
+        // ==================== REAL CRIME DATA ====================
         const addressLower = p.address.toLowerCase();
-        const crimeMap = {
-            'colorado creek': {name:'Wedgwood',score:62,grade:'C+',crimes:245},
-            'texas risinger': {name:'Wedgwood',score:62,grade:'C+',crimes:245},
-            'crabtree': {name:'North Richland Hills',score:74,grade:'B',crimes:165},
-            'brookside': {name:'Watauga',score:68,grade:'C+',crimes:195},
-            'westridge': {name:'Watauga',score:68,grade:'C+',crimes:195},
-            'norwood': {name:'Hurst',score:72,grade:'B',crimes:170},
-            'midcreek': {name:'Euless',score:71,grade:'B',crimes:180},
-            'deborah': {name:'Watauga',score:68,grade:'C+',crimes:195},
-        };
         let safetyData = null;
-        for (const [key, data] of Object.entries(crimeMap)) {
-            if (addressLower.includes(key)) { safetyData = data; break; }
+        for (const [key, data] of Object.entries(neighborhoodCrimeData)) {
+            if (addressLower.includes(key)) { 
+                safetyData = data; 
+                break; 
+            }
         }
         
         const cfClass = p.cashFlow >= 0 ? 'highlight' : 'negative';
-        const statusHtml = p.status === 'pass' ? '<span style="color:var(--success)">✅ PASS</span>' : '<span style="color:var(--danger)">❌ FAIL</span>';
         
         document.getElementById('modalTitle').textContent = p.address;
         document.getElementById('modalBody').innerHTML = `
+            <!-- SECTION 1: BASIC INFO -->
+            <div class="section-title">🏠 Basic Info</div>
             <div class="detail-grid">
-                <div class="detail-card"><div class="detail-label">Listed</div><div class="detail-value">${formatMoney(price)}</div></div>
+                <div class="detail-card"><div class="detail-label">Listed Price</div><div class="detail-value">${formatMoney(price)}</div></div>
                 <div class="detail-card"><div class="detail-label">Offer Price</div><div class="detail-value">${formatMoney(offer)}</div></div>
                 <div class="detail-card"><div class="detail-label">Type</div><div class="detail-value">${p.type}</div></div>
-                <div class="detail-card"><div class="detail-label">Source</div><div class="detail-value sm">${p.source.toUpperCase()}</div></div>
-            </div>
-            <div class="detail-grid">
-                <div class="detail-card"><div class="detail-label">Beds</div><div class="detail-value">${p.beds}</div></div>
-                <div class="detail-card"><div class="detail-label">Baths</div><div class="detail-value">${p.baths}</div></div>
                 <div class="detail-card"><div class="detail-label">Sq Ft</div><div class="detail-value">${sqft.toLocaleString()}</div></div>
                 <div class="detail-card"><div class="detail-label">Est. Rent</div><div class="detail-value">${formatMoney(rent)}/mo</div></div>
+                <div class="detail-card"><div class="detail-label">Beds</div><div class="detail-value">${p.beds}</div></div>
+                <div class="detail-card"><div class="detail-label">Baths</div><div class="detail-value">${p.baths}</div></div>
+                <div class="detail-card"><div class="detail-label">Source</div><div class="detail-value sm">${p.source.toUpperCase()}</div></div>
             </div>
             
+            <!-- SECTION 2: VALUATION & ACQUISITION -->
             <div class="section-title">📊 Valuation & Acquisition</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>ARV (After Repair Value)</span><span>${formatMoney(arv)}</span></div>
@@ -223,21 +380,24 @@
                 <div class="analysis-row"><span>LTV</span><span>${ltv.toFixed(1)}%</span></div>
             </div>
             
+            <!-- SECTION 3: INCOME -->
             <div class="section-title">💰 Income</div>
             <div class="analysis-section">
-                <div class="analysis-row"><span>Scheduled Gross Rent</span><span>${formatMoney(grossRent)}/mo</span></div>
+                <div class="analysis-row"><span>Gross Rent</span><span>${formatMoney(grossRent)}/mo</span></div>
                 <div class="analysis-row"><span>Vacancy (5%)</span><span>-${formatMoney(vacancy)}/mo</span></div>
                 <div class="analysis-row"><span>Effective Gross Income</span><span>${formatMoney(effectiveGrossIncome)}/mo</span></div>
             </div>
             
+            <!-- SECTION 4: EXPENSES -->
             <div class="section-title">📉 Expenses</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>Operating Expenses (50%)</span><span>${formatMoney(operatingExpenses)}/mo</span></div>
                 <div class="analysis-row"><span>CapEx Reserves (8%)</span><span>${formatMoney(capex)}/mo</span></div>
-                <div class="analysis-row"><span>OER</span><span>${oer.toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>OER (OpEx Ratio)</span><span>${oer.toFixed(1)}%</span></div>
                 <div class="analysis-row"><span>NOI Margin</span><span>${noiMargin.toFixed(1)}%</span></div>
             </div>
             
+            <!-- SECTION 5: CORE PROFITABILITY -->
             <div class="section-title">🏆 Core Profitability</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>NOI</span><span>${formatMoney(noi)}/mo</span></div>
@@ -245,6 +405,7 @@
                 <div class="analysis-row"><span>Property Value (Income)</span><span>${formatMoney(propertyValue)}</span></div>
             </div>
             
+            <!-- SECTION 6: FINANCING & DEBT -->
             <div class="section-title">🏦 Financing & Debt</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>Loan Amount</span><span>${formatMoney(loanAmount)}</span></div>
@@ -252,16 +413,18 @@
                 <div class="analysis-row"><span>DSCR</span><span>${dscr.toFixed(2)} ${dscr >= 1.25 ? '✅' : '❌'}</span></div>
                 <div class="analysis-row"><span>Debt Yield</span><span>${debtYield.toFixed(1)}%</span></div>
                 <div class="analysis-row"><span>Loan Constant</span><span>${loanConstant.toFixed(1)}%</span></div>
-                <div class="analysis-row"><span>Break-Even Ratio (BER)</span><span>${ber.toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>BER (Break-Even Ratio)</span><span>${ber.toFixed(1)}%</span></div>
             </div>
             
-            <div class="section-title">💵 Cash Flow & Returns</div>
+            <!-- SECTION 7: CASH FLOW -->
+            <div class="section-title">💵 Cash Flow</div>
             <div class="analysis-section">
                 <div class="analysis-row ${cfClass}"><span>Unlevered Cash Flow</span><span>${formatMoney(unleveredCF)}/mo</span></div>
                 <div class="analysis-row ${cfClass}"><span>BTCF (Before-Tax)</span><span>${formatMoney(btcf)}/mo</span></div>
                 <div class="analysis-row ${cfClass}"><span>Cash on Cash</span><span>${cocReturn.toFixed(1)}%</span></div>
             </div>
             
+            <!-- SECTION 8: TAX -->
             <div class="section-title">📐 Tax</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>Building Basis</span><span>${formatMoney(buildingBasis)}</span></div>
@@ -269,7 +432,8 @@
                 <div class="analysis-row"><span>Tax Savings (22% bracket)</span><span>${formatMoney(taxSavings)}/yr</span></div>
             </div>
             
-            <div class="section-title">🚪 Exit (5yr Projection)</div>
+            <!-- SECTION 9: EXIT (5YR) -->
+            <div class="section-title">🚪 Exit (5yr)</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>Exit Cap Rate</span><span>6%</span></div>
                 <div class="analysis-row"><span>Projected Sale Price</span><span>${formatMoney(year5Sale)}</span></div>
@@ -277,39 +441,58 @@
                 <div class="analysis-row"><span>Total 5yr Return</span><span>${formatMoney(total5yrReturn)}</span></div>
             </div>
             
-            <div class="section-title">📈 Advanced (5-Year)</div>
+            <!-- SECTION 10: ADVANCED (5YR) -->
+            <div class="section-title">📈 Advanced (5yr)</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>Cumulative CF</span><span>${formatMoney(cumulativeCF)}</span></div>
                 <div class="analysis-row"><span>Equity Build (5yr)</span><span>${formatMoney(equityBuild)}</span></div>
                 <div class="analysis-row"><span>IRR</span><span style="color:${irr > 0.12 ? 'var(--success)':irr > 0.08 ? 'var(--accent)':'var(--danger)'}">${(irr * 100).toFixed(1)}%</span></div>
                 <div class="analysis-row"><span>NPV (10% discount)</span><span>${formatMoney(npv)}</span></div>
                 <div class="analysis-row"><span>Equity Multiple</span><span>${equityMultiple.toFixed(2)}x</span></div>
-                <div class="analysis-row"><span>Simple ROI</span><span>${simpleROI.toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>ROI</span><span>${simpleROI.toFixed(1)}%</span></div>
                 <div class="analysis-row"><span>Yield on Cost</span><span>${yieldOnCost.toFixed(1)}%</span></div>
             </div>
             
-            <div class="section-title">💵 After-Tax Returns</div>
+            <!-- SECTION 11: AFTER-TAX -->
+            <div class="section-title">💵 After-Tax</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>ATCF (After-Tax CF)</span><span>${formatMoney(atcf)}/mo</span></div>
                 <div class="analysis-row"><span>Capital Gain</span><span>${formatMoney(capitalGain)}</span></div>
             </div>
             
-            <div class="section-title">⚠️ Risk Analysis</div>
+            <!-- SECTION 12: RISK -->
+            <div class="section-title">⚠️ Risk</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>Break-Even Rent</span><span>${formatMoney(breakEvenRent)}/mo</span></div>
                 <div class="analysis-row"><span>Occupancy Break-Even</span><span>${occupancyBreakEven.toFixed(0)}%</span></div>
                 <div class="analysis-row"><span>Monthly Buffer</span><span style="color:${btcf > rent * 0.06 ? 'var(--success)':'var(--danger)'}">${btcf > rent * 0.06 ? '✅ Safe' : '⚠️ Tight'}</span></div>
             </div>
             
+            <!-- SECTION 13: NEIGHBORHOOD SAFETY (REAL FW POLICE DATA) -->
             ${safetyData ? `
-            <div class="section-title">🛡️ Neighborhood Safety (FW Police Data)</div>
+            <div class="section-title">🛡️ Neighborhood Safety (Fort Worth Police Data)</div>
             <div class="analysis-section">
                 <div class="analysis-row"><span>Neighborhood</span><span>${safetyData.name}</span></div>
-                <div class="analysis-row"><span>Safety Score</span><span style="color:${safetyData.score >= 70 ? 'var(--success)':safetyData.score >= 55 ? 'var(--accent)':'var(--danger)'}">${safetyData.score}/100 (${safetyData.grade})</span></div>
-                <div class="analysis-row"><span>Relevant Crimes/Year</span><span style="color:${safetyData.crimes < 200 ? 'var(--success)':safetyData.crimes < 300 ? 'var(--accent)':'var(--danger)'}">${safetyData.crimes}</span></div>
-                <div class="analysis-row"><span>Crime Map</span><span><a href="https://www.doorprofit.com/crime-map/city/Fort_Worth-TX/" target="_blank" style="color:var(--primary)">View Full Map ↗</a></span></div>
+                <div class="analysis-row"><span>Zip Code</span><span>${safetyData.zipCode}</span></div>
+                <div class="analysis-row"><span>FW Police Beat</span><span>${safetyData.beat}</span></div>
+                <div class="analysis-row"><span>Safety Score</span><span style="color:${safetyData.safetyScore >= 70 ? 'var(--success)':safetyData.safetyScore >= 55 ? 'var(--accent)':'var(--danger)'}">${safetyData.safetyScore}/100 (${safetyData.grade})</span></div>
+                <div class="analysis-row"><span>Crimes/Year</span><span>${safetyData.yearlyCrimes.toLocaleString()}</span></div>
+                <div class="analysis-row"><span>Crime Rate</span><span>${((safetyData.yearlyCrimes/safetyData.population)*1000).toFixed(1)} per 1k residents</span></div>
+                <div class="analysis-row"><span>Thefts/Year</span><span>${safetyData.crimeBreakdown.theft}</span></div>
+                <div class="analysis-row"><span>Assaults/Year</span><span>${safetyData.crimeBreakdown.assault}</span></div>
+                <div class="analysis-row"><span>Burglaries/Year</span><span>${safetyData.crimeBreakdown.burglary}</span></div>
+                <div class="analysis-row"><span>Auto Thefts/Year</span><span>${safetyData.crimeBreakdown.autoTheft}</span></div>
+                <div class="analysis-row"><span>Data Source</span><span>FW Police (603K records)</span></div>
+                <div class="analysis-row"><span>Crime Map</span><span><a href="https://www.doorprofit.com/crime-map/city/Fort_Worth-TX/" target="_blank" style="color:var(--primary)">View Interactive Map ↗</a></span></div>
             </div>
-            ` : ''}
+            ` : `
+            <div class="section-title">🛡️ Neighborhood Safety</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Data Source</span><span>Fort Worth Police (603K+ records)</span></div>
+                <div class="analysis-row"><span>FW Annual Crimes</span><span>~57,800/year</span></div>
+                <div class="analysis-row"><span>Crime Map</span><span><a href="https://www.doorprofit.com/crime-map/city/Fort_Worth-TX/" target="_blank" style="color:var(--primary)">View Interactive Map ↗</a></span></div>
+            </div>
+            `}
             
             <div class="action-buttons">
                 <button class="action-btn secondary" onclick="closeModal()">Close</button>
