@@ -6,6 +6,10 @@
 const http = require('http');
 const https = require('https');
 const url = require('url');
+const fs = require('fs');
+const path = require('path');
+
+const DOCS_DIR = __dirname;
 
 // ScraperAPI configuration
 const SCRAPER_API_KEY = '0b281e9035c595a332e175b172d8b36e';
@@ -213,9 +217,40 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'ok' }));
     }
+    // Properties API - serve from properties-cache.json
+    else if (parsedUrl.pathname === '/api/properties') {
+        const cacheFile = path.join(DOCS_DIR, 'properties-cache.json');
+        if (fs.existsSync(cacheFile)) {
+            const data = fs.readFileSync(cacheFile, 'utf8');
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(data);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ properties: [], count: 0 }));
+        }
+    }
+    // Static file serving
     else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Not found. Use /api/scrape?url=...' }));
+        let filePath = parsedUrl.pathname === '/' ? '/index.html' : parsedUrl.pathname;
+        const fullPath = path.join(DOCS_DIR, filePath);
+        const ext = path.extname(fullPath);
+        const contentTypes = {
+            '.html': 'text/html',
+            '.js': 'application/javascript',
+            '.css': 'text/css',
+            '.json': 'application/json',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.svg': 'image/svg+xml'
+        };
+        
+        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+            res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'text/plain' });
+            res.end(fs.readFileSync(fullPath));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not found');
+        }
     }
 });
 
