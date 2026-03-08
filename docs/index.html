@@ -197,9 +197,13 @@
             }
             properties = (data.data || []).map(p => ({
                 ...p,
-                beds: p.beds || '-',
-                baths: p.baths || '-',
-                sqft: p.sqft || '-',
+                beds: parseInt(p.beds) || 0,
+                baths: parseFloat(p.baths) || 0,
+                sqft: parseInt(p.sqft) || 0,
+                listed: parseInt(p.listed) || 0,
+                offer: parseFloat(p.offer) || 0,
+                cashFlow: parseInt(p.cashFlow) || 0,
+                coc: parseFloat(p.coc) || 0,
                 grade: p.grade || (p.coc >= 10 ? 'A' : p.coc >= 5 ? 'B' : p.coc > 0 ? 'C' : 'D'),
                 status: p.status === 'pass' || p.cashFlow > 0 ? 'pass' : 'fail'
             }));
