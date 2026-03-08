@@ -408,7 +408,7 @@
                 <div class="analysis-row ${cfClass}"><span>Unlevered Cash Flow</span><span>${formatMoney(unleveredCF)}/mo</span></div>
                 <div class="analysis-row ${cfClass}"><span>BTCF (Before-Tax)</span><span>${formatMoney(btcf)}/mo</span></div>
                 <div class="analysis-row ${cfClass}"><span>Cash on Cash</span><span style="color:${cocReturn >= 8 ? 'var(--success)' : cocReturn >= 5 ? 'var(--accent)' : 'var(--danger)'}">${cocReturn.toFixed(1)}% ${cocReturn >= 8 ? '🎯' : cocReturn >= 5 ? '✓' : '⚠️'}</span></div>
-                <div class="analysis-row"><span>1% Rule</span><span style="color:${onePct >= 1 ? 'var(--success)' : onePct >= 0.8 ? 'var(--accent)' : 'var(--danger)'}">${onePct.toFixed(2)}% ${onePct >= 1 ? '🎯' : onePct >= 0.8 ? '✓' : ''}</span></div>
+                <div class="analysis-row"><span>1% Rule</span><span style="color:${onePercentRule >= 1 ? 'var(--success)' : onePercentRule >= 0.8 ? 'var(--accent)' : 'var(--danger)'}">${onePercentRule.toFixed(2)}% ${onePercentRule >= 1 ? '🎯' : onePercentRule >= 0.8 ? '✓' : ''}</span></div>
                 <div class="analysis-row"><span>Cap Rate</span><span style="color:${capRate >= 6 ? 'var(--success)' : capRate >= 4 ? 'var(--accent)' : 'var(--danger)'}">${capRate.toFixed(1)}%</span></div>
                 <div class="analysis-row"><span>GRM</span><span>${grm.toFixed(1)}</span></div>
                 <div class="analysis-row"><span>DSCR</span><span style="color:${dscr >= 1.25 ? 'var(--success)' : 'var(--danger)'}">${dscr.toFixed(2)}</span></div>
