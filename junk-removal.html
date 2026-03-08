@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fort Worth Junk Removal - Fast, Affordable</title>
+    <style>
+        :root {
+            --primary: #22c55e;
+            --primary-dark: #16a34a;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray: #6b7280;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--dark) 0%, #374151 100%);
+            color: white;
+            padding: 4rem 1rem;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: #d1d5db;
+            margin-bottom: 2rem;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: background 0.3s;
+        }
+        
+        .cta-button:hover {
+            background: var(--primary-dark);
+        }
+        
+        .features {
+            padding: 4rem 1rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .features h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light);
+            border-radius: 12px;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .pricing {
+            background: var(--light);
+            padding: 4rem 1rem;
+        }
+        
+        .pricing-inner {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .pricing h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .price-table th, .price-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .price-table th {
+            background: var(--dark);
+            color: white;
+        }
+        
+        .price-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .price-table .price {
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+        }
+        
+        .quote-form {
+            padding: 4rem 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .quote-form h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        footer {
+            background: var(--dark);
+            color: #d1d5db;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <span class="badge">Fort Worth & Surrounding Areas</span>
+        <h1>🗑️ We Haul It All!</h1>
+        <p>Fast, affordable junk removal. Same-day service available.</p>
+        <a href="#quote" class="cta-button">Get Free Quote</a>
+    </section>
+    
+    <section class="features">
+        <h2>Why Choose Us?</h2>
+        <div class="feature-grid">
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Same-Day Service</h3>
+                <p>Most jobs completed within 24 hours. Call now!</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💰</div>
+                <h3>Up to 30% Cheaper</h3>
+                <p>We beat franchise prices. No hidden fees.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🏠</div>
+                <h3>Local Owned</h3>
+                <p>Fort Worth neighbor. We care about our community.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⭐</div>
+                <h3>5-Star Service</h3>
+                <p>We're rated 5 stars on Google. References available.</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="pricing">
+        <div class="pricing-inner">
+            <h2>Simple, Transparent Pricing</h2>
+            <table class="price-table">
+                <thead>
+                    <tr>
+                        <th>Load Size</th>
+                        <th>What's It Include?</th>
+                        <th>Price*</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Small Load</td>
+                        <td>1-2 pieces of furniture, bags of trash</td>
+                        <td class="price">$75-125</td>
+                    </tr>
+                    <tr>
+                        <td>1/4 Truck</td>
+                        <td>Small garage cleanout, single room</td>
+                        <td class="price">$125-175</td>
+                    </tr>
+                    <tr>
+                        <td>1/2 Truck</td>
+                        <td>Garage, basement, or hallway</td>
+                        <td class="price">$175-250</td>
+                    </tr>
+                    <tr>
+                        <td>Full Truck</td>
+                        <td>Whole house, estate cleanout</td>
+                        <td class="price">$300-400</td>
+                    </tr>
+                    <tr>
+                        <td>Commercial</td>
+                        <td>Offices, construction debris</td>
+                        <td class="price">Custom Quote</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 1rem; color: var(--gray); font-size: 0.875rem;">*Final price depends on weight, location, and items. Free on-site estimates!</p>
+        </div>
+    </section>
+    
+    <section class="quote-form" id="quote">
+        <h2>Get Your Free Quote</h2>
+        <form id="junkForm">
+            <div class="form-group">
+                <label for="name">Your Name</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email (optional)</label>
+                <input type="email" id="email" name="email">
+            </div>
+            <div class="form-group">
+                <label for="zip">ZIP Code</label>
+                <input type="text" id="zip" name="zip" required>
+            </div>
+            <div class="form-group">
+                <label for="load-size">Estimated Load Size</label>
+                <select id="load-size" name="load-size">
+                    <option value="">Not sure - describe below</option>
+                    <option value="small">Small (1-2 items)</option>
+                    <option value="quarter">1/4 Truck</option>
+                    <option value="half">1/2 Truck</option>
+                    <option value="full">Full Truck</option>
+                    <option value="commercial">Commercial</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="items">What items need to be removed?</label>
+                <textarea id="items" name="items" rows="4" placeholder="Furniture, appliances, boxes, etc."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="access">Access Notes</label>
+                <textarea id="access" name="access" rows="2" placeholder="Gate code, stairs, basement, etc."></textarea>
+            </div>
+            <button type="submit" class="submit-btn">Get My Free Quote</button>
+        </form>
+    </section>
+    
+    <footer>
+        <p>📞 Call or Text: (817) 555-0123</p>
+        <p style="margin-top: 0.5rem;">Serving Fort Worth, Arlington, NRH, Keller, & Surrounding Areas</p>
+        <p style="margin-top: 1rem; font-size: 0.875rem;">© 2026 Fort Worth Junk Removal. Licensed & Insured.</p>
+    </footer>
+    
+    <script>
+        document.getElementById('junkForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                zip: document.getElementById('zip').value,
+                loadSize: document.getElementById('load-size').value,
+                items: document.getElementById('items').value,
+                access: document.getElementById('access').value
+            };
+            
+            // Store in localStorage for now (could be sent to API)
+            const quotes = JSON.parse(localStorage.getItem('junkQuotes') || '[]');
+            quotes.push({...formData, date: new Date().toISOString()});
+            localStorage.setItem('junkQuotes', JSON.stringify(quotes));
+            
+            alert('Thanks! We\'ll call you within 2 hours with your quote. 📞');
+            this.reset();
+        });
+    </script>
+</body>
+</html>
