@@ -149,7 +149,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1238",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -166,7 +166,7 @@
       "beds": "2",
       "baths": "2",
       "sqft": "915",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -183,7 +183,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1420",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -200,7 +200,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1121",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -217,7 +217,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1688",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -234,7 +234,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1545",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -251,7 +251,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "1113",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -268,7 +268,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "988",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -285,7 +285,7 @@
       "beds": "2",
       "baths": "1",
       "sqft": "887",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -302,7 +302,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1462",
-      "isNew": true,
+      "isNew": false,
       "priceCut": true,
       "listedDate": "2026-03-06"
     },
@@ -319,7 +319,7 @@
       "beds": "3",
       "baths": "1",
       "sqft": "1200",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -336,7 +336,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1187",
-      "isNew": true,
+      "isNew": false,
       "priceCut": true,
       "listedDate": "2026-03-06"
     },
@@ -353,7 +353,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1400",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -370,7 +370,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1260",
-      "isNew": true,
+      "isNew": false,
       "priceCut": true,
       "listedDate": "2026-03-06"
     },
@@ -387,7 +387,7 @@
       "beds": "4",
       "baths": "2",
       "sqft": "1690",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
@@ -404,7 +404,7 @@
       "beds": "3",
       "baths": "2",
       "sqft": "1194",
-      "isNew": true,
+      "isNew": false,
       "priceCut": false,
       "listedDate": "2026-03-06"
     },
