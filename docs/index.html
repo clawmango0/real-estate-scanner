@@ -174,12 +174,17 @@
         }
     };
 
-    // Load properties from API
+    // Load properties from JSON file (works on both GitHub Pages and local server)
     let properties = [];
     async function loadProperties() {
         try {
-            const res = await fetch('/api/properties');
-            const data = await res.json();
+            // Try local server API first, fall back to static JSON
+            let res = await fetch('/api/properties');
+            let data = await res.json();
+            if (!data.data || data.data.length === 0) {
+                res = await fetch('/properties.json');
+                data = await res.json();
+            }
             properties = (data.data || []).map(p => ({
                 ...p,
                 beds: p.beds || '-',
