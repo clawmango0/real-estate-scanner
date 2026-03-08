@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Agent Activity Dashboard</title>
+    <style>
+        :root { 
+            --primary:#1E3A5F; --secondary:#2E7D32; --accent:#FF6B35; 
+            --success:#4CAF50; --danger:#F44336; --warning:#FF9800;
+            --bg:#0D1117; --card-bg:#161B22; --text:#E6EDF3; --text2:#8B949E; 
+            --border:#30363D; --hover:#21262D;
+            --purple:#9c27b0; --cyan:#00bcd4;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        
+        .header { 
+            background:linear-gradient(135deg,var(--purple),#1a1a2e); 
+            padding:1rem 2rem; border-bottom:1px solid var(--border);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .logo { display:flex; align-items:center; gap:0.75rem; }
+        .logo-icon { 
+            width:40px;height:40px;background:var(--secondary);border-radius:10px;
+            display:flex;align-items:center;justify-content:center;font-size:20px; 
+        }
+        .logo h1 { font-size:1.25rem; }
+        .logo span { color:var(--text2);font-size:0.8rem; }
+        
+        .live-indicator {
+            display:flex; align-items:center; gap:0.5rem;
+            background:var(--hover);padding:0.5rem 1rem;border-radius:20px;
+        }
+        .live-dot {
+            width:10px;height:10px;background:var(--cyan);border-radius:50%;
+            animation:pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%,100%{opacity:1;} 50%{opacity:0.4;}
+        }
+        
+        .status-bar {
+            background:var(--card-bg);padding:0.75rem 2rem;
+            display:flex;gap:2rem;font-size:0.85rem;border-bottom:1px solid var(--border);
+            flex-wrap:wrap;
+        }
+        .status-item { display:flex;align-items:center;gap:0.5rem; }
+        .status-label { color:var(--text2); }
+        .status-value { font-weight:600; }
+        .status-value.ok{color:var(--success)}.status-value.error{color:var(--danger)}.status-value.warning{color:var(--warning)}
+        
+        .main { padding:1.5rem 2rem;max-width:1600px;margin:0 auto; }
+        
+        .grid { display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem; }
+        @media(max-width:1200px){.grid{grid-template-columns:repeat(2,1fr)}}
+        
+        .card { 
+            background:var(--card-bg);border:1px solid var(--border);border-radius:12px;
+            padding:1.25rem; position:relative;overflow:hidden;
+        }
+        .card-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem; }
+        .card-title { font-size:0.75-color:var(--text2);text-transform:uppercase;letter-spacing:0.5px; }
+        .card-icon { font-size:1.25rem; }
+        
+        .metric { font-size:2rem;font-weight:700; }
+        .metric.success{color:var(--success)}.metric.danger{color:var(--danger)}.metric.accent{color:var(--accent)}
+        .metric.purple{color:var(--purple)}.metric.cyan{color:var(--cyan)}
+        .metric small { font-size:0.9rem;color:var(--text2);font-weight:400; }
+        
+        /* Agent Cards */
+        .agent-list { display:flex;flex-direction:column;gap:0.75rem; }
+        .agent-card {
+            background:var(--hover);border:1px solid var(--border);border-radius:10px;
+            padding:1rem;display:flex;align-items:center;gap:1rem;
+        }
+        .agent-avatar {
+            width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+            font-size:1.5rem;flex-shrink:0;
+        }
+        .agent-avatar.main{background:linear-gradient(135deg,var(--purple),var(--accent))}
+        .agent-avatar.sub{background:linear-gradient(135deg,var(--cyan),var(--secondary))}
+        
+        .agent-info { flex:1;min-width:0; }
+        .agent-name { font-weight:600;margin-bottom:0.25rem; }
+        .agent-detail { font-size:0.8rem;color:var(--text2); }
+        .agent-detail span { color:var(--text); }
+        
+        .agent-status {
+            padding:0.3rem 0.75rem;border-radius:20px;font-size:0.7rem;font-weight:600;
+        }
+        .agent-status.active{background:rgba(76,175,80,0.2);color:var(--success)}
+        
+        /* Activity Feed */
+        .activity-list { max-height:350px;overflow-y:auto; }
+        .activity-item {
+            padding:0.75rem;border-bottom:1px solid var(--border);
+            display:flex;gap:0.75rem;align-items:flex-start;
+        }
+        .activity-icon { 
+            width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+            font-size:0.9rem;flex-shrink:0;
+        }
+        .activity-icon.assistant{background:rgba(156,39,176,0.2)}
+        .activity-icon.user{background:rgba(0,188,212,0.2)}
+        
+        .activity-content { flex:1;min-width:0; }
+        .activity-title { font-size:0.85rem;margin-bottom:0.25rem; }
+        .activity-time { font-size:0.7rem;color:var(--text2); }
+        
+        /* Tool Calls */
+        .tool-call {
+            background:var(--hover);border-radius:8px;padding:0.75rem;margin-top:0.5rem;
+            font-family:monospace;font-size:0.75rem;
+        }
+        .tool-name { color:var(--cyan);font-weight:600; }
+        
+        /* Footer */
+        .footer { 
+            text-align:center;padding:1rem;color:var(--text2);font-size:0.75rem;
+            border-top:1px solid var(--border);margin-top:2rem;
+        }
+        
+        .badge { 
+            display:inline-block;padding:0.15rem 0.5rem;border-radius:4px;
+            font-size:0.65rem;margin-left:0.5rem;
+        }
+        .badge.model{background:rgba(0,188,212,0.2);color:var(--cyan)}
+        
+        .two-col { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+        @media(max-width:900px){.two-col{grid-template-columns:1fr}}
+        
+        .refresh-btn {
+            background:var(--hover);border:1px solid var(--border);
+            color:var(--text);padding:0.4rem 0.8rem;border-radius:6px;
+            cursor:pointer;font-size:0.8rem;
+        }
+        .refresh-btn:hover { background:var(--secondary); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🤖</div>
+            <div>
+                <h1>Agent Activity Dashboard</h1>
+                <span>OpenClaw Runtime Monitor</span>
+            </div>
+        </div>
+        <div class="live-indicator">
+            <div class="live-dot"></div>
+            <span>LIVE</span>
+            <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
+        </div>
+    </header>
+    
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-label">Runtime:</span>
+            <span class="status-value ok" id="runtimeStatus">Online</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Active Sessions:</span>
+            <span class="status-value" id="sessionCount">--</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Sub-agents:</span>
+            <span class="status-value" id="subagentCount">--</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Model:</span>
+            <span class="status-value" id="currentModel">--</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Total Tokens:</span>
+            <span class="status-value" id="totalTokens">--</span>
+        </div>
+    </div>
+    
+    <main class="main">
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Active Sessions</span>
+                    <span class="card-icon">💬</span>
+                </div>
+                <div class="metric purple" id="sessionsMetric">--</div>
+                <div class="sub-metric">active in last 60min</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Sub-agents Running</span>
+                    <span class="card-icon">🧠</span>
+                </div>
+                <div class="metric cyan" id="subagentsMetric">--</div>
+                <div class="sub-metric" id="subagentDetails">Loading...</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Input Tokens</span>
+                    <span class="card-icon">📥</span>
+                </div>
+                <div class="metric" id="inputTokens">--<small></small></div>
+                <div class="sub-metric" id="inputTokensDetail">--</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Output Tokens</span>
+                    <span class="card-icon">📤</span>
+                </div>
+                <div class="metric accent" id="outputTokens">--<small></small></div>
+                <div class="sub-metric" id="outputTokensDetail">--</div>
+            </div>
+        </div>
+        
+        <div class="two-col">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🤖 Active Sessions</span>
+                </div>
+                <div class="agent-list" id="agentList">
+                    <div style="padding:1rem;color:var(--text2);text-align:center;">Loading...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📜 Session Details</span>
+                </div>
+                <div id="sessionDetails" style="padding:1rem;">
+                    <div style="color:var(--text2);text-align:center;">Loading session data...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" style="margin-top:1rem;">
+            <div class="card-header">
+                <span class="card-title">🔧 OpenClaw CLI Tools Available</span>
+            </div>
+            <div style="padding:1rem;font-size:0.8rem;color:var(--text2);">
+                <code>openclaw sessions --json --active 60</code> - List active sessions<br>
+                <code>openclaw agents</code> - List configured agents<br>
+                <code>openclaw gateway status</code> - Gateway health
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        Last updated: <span id="lastUpdate">--</span> • Auto-refresh every 5s • Real OpenClaw Data
+    </footer>
+    
+    <script>
+        let agentData = { sessions: { sessions: [], count: 0 }, subagents: { total: 0, active: [] } };
+        
+        async function refreshAll() {
+            await loadAgentActivity();
+            updateUI();
+        }
+        
+        async function loadAgentActivity() {
+            try {
+                const res = await fetch('/api/agent-activity');
+                agentData = await res.json();
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+        
+        function fmtNumber(n) {
+            if (!n && n !== 0) return '--';
+            if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+            return n.toString();
+        }
+        
+        function timeAgo(ms) {
+            if (!ms) return '--';
+            const s = Math.floor(ms / 1000);
+            if (s < 60) return s + 's ago';
+            if (s < 3600) return Math.floor(s/60) + 'm ago';
+            return Math.floor(s/3600) + 'h ago';
+        }
+        
+        function updateUI() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+            
+            const sessions = agentData.sessions?.sessions || [];
+            const session = sessions[0];
+            
+            // Metrics
+            document.getElementById('sessionsMetric').textContent = sessions.length;
+            document.getElementById('sessionCount').textContent = sessions.length;
+            
+            const subagentCount = agentData.subagents?.active?.length || 0;
+            document.getElementById('subagentsMetric').textContent = subagentCount;
+            document.getElementById('subagentCount').textContent = subagentCount;
+            document.getElementById('subagentDetails').textContent = subagentCount > 0 ? `${subagentCount} running` : 'No active sub-agents';
+            
+            // Real token data
+            const inputTokens = session?.inputTokens || 0;
+            const outputTokens = session?.outputTokens || 0;
+            const totalTokens = session?.totalTokens || 0;
+            const contextTokens = session?.contextTokens || 200000;
+            
+            document.getElementById('inputTokens').innerHTML = fmtNumber(inputTokens);
+            document.getElementById('outputTokens').innerHTML = fmtNumber(outputTokens);
+            document.getElementById('totalTokens').textContent = fmtNumber(totalTokens);
+            document.getElementById('currentModel').textContent = session?.model || '--';
+            
+            // Context usage
+            const contextPct = Math.round((totalTokens / contextTokens) * 100);
+            document.getElementById('inputTokensDetail').textContent = `${contextPct}% of context`;
+            
+            // Session details
+            document.getElementById('sessionDetails').innerHTML = session ? `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div>
+                        <div style="font-size:0.7rem;color:var(--text2);">SESSION ID</div>
+                        <div style="font-size:0.8rem;font-family:mon;">${session.sessionId?.slice(0,18)}...</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem;color:var(--text2);">KEY</div>
+                        <div style="font-size:0.8rem;font-family:mon;">${session.key}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem;color:var(--text2);">LAST UPDATED</div>
+                        <div style="font-size:0.8rem;">${timeAgo(session.ageMs)}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem;color:var(--text2);">PROVIDER</div>
+                        <div style="font-size:0.8rem;">${session.modelProvider}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem;color:var(--text2);">CONTEXT LIMIT</div>
+                        <div style="font-size:0.8rem;">${fmtNumber(contextTokens)} tokens</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem;color:var(--text2);">USAGE</div>
+                        <div style="font-size:0.8rem;">${contextPct}% used</div>
+                    </div>
+                </div>
+            ` : '<div style="color:var(--text2);">No active session</div>';
+            
+            // Agent list
+            const agentList = document.getElementById('agentList');
+            if (sessions.length > 0) {
+                agentList.innerHTML = sessions.map(s => `
+                    <div class="agent-card">
+                        <div class="agent-avatar main">🥭</div>
+                        <div class="agent-info">
+                            <div class="agent-name">Mango <span class="badge model">${s.model}</span></div>
+                            <div class="agent-detail">${s.kind} • <span>${s.modelProvider}</span></div>
+                        </div>
+                        <span class="agent-status active">Active</span>
+                    </div>
+                `).join('');
+            } else {
+                agentList.innerHTML = '<div style="padding:1rem;color:var(--text2);text-align:center;">No active sessions</div>';
+            }
+        }
+        
+        // Initial load
+        refreshAll();
+        setInterval(refreshAll, 5000);
+    </script>
+</body>
+</html>
