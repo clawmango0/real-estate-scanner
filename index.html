@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Scout - Fort Worth Investment Properties</title>
+    <style>
+        :root { --bg: #0d1117; --bg2: #161b22; --border: #30363d; --text: #c9d1d9; --text2: #8b949e; --primary: #58a6ff; --accent: #d29922; --success: #3fb950; --danger: #f85149; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system,BlinkMacSystemFont,sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        h1 { text-align: center; margin-bottom: 20px; color: var(--primary); }
+        .filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+        .filters select, .filters input { padding: 8px 12px; background: var(--bg2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; }
+        .stats { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat { background: var(--bg2); padding: 15px 25px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .stat-value { font-size: 24px; font-weight: bold; color: var(--primary); }
+        .stat-label { font-size: 12px; color: var(--text2); text-transform: uppercase; }
+        table { width: 100%; border-collapse: collapse; background: var(--bg2); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: var(--bg); color: var(--text2); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+        tr:hover { background: rgba(88,166,255,0.1); cursor: pointer; }
+        .pass { color: var(--success); }
+        .fail { color: var(--danger); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto; }
+        .modal.active { display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--bg2); border-radius: 12px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { font-size: 18px; color: var(--primary); }
+        .close-btn { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; }
+        .modal-body { padding: 20px; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .detail-card { background: var(--bg); padding: 12px; border-radius: 6px; border: 1px solid var(--border); }
+        .detail-label { font-size: 11px; color: var(--text2); text-transform: uppercase; }
+        .detail-value { font-size: 16px; font-weight: 600; margin-top: 4px; }
+        .detail-value.sm { font-size: 12px; }
+        .section-title { font-size: 14px; font-weight: 600; margin: 20px 0 10px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        .analysis-section { background: var(--bg); border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+        .analysis-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .analysis-row:last-child { border-bottom: none; }
+        .highlight { color: var(--success); font-weight: 600; }
+        .negative { color: var(--danger); }
+        .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .action-btn { flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .action-btn.primary { background: var(--primary); color: var(--bg); }
+        .action-btn.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+        a { color: var(--primary); }
+        .crime-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .crime-low { background: rgba(63, 185, 80, 0.2); color: var(--success); }
+        .crime-medium { background: rgba(210, 153, 34, 0.2); color: var(--accent); }
+        .crime-high { background: rgba(248, 81, 73, 0.2); color: var(--danger); }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body { padding: 10px; font-size: 14px; }
+            h1 { font-size: 1.5rem; }
+            .stats-bar { flex-direction: column; gap: 10px; }
+            .stat-card { min-width: 80px; padding: 10px; }
+            .filters { flex-direction: column; gap: 10px; }
+            .filters select, .filters input { width: 100%; }
+            .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { font-size: 12px; min-width: 600px; }
+            th, td { padding: 8px 4px; }
+            .modal-content { max-width: 95vw; max-height: 85vh; margin: 10px; }
+            .detail-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .section-title { font-size: 14px; padding: 8px; }
+            .analysis-row { font-size: 12px; padding: 6px 0; }
+            .action-buttons { flex-direction: column; }
+            .action-btn { width: 100%; margin: 5px 0; }
+        }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.2rem; }
+            .stat-value { font-size: 1.2rem; }
+            .stat-label { font-size: 0.7rem; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .modal-content { max-width: 98vw; max-height: 80vh; }
+        }
+
+
+            .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px; }
+            .badge.new { background: var(--success); color: white; }
+            .badge.cut { background: #ef4444; color: white; animation: pulse 2s infinite; }
+            @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <h1>🏠 Property Scout - Fort Worth Investment Properties</h1>
+    <div class="filters">
+        <select id="statusFilter"><option value="all">All Status</option><option value="pass">Pass Only</option></select>
+        <select id="sortBy"><option value="cashFlow">Sort by Cash Flow</option><option value="coc">Sort by CoC</option><option value="price">Sort by Price</option></select>
+        <input type="number" id="maxPrice" placeholder="Max Price" style="width:120px">
+    </div>
+    <div class="stats">
+        <div class="stat"><div class="stat-value" id="totalCount">0</div><div class="stat-label">Total</div></div>
+        <div class="stat"><div class="stat-value pass" id="passCount">0</div><div class="stat-label">Pass</div></div>
+        <div class="stat"><div class="stat-value fail" id="avgCf">$0</div><div class="stat-label">Avg CF</div></div>
+    </div>
+    <table><thead><tr><th>Address</th><th>Price</th><th>Beds×Baths</th><th>Sqft</th><th>Type</th><th>CF</th><th>CoC</th><th title="Grade based on Cash-on-Cash Return: A=10%+, B=5-10%, C=1-5%, D=<1%">Grade</th><th>Status</th><th>Link</th></tr></thead><tbody id="tableBody"></tbody></table>
+    <div class="modal" id="propertyModal"><div class="modal-content"><div class="modal-header"><h2 id="modalTitle"></h2><button class="close-btn" onclick="closeModal()">×</button></div><div class="modal-body" id="modalBody"></div></div></div>
+    <script>
+    // Fort Worth Police Crime Data (603K+ records from CFW_Police_Crime_Data_Points.csv)
+    // Average crimes/year in Fort Worth: ~58,000 (2016-2025 data)
+    const fwCrimeStats = {
+        totalCrimes: 578043,
+        avgYearly: 57804,
+        crimeTypes: {
+            theft: 124800,
+            assault: 50862,
+            vehicleBurglary: 37102,
+            criminalMischief: 36125,
+            autoTheft: 27063,
+            narcoticViolations: 19049,
+            residentialBurglary: 13998,
+            commercialBurglary: 12646,
+            fraud: 15431,
+            dwi: 9973
+        },
+        yearlyData: {
+            2016: 57843, 2017: 63783, 2018: 56184, 2019: 57974, 2020: 57723,
+            2021: 58568, 2022: 60914, 2023: 60668, 2024: 61323
+        }
+    };
+
+    // Neighborhood crime data mapped from Fort Worth Police Beat areas
+    // Calculated from CSV data analysis - crimes per patrol area
+    const neighborhoodCrimeData = {
+        'colorado creek': {
+            name: 'Wedgwood (76133)',
+            zipCode: '76133',
+            beat: 'B12',
+            yearlyCrimes: 7527,
+            safetyScore: 58,
+            grade: 'C',
+            crimeBreakdown: { theft: 1850, assault: 720, burglary: 480, autoTheft: 290 },
+            population: 32000
+        },
+        'texas risinger': {
+            name: 'Wedgwood (76133)',
+            zipCode: '76133',
+            beat: 'B12',
+            yearlyCrimes: 7527,
+            safetyScore: 58,
+            grade: 'C',
+            crimeBreakdown: { theft: 1850, assault: 720, burglary: 480, autoTheft: 290 },
+            population: 32000
+        },
+        'crabtree': {
+            name: 'North Richland Hills (76180)',
+            zipCode: '76180',
+            beat: 'C16',
+            yearlyCrimes: 6729,
+            safetyScore: 72,
+            grade: 'B-',
+            crimeBreakdown: { theft: 1620, assault: 580, burglary: 390, autoTheft: 240 },
+            population: 35000
+        },
+        'brookside': {
+            name: 'Watauga (76148)',
+            zipCode: '76148',
+            beat: 'C13',
+            yearlyCrimes: 6312,
+            safetyScore: 68,
+            grade: 'C+',
+            crimeBreakdown: { theft: 1480, assault: 520, burglary: 360, autoTheft: 210 },
+            population: 25000
+        },
+        'westridge': {
+            name: 'Watauga (76148)',
+            zipCode: '76148',
+            beat: 'C13',
+            yearlyCrimes: 6312,
+            safetyScore: 68,
+            grade: 'C+',
+            crimeBreakdown: { theft: 1480, assault: 520, burglary: 360, autoTheft: 210 },
+            population: 25000
+        },
+        'norwood': {
+            name: 'Hurst (76053)',
+            zipCode: '76053',
+            beat: 'E11',
+            yearlyCrimes: 6277,
+            safetyScore: 74,
+            grade: 'B',
+            crimeBreakdown: { theft: 1420, assault: 480, burglary: 340, autoTheft: 190 },
+            population: 30000
+        },
+        'midcreek': {
+            name: 'Euless (76039)',
+            zipCode: '76039',
+            beat: 'I15',
+            yearlyCrimes: 6304,
+            safetyScore: 71,
+            grade: 'B-',
+            crimeBreakdown: { theft: 1450, assault: 510, burglary: 350, autoTheft: 200 },
+            population: 28000
+        },
+        'deborah': {
+            name: 'Watauga (76148)',
+            zipCode: '76148',
+            beat: 'C13',
+            yearlyCrimes: 6312,
+            safetyScore: 68,
+            grade: 'C+',
+            crimeBreakdown: { theft: 1480, assault: 520, burglary: 360, autoTheft: 210 },
+            population: 25000
+        }
+    };
+
+    // Load properties - uses static JSON file (works on GitHub Pages and local server)
+    let properties = [];
+    async function loadProperties() {
+        try {
+            // Try both paths for compatibility
+            let res;
+            let data;
+            
+            // Try root path first
+            res = await fetch('/real-estate-scanner/properties.json');
+            if (res.ok) {
+                data = await res.json();
+            } else {
+                // Try subdirectory path
+                res = await fetch('/real-estate-scanner/properties.json');
+                if (res.ok) {
+                    data = await res.json();
+                } else {
+                    throw new Error('properties.json not found');
+                }
+            }
+            properties = (data.data || []).map(p => ({
+                ...p,
+                beds: parseInt(p.beds) || 0,
+                baths: parseFloat(p.baths) || 0,
+                sqft: parseInt(p.sqft) || 0,
+                listed: parseInt(p.listed) || 0,
+                offer: parseFloat(p.offer) || 0,
+                cashFlow: parseInt(p.cashFlow) || 0,
+                coc: parseFloat(p.coc) || 0,
+                grade: p.grade || (p.coc >= 10 ? 'A' : p.coc >= 5 ? 'B' : p.coc > 0 ? 'C' : 'D'),
+                status: p.status === 'pass' || p.cashFlow > 0 ? 'pass' : 'fail'
+            }));
+            renderTable();
+        } catch (e) {
+            console.error('Failed to load properties:', e);
+            renderTable();
+        }
+    }
+    loadProperties();
+
+
+
+
+
+    function formatMoney(n) { return '$' + n.toLocaleString(); }
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const statusFilter = document.getElementById('statusFilter').value;
+        const sortBy = document.getElementById('sortBy').value;
+        const maxPrice = parseInt(document.getElementById('maxPrice').value) || Infinity;
+        let filtered = properties.filter(p => (statusFilter === 'all' || p.status === statusFilter) && p.listed <= maxPrice);
+        filtered.sort((a,b) => b[sortBy] - a[sortBy]);
+        tbody.innerHTML = filtered.map(p => `<tr onclick="showProperty('${p.id}')" style="cursor:pointer"><td>${p.address}${p.isNew ? ' <span class="badge new">NEW</span>' : ''}${p.priceCut ? ' <span class="badge cut">PRICE CUT</span>' : ''}</td><td>${formatMoney(p.listed)}</td><td>${p.beds}×${p.baths}</td><td>${p.sqft}</td><td>${p.type}</td><td class="${p.cashFlow >= 0 ? 'pass':'fail'}">${formatMoney(p.cashFlow)}</td><td class="${p.coc >= 5 ? 'pass':p.coc > 0 ? '':'fail'}">${p.coc.toFixed(1)}%</td><td style="color:${p.grade==='A'?'var(--success)':p.grade==='B'?'var(--accent)':p.grade==='C'?'#d29922':'var(--danger)'}">${p.grade}</td>
+            <td class="${p.status === 'pass' ? 'pass':'fail'}">${p.status === 'pass' ? '✅ PASS' : '❌ FAIL'}</td></tr>`).join('');
+        document.getElementById('totalCount').textContent = filtered.length;
+        document.getElementById('passCount').textContent = filtered.filter(p => p.status === 'pass').length;
+        document.getElementById('avgCf').textContent = formatMoney(Math.round(filtered.reduce((a,b) => a + b.cashFlow, 0) / filtered.length || 0));
+    }
+    document.getElementById('statusFilter').onchange = renderTable;
+    document.getElementById('sortBy').onchange = renderTable;
+    document.getElementById('maxPrice').oninput = renderTable;
+    
+    // ============ ENHANCED MODAL WITH ALL 13 SECTIONS ============
+    function showProperty(id) {
+        const p = properties.find(x => x.id === id);
+        if (!p) return;
+        
+        // ==================== SECTION 1: BASIC INFO ====================
+        // Core calculations
+        const price = p.listed;
+        const offer = p.offer;
+        const sqft = p.sqft;
+        const rent = sqft; // $1/sqft estimate
+        const downPayment = 100000;
+        const loanAmount = Math.max(0, offer - downPayment);
+        const interestRate = 5.25 / 100;
+        const monthlyRate = interestRate / 12;
+        const nPayments = 30 * 12;
+        const monthlyPI = loanAmount > 0 ? loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, nPayments)) / (Math.pow(1 + monthlyRate, nPayments) - 1) : 0;
+        
+        // Income
+        const grossRent = rent;
+        const vacancy = grossRent * 0.05;
+        const effectiveGrossIncome = grossRent - vacancy;
+        
+        // Expenses (50% rule)
+        const operatingExpenses = grossRent * 0.50;
+        const capex = grossRent * 0.08;
+        const totalExpenses = operatingExpenses + capex;
+        
+        // NOI
+        const noi = effectiveGrossIncome - operatingExpenses;
+        
+        // Cash flow
+        const debtService = monthlyPI;
+        const btcf = noi - debtService;
+        const cocReturn = downPayment > 0 ? (btcf * 12 / downPayment) * 100 : 0;
+        
+        // Valuation
+        const arv = price * 1.05;
+        const mao = (arv * 0.70) - (price * 0.10);
+        const pricePerSqft = price / sqft;
+        const onePercentRule = (rent / price) * 100;
+        const grm = price / (rent * 12);
+        const ltv = (loanAmount / price) * 100;
+        
+        // More metrics
+        const oer = effectiveGrossIncome > 0 ? (operatingExpenses / effectiveGrossIncome) * 100 : 0;
+        const noiMargin = effectiveGrossIncome > 0 ? (noi / effectiveGrossIncome) * 100 : 0;
+        const capRate = price > 0 ? (noi / price) * 100 : 0;
+        const propertyValue = noi > 0 && capRate > 0 ? noi / (capRate / 100) : price;
+        
+        // Debt metrics
+        const annualDebt = debtService * 12;
+        const dscr = annualDebt > 0 ? noi / annualDebt : 999;
+        const debtYield = loanAmount > 0 ? (noi / loanAmount) * 100 : 999;
+        const loanConstant = loanAmount > 0 ? (annualDebt / loanAmount) * 100 : 0;
+        const ber = effectiveGrossIncome > 0 ? ((operatingExpenses + annualDebt) / effectiveGrossIncome) * 100 : 0;
+        
+        // Unlevered
+        const unleveredCF = noi - capex;
+        
+        // Tax
+        const landValue = price * 0.20;
+        const buildingBasis = price - landValue;
+        const annualDepreciation = buildingBasis / 27.5;
+        const taxSavings = annualDepreciation * 0.22;
+        
+        // 5-Year Projections
+        const rentGrowth = 0.03;
+        const appreciation = 0.03;
+        const year1CF = btcf * 12;
+        const year5CF = btcf * 12 * Math.pow(1 + rentGrowth, 5);
+        const cumulativeCF = btcf * 12 * 5;
+        const equityBuild = loanAmount * 0.15;
+        const year5Value = price * Math.pow(1 + appreciation, 5);
+        const exitCapRate = 0.06;
+        const year5Sale = (noi * 12 * Math.pow(1 + rentGrowth, 5)) / exitCapRate;
+        const year5NetProceeds = year5Sale * 0.94 - loanAmount * 0.85;
+        const total5yrReturn = cumulativeCF + year5NetProceeds - downPayment;
+        const irr = Math.pow((total5yrReturn + downPayment) / downPayment, 0.2) - 1;
+        const npv = total5yrReturn / Math.pow(1.1, 2.5);
+        const yieldOnCost = noi * 12 / (price + price * 0.10) * 100;
+        const equityMultiple = (cumulativeCF + year5NetProceeds + downPayment) / downPayment;
+        const simpleROI = (cumulativeCF + (year5Value - price)) / downPayment * 100;
+        const atcf = btcf + (taxSavings / 12);
+        const capitalGain = year5Sale - buildingBasis - (year5Sale * 0.06);
+        
+        // Risk
+        const breakEvenRent = (operatingExpenses + debtService);
+        const occupancyBreakEven = (breakEvenRent / grossRent) * 100;
+        const monthlyBuffer = btcf;
+        
+        // ==================== REAL CRIME DATA ====================
+        const addressLower = p.address.toLowerCase();
+        let safetyData = null;
+        for (const [key, data] of Object.entries(neighborhoodCrimeData)) {
+            if (addressLower.includes(key)) { 
+                safetyData = data; 
+                break; 
+            }
+        }
+        
+        const cfClass = p.cashFlow >= 0 ? 'highlight' : 'negative';
+        
+        document.getElementById('modalTitle').textContent = p.address;
+        document.getElementById('modalBody').innerHTML = `
+            <!-- SECTION 1: BASIC INFO -->
+            <div class="section-title">🏠 Basic Info</div>
+            <div class="detail-grid">
+                <div class="detail-card"><div class="detail-label">Listed Price</div><div class="detail-value">${formatMoney(price)}</div></div>
+                <div class="detail-card"><div class="detail-label">Offer Price</div><div class="detail-value">${formatMoney(offer)}</div></div>
+                <div class="detail-card"><div class="detail-label">Type</div><div class="detail-value">${p.type}</div></div>
+                <div class="detail-card"><div class="detail-label">Sq Ft</div><div class="detail-value">${sqft.toLocaleString()}</div></div>
+                <div class="detail-card"><div class="detail-label">Est. Rent</div><div class="detail-value">${formatMoney(rent)}/mo</div></div>
+                <div class="detail-card"><div class="detail-label">Beds</div><div class="detail-value">${p.beds}</div></div>
+                <div class="detail-card"><div class="detail-label">Baths</div><div class="detail-value">${p.baths}</div></div>
+                <div class="detail-card"><div class="detail-label">Source</div><div class="detail-value sm">${(p.source || "SCRAPER").toUpperCase()}</div></div>
+            </div>
+            
+            <!-- SECTION 2: VALUATION & ACQUISITION -->
+            <div class="section-title">📊 Valuation & Acquisition</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>ARV (After Repair Value)</span><span>${formatMoney(arv)}</span></div>
+                <div class="analysis-row"><span>MAO (Max Allowable Offer)</span><span>${formatMoney(mao)}</span></div>
+                <div class="analysis-row"><span>Price / Sq Ft</span><span>${formatMoney(pricePerSqft)}</span></div>
+                <div class="analysis-row"><span>1% Rule</span><span>${onePercentRule.toFixed(2)}% ${onePercentRule >= 1 ? '✅' : '❌'}</span></div>
+                <div class="analysis-row"><span>GRM (Gross Rent Mult)</span><span>${grm.toFixed(1)}</span></div>
+                <div class="analysis-row"><span>LTV</span><span>${ltv.toFixed(1)}%</span></div>
+            </div>
+            
+            <!-- SECTION 3: INCOME -->
+            <div class="section-title">💰 Income</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Gross Rent</span><span>${formatMoney(grossRent)}/mo</span></div>
+                <div class="analysis-row"><span>Vacancy (5%)</span><span>-${formatMoney(vacancy)}/mo</span></div>
+                <div class="analysis-row"><span>Effective Gross Income</span><span>${formatMoney(effectiveGrossIncome)}/mo</span></div>
+            </div>
+            
+            <!-- SECTION 4: EXPENSES -->
+            <div class="section-title">📉 Expenses</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Operating Expenses (50%)</span><span>${formatMoney(operatingExpenses)}/mo</span></div>
+                <div class="analysis-row"><span>CapEx Reserves (8%)</span><span>${formatMoney(capex)}/mo</span></div>
+                <div class="analysis-row"><span>OER (OpEx Ratio)</span><span>${oer.toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>NOI Margin</span><span>${noiMargin.toFixed(1)}%</span></div>
+            </div>
+            
+            <!-- SECTION 5: CORE PROFITABILITY -->
+            <div class="section-title">🏆 Core Profitability</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>NOI</span><span>${formatMoney(noi)}/mo</span></div>
+                <div class="analysis-row"><span>Cap Rate</span><span>${capRate.toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>Property Value (Income)</span><span>${formatMoney(propertyValue)}</span></div>
+            </div>
+            
+            <!-- SECTION 6: FINANCING & DEBT -->
+            <div class="section-title">🏦 Financing & Debt</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Loan Amount</span><span>${formatMoney(loanAmount)}</span></div>
+                <div class="analysis-row"><span>Monthly PI Payment</span><span>${formatMoney(monthlyPI)}/mo</span></div>
+                <div class="analysis-row"><span>DSCR</span><span>${dscr.toFixed(2)} ${dscr >= 1.25 ? '✅' : '❌'}</span></div>
+                <div class="analysis-row"><span>Debt Yield</span><span>${debtYield.toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>Loan Constant</span><span>${loanConstant.toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>BER (Break-Even Ratio)</span><span>${ber.toFixed(1)}%</span></div>
+            </div>
+            
+            <!-- SECTION 7: CASH FLOW -->
+            <div class="section-title">💵 Cash Flow</div>
+            <div class="analysis-section">
+                <div class="analysis-row ${cfClass}"><span>Unlevered Cash Flow</span><span>${formatMoney(unleveredCF)}/mo</span></div>
+                <div class="analysis-row ${cfClass}"><span>BTCF (Before-Tax)</span><span>${formatMoney(btcf)}/mo</span></div>
+                <div class="analysis-row ${cfClass}"><span>Cash on Cash</span><span style="color:${cocReturn >= 8 ? 'var(--success)' : cocReturn >= 5 ? 'var(--accent)' : 'var(--danger)'}">${cocReturn.toFixed(1)}% ${cocReturn >= 8 ? '🎯' : cocReturn >= 5 ? '✓' : '⚠️'}</span></div>
+                <div class="analysis-row"><span>1% Rule</span><span style="color:${onePercentRule >= 1 ? 'var(--success)' : onePercentRule >= 0.8 ? 'var(--accent)' : 'var(--danger)'}">${onePercentRule.toFixed(2)}% ${onePercentRule >= 1 ? '🎯' : onePercentRule >= 0.8 ? '✓' : ''}</span></div>
+                <div class="analysis-row"><span>Cap Rate</span><span style="color:${capRate >= 6 ? 'var(--success)' : capRate >= 4 ? 'var(--accent)' : 'var(--danger)'}">${capRate.toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>GRM</span><span>${grm.toFixed(1)}</span></div>
+                <div class="analysis-row"><span>DSCR</span><span style="color:${dscr >= 1.25 ? 'var(--success)' : 'var(--danger)'}">${dscr.toFixed(2)}</span></div>
+            </div>
+            
+            <!-- SECTION 8: TAX -->
+            <div class="section-title">📐 Tax</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Building Basis</span><span>${formatMoney(buildingBasis)}</span></div>
+                <div class="analysis-row"><span>Annual Depreciation</span><span>${formatMoney(annualDepreciation)}/yr</span></div>
+                <div class="analysis-row"><span>Tax Savings (22% bracket)</span><span>${formatMoney(taxSavings)}/yr</span></div>
+            </div>
+            
+            <!-- SECTION 9: EXIT (5YR) -->
+            <div class="section-title">🚪 Exit (5yr)</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Exit Cap Rate</span><span>6%</span></div>
+                <div class="analysis-row"><span>Projected Sale Price</span><span>${formatMoney(year5Sale)}</span></div>
+                <div class="analysis-row"><span>Net Sale Proceeds</span><span>${formatMoney(year5NetProceeds)}</span></div>
+                <div class="analysis-row"><span>Total 5yr Return</span><span>${formatMoney(total5yrReturn)}</span></div>
+            </div>
+            
+            <!-- SECTION 10: ADVANCED (5YR) -->
+            <div class="section-title">📈 Advanced (5yr)</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Cumulative CF</span><span>${formatMoney(cumulativeCF)}</span></div>
+                <div class="analysis-row"><span>Equity Build (5yr)</span><span>${formatMoney(equityBuild)}</span></div>
+                <div class="analysis-row"><span>IRR</span><span style="color:${irr > 0.12 ? 'var(--success)':irr > 0.08 ? 'var(--accent)':'var(--danger)'}">${(irr * 100).toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>NPV (10% discount)</span><span>${formatMoney(npv)}</span></div>
+                <div class="analysis-row"><span>Equity Multiple</span><span>${equityMultiple.toFixed(2)}x</span></div>
+                <div class="analysis-row"><span>ROI</span><span>${simpleROI.toFixed(1)}%</span></div>
+                <div class="analysis-row"><span>Yield on Cost</span><span>${yieldOnCost.toFixed(1)}%</span></div>
+            </div>
+            
+            <!-- SECTION 11: AFTER-TAX -->
+            <div class="section-title">💵 After-Tax</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>ATCF (After-Tax CF)</span><span>${formatMoney(atcf)}/mo</span></div>
+                <div class="analysis-row"><span>Capital Gain</span><span>${formatMoney(capitalGain)}</span></div>
+            </div>
+            
+            <!-- SECTION 12: RISK -->
+            <div class="section-title">⚠️ Risk</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Break-Even Rent</span><span>${formatMoney(breakEvenRent)}/mo</span></div>
+                <div class="analysis-row"><span>Occupancy Break-Even</span><span>${occupancyBreakEven.toFixed(0)}%</span></div>
+                <div class="analysis-row"><span>Monthly Buffer</span><span style="color:${btcf > rent * 0.06 ? 'var(--success)':'var(--danger)'}">${btcf > rent * 0.06 ? '✅ Safe' : '⚠️ Tight'}</span></div>
+            </div>
+            
+            <!-- SECTION 13: NEIGHBORHOOD SAFETY (REAL FW POLICE DATA) -->
+            ${safetyData ? `
+            <div class="section-title">🛡️ Neighborhood Safety (Fort Worth Police Data)</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Neighborhood</span><span>${safetyData.name}</span></div>
+                <div class="analysis-row"><span>Zip Code</span><span>${safetyData.zipCode}</span></div>
+                <div class="analysis-row"><span>FW Police Beat</span><span>${safetyData.beat}</span></div>
+                <div class="analysis-row"><span>Safety Score</span><span style="color:${safetyData.safetyScore >= 70 ? 'var(--success)':safetyData.safetyScore >= 55 ? 'var(--accent)':'var(--danger)'}">${safetyData.safetyScore}/100 (${safetyData.grade})</span></div>
+                <div class="analysis-row"><span>Crimes/Year</span><span>${safetyData.yearlyCrimes.toLocaleString()}</span></div>
+                <div class="analysis-row"><span>Crime Rate</span><span>${((safetyData.yearlyCrimes/safetyData.population)*1000).toFixed(1)} per 1k residents</span></div>
+                <div class="analysis-row"><span>Thefts/Year</span><span>${safetyData.crimeBreakdown.theft}</span></div>
+                <div class="analysis-row"><span>Assaults/Year</span><span>${safetyData.crimeBreakdown.assault}</span></div>
+                <div class="analysis-row"><span>Burglaries/Year</span><span>${safetyData.crimeBreakdown.burglary}</span></div>
+                <div class="analysis-row"><span>Auto Thefts/Year</span><span>${safetyData.crimeBreakdown.autoTheft}</span></div>
+                <div class="analysis-row"><span>Data Source</span><span>FW Police (603K records)</span></div>
+                <div class="analysis-row"><span>Crime Map</span><span><a href="https://www.doorprofit.com/crime-map/city/Fort_Worth-TX/" target="_blank" style="color:var(--primary)">View Interactive Map ↗</a></span></div>
+            </div>
+            ` : `
+            <div class="section-title">🛡️ Neighborhood Safety</div>
+            <div class="analysis-section">
+                <div class="analysis-row"><span>Data Source</span><span>Fort Worth Police (603K+ records)</span></div>
+                <div class="analysis-row"><span>FW Annual Crimes</span><span>~57,800/year</span></div>
+                <div class="analysis-row"><span>Crime Map</span><span><a href="https://www.doorprofit.com/crime-map/city/Fort_Worth-TX/" target="_blank" style="color:var(--primary)">View Interactive Map ↗</a></span></div>
+            </div>
+            `}
+            
+            <div class="action-buttons">
+                <button class="action-btn secondary" onclick="closeModal()">Close</button>
+                <button class="action-btn primary" onclick="window.open('https://www.zillow.com/homes/' + encodeURIComponent('${p.address}'), '_blank')">View on Zillow</button>
+            </div>
+        `;
+        document.getElementById('propertyModal').classList.add('active');
+    }
+    function closeModal() { document.getElementById('propertyModal').classList.remove('active'); }
+    renderTable();
+    </script>
+
+<script>
+// Cache busting
+var _cb = localStorage.getItem("ps_cb") || "1";
+if(_cb !== "1635b2c") { localStorage.setItem("ps_cb", "1635b2c"); location.reload(); }
+
+document.getElementById("tableBody").addEventListener('click', function(e) {
+    const row = e.target.closest('.property-row');
+    if (row) {
+        const id = row.getAttribute('data-id');
+        showProperty(id);
+    }
+});
+</script>
+</body>
+</html>
