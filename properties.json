@@ -1053,6 +1053,57 @@
       "isNew": true,
       "priceCut": false,
       "listedDate": "2026-03-10"
+    },
+    {
+      "id": "1213-Glenn-Dr",
+      "address": "1213 Glenn Dr, Euless, TX 76039",
+      "listed": 257500,
+      "offer": 218875,
+      "type": "Single Family Residence",
+      "cashFlow": -519,
+      "coc": -8.6,
+      "status": "FAIL",
+      "url": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1136",
+      "isNew": true,
+      "priceCut": true,
+      "listedDate": "2026-03-10"
+    },
+    {
+      "id": "3950-Cypress-Wood-Ct",
+      "address": "3950 Cypress Wood Ct, Fort Worth, TX 76133",
+      "listed": 189900,
+      "offer": 161415,
+      "type": "Single Family Residence",
+      "cashFlow": 361,
+      "coc": 8.2,
+      "status": "PASS",
+      "url": "",
+      "beds": "4",
+      "baths": "2",
+      "sqft": "1830",
+      "isNew": true,
+      "priceCut": false,
+      "listedDate": "2026-03-10"
+    },
+    {
+      "id": "709-Cozby-St-N",
+      "address": "709 Cozby St N, Benbrook, TX 76126",
+      "listed": 265000,
+      "offer": 225250,
+      "type": "Single Family Residence",
+      "cashFlow": -388,
+      "coc": -6.3,
+      "status": "FAIL",
+      "url": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1363",
+      "isNew": true,
+      "priceCut": true,
+      "listedDate": "2026-03-10"
     }
   ]
 }
