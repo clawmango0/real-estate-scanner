@@ -189,7 +189,7 @@
 
 <header class="header">
   <div class="header-left">
-    <div class="logo">🏠</div>
+    <div class="logo"><svg width="22" height="20" viewBox="0 0 22 20" fill="none" style="color:var(--amber)"><path d="M1 9.5L11 2L21 9.5V19H15V13H7V19H1V9.5Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg></div>
     <div class="title-block">
       <h1>Fort Worth Property Scout</h1>
       <p>Investment Analyzer · Updated Feb 26, 2026</p>
@@ -429,12 +429,33 @@ const properties = [
   { id:16, address:"7566 Kings Trl",         city:"Fort Worth, TX 76133",   listed:189000, type:"DUPLEX", beds:3, baths:2.5, sqft:1650, monthlyRent:2000, condition:"good",       improvement:"asis",      status:"pass", source:"har",     isNew:false, priceDrop:true,  dropAmt:9000 },
 ];
 
+// ── Rent overrides (per-property, persisted in localStorage) ──
+const RENT_KEY = 'ps_rents_v1';
+let rentOverrides = {};
+try { rentOverrides = JSON.parse(localStorage.getItem(RENT_KEY)) || {}; } catch {}
+function getRent(p){ const o=rentOverrides[String(p.id)]; return (o!=null&&o>0)?o:p.monthlyRent; }
+function applyRent(id, val){
+  if(val>0) rentOverrides[String(id)]=val; else delete rentOverrides[String(id)];
+  localStorage.setItem(RENT_KEY, JSON.stringify(rentOverrides));
+  const p=properties.find(x=>x.id===id);
+  if(p){
+    const r=getRent(p);
+    p._tiers=offerTiers(r);
+    const c=r?calcCoC(p.listed,r):null;
+    p._cocAtList=c?c.coc:null;
+    p._cfAtList=c?c.cashFlow:null;
+  }
+  render();
+  if(openPropId===id) buildModalBody(id);
+}
+
 // Pre-compute tiers & CoC at list for all properties
 properties.forEach(p => {
-  p._tiers      = offerTiers(p.monthlyRent);
-  const r       = p.monthlyRent ? calcCoC(p.listed, p.monthlyRent) : null;
-  p._cocAtList  = r ? r.coc : null;
-  p._cfAtList   = r ? r.cashFlow : null;
+  const r0      = getRent(p);
+  p._tiers      = offerTiers(r0);
+  const c       = r0 ? calcCoC(p.listed, r0) : null;
+  p._cocAtList  = c ? c.coc : null;
+  p._cfAtList   = c ? c.cashFlow : null;
 });
 
 // Update top-deal banner with calculated strong-buy price
@@ -454,6 +475,16 @@ let modalCondition={}, modalImprovement={}, modalHold={};
 const fmt  = n => '$'+Math.abs(Math.round(n)).toLocaleString();
 const fmtS = n => (n>=0?'+':'')+fmt(n);
 const pct  = n => (n*100).toFixed(1)+'%';
+
+// Address helpers — guard against blank city or duplicate city in address
+function formatCity(c){ return (c||'').trim().replace(/^[,\s]+/,''); }
+function fullModalAddr(p){
+  const city = formatCity(p.city);
+  if(!city) return p.address;
+  const cityName = city.split(',')[0].trim().toLowerCase();
+  if(cityName && p.address.toLowerCase().includes(cityName)) return p.address;
+  return `${p.address}, ${city}`;
+}
 
 function getCuration(id){return curation[String(id)]||null;}
 function setCuration(id,val){
@@ -480,7 +511,9 @@ function classifyPrice(price, tiers) {
 
 // Offer range cell for table
 function offerRangeCell(p) {
-  if (!p._tiers || !p.monthlyRent)
+  if (!getRent(p))
+    return `<span style="color:var(--blue);font-size:.75rem;cursor:pointer">Set rent →</span>`;
+  if (!p._tiers)
     return `<span style="color:var(--text2);font-size:.75rem">—</span>`;
   const { strong, consider, stretch } = p._tiers;
   const tc = classifyPrice(p.listed, p._tiers);
@@ -542,15 +575,15 @@ function render(){
       <td class="address-cell" onclick="openModal(${p.id})">
         <div style="margin-bottom:3px">${sourceBadge(p.source)}${badges}</div>
         <div class="addr-main">${p.address}</div>
-        <div class="addr-sub">${p.city}${p.beds?` · ${p.beds}bd/${p.baths}ba`:''}</div>
+        <div class="addr-sub">${formatCity(p.city)}${p.beds?` · ${p.beds}bd/${p.baths}ba`:''}</div>
       </td>
-      <td class="hide-sm" onclick="openModal(${p.id})"><span class="money">${fmt(p.listed)}</span></td>
+      <td class="hide-sm" onclick="openModal(${p.id})"><span class="money">${p.listed?fmt(p.listed):'<span style="color:var(--text2)">TBD</span>'}</span></td>
       <td onclick="openModal(${p.id})">${offerRangeCell(p)}</td>
       <td class="hide-sm" onclick="openModal(${p.id})">
         <span class="type-chip ${isDuplex?'duplex':''}">${p.type}</span>
       </td>
       <td onclick="openModal(${p.id})">
-        <span class="money amber">${p.monthlyRent?fmt(p.monthlyRent)+'/mo':'—'}</span>
+        ${getRent(p)?`<span class="money amber">${fmt(getRent(p))}/mo</span>`:`<span style="color:var(--blue);font-size:.75rem;cursor:pointer">Set rent →</span>`}
       </td>
       <td onclick="openModal(${p.id})">
         <span class="coc ${p._cocAtList!==null&&p._cocAtList>=PARAMS.targetCoCMin?'pass':'fail'}">
@@ -621,18 +654,20 @@ function buildModalBody(id){
   let badges=sourceBadge(p.source);
   if(p.isNew)     badges+=`<span class="badge badge-new">🆕 New Listing</span>`;
   if(p.priceDrop) badges+=`<span class="badge badge-drop">📉 Price Drop −${fmt(p.dropAmt)}</span>`;
-  document.getElementById('m-address').textContent=`${p.address}, ${p.city}`;
+  document.getElementById('m-address').textContent=fullModalAddr(p);
   document.getElementById('m-badges').innerHTML=badges;
 
+  // Effective rent (override takes priority over property default)
+  const rent       = getRent(p);
   // CoC at each tier
-  const cocList    = p.monthlyRent?calcCoC(p.listed,   p.monthlyRent):null;
-  const cocStrong  = tiers&&p.monthlyRent?calcCoC(tiers.strong,   p.monthlyRent):null;
-  const cocConsider= tiers&&p.monthlyRent?calcCoC(tiers.consider, p.monthlyRent):null;
+  const cocList    = rent&&p.listed?calcCoC(p.listed,   rent):null;
+  const cocStrong  = tiers&&rent?calcCoC(tiers.strong,   rent):null;
+  const cocConsider= tiers&&rent?calcCoC(tiers.consider, rent):null;
 
   // Offer price for exit = min(listed, consider-tier) so exit is based on what you'd actually pay
-  const offerForExit = tiers ? Math.min(p.listed, tiers.consider) : p.listed;
-  const exit = p.monthlyRent
-    ? calcExit(offerForExit, p.monthlyRent, condKey, imprKey, holdYears)
+  const offerForExit = tiers ? Math.min(p.listed||tiers.consider, tiers.consider) : (p.listed||0);
+  const exit = rent&&offerForExit
+    ? calcExit(offerForExit, rent, condKey, imprKey, holdYears)
     : null;
 
   // Condition & improvement buttons
@@ -645,9 +680,18 @@ function buildModalBody(id){
 
   document.getElementById('m-body').innerHTML=`
 
+    <!-- Rent input -->
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.875rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.875rem">
+      <span style="font-size:.62rem;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap">Est. Monthly Rent</span>
+      <input type="number" min="0" step="50" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1500"
+        style="flex:1;min-width:80px;background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:.35rem .6rem;color:var(--text);font-family:'DM Mono',monospace;font-size:.85rem;outline:none"
+        onchange="applyRent(${id},+this.value)">
+      <span style="font-size:.7rem;color:var(--text2)">/mo</span>
+    </div>
+
     <!-- ① OFFER RANGE -->
-    <div class="section-title">📊 Calculated Offer Range — based on ${p.monthlyRent?fmt(p.monthlyRent)+'/mo est. rent':'no rent data'}</div>
-    ${tiers&&p.monthlyRent?`
+    <div class="section-title">📊 Calculated Offer Range — based on ${rent?fmt(rent)+'/mo est. rent':'no rent data'}</div>
+    ${tiers&&rent?`
     <table class="offer-table">
       <thead><tr><th>Tier</th><th>Max Offer Price</th><th>CoC Return</th><th>Monthly CF</th><th>Cash Required</th></tr></thead>
       <tbody>
@@ -680,14 +724,14 @@ function buildModalBody(id){
       </tbody>
     </table>
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.875rem;margin-bottom:1.25rem;font-size:.8rem;line-height:1.7">
-      Listed at <strong>${fmt(p.listed)}</strong> →
+      Listed at <strong>${p.listed?fmt(p.listed):'TBD'}</strong> →
       <strong class="${tc.cls}">${tc.label}</strong>
       ${tiers&&p.listed>tiers.strong?`· Offer <strong class="tier-strong">${fmt(tiers.strong)}</strong> to hit 12% CoC (${Math.round((1-tiers.strong/p.listed)*100)}% below list)`:'· Already within Strong Buy range'}
     </div>`
-    :`<div style="color:var(--text2);font-size:.8rem;margin-bottom:1.25rem">No rent estimate — add rent data to calculate offer range.</div>`}
+    :`<div style="color:var(--text2);font-size:.8rem;margin-bottom:1.25rem">Enter an estimated monthly rent above to calculate offer range.</div>`}
 
     <!-- ② AT LISTED PRICE -->
-    <div class="section-title">💵 Financials at Listed Price ${fmt(p.listed)}</div>
+    <div class="section-title">💵 Financials at Listed Price ${p.listed?fmt(p.listed):'TBD'}</div>
     <div class="modal-kpis">
       <div class="mkpi">
         <div class="mkpi-l">Monthly Cash Flow</div>
@@ -749,7 +793,7 @@ function buildModalBody(id){
       <span class="exit-total-l">Total Profit over ${holdYears} yr${holdYears>1?'s':''}</span>
       <span class="exit-total-v">${fmtS(exit.totalProfit)} &nbsp;·&nbsp; ${pct(exit.totalROI)} total &nbsp;·&nbsp; ${pct(exit.annualizedROI)}/yr</span>
     </div>`
-    :`<div style="color:var(--text2);font-size:.8rem">No rent data — exit analysis unavailable.</div>`}
+    :`<div style="color:var(--text2);font-size:.8rem">Enter rent above — exit analysis will appear once rent is set.</div>`}
 
     <!-- ⑤ CURATION -->
     <div class="section-title" style="margin-top:1.25rem">Curate This Property</div>
