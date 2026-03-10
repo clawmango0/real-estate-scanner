@@ -1104,6 +1104,23 @@
       "isNew": true,
       "priceCut": true,
       "listedDate": "2026-03-10"
+    },
+    {
+      "id": "4060-Dublin-Ridge-Dr",
+      "address": "4060 Dublin Ridge Dr, Crowley, TX 76036",
+      "listed": 243299,
+      "offer": 121650,
+      "type": "Single Family Residence",
+      "cashFlow": 167,
+      "coc": 8.2,
+      "status": "PASS",
+      "url": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1260",
+      "isNew": true,
+      "priceCut": false,
+      "listedDate": "2026-03-10"
     }
   ]
 }
