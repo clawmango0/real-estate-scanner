@@ -417,8 +417,32 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 // ══════════════════════════════════════════════════════════
 //  FINANCIAL CONSTANTS
 // ══════════════════════════════════════════════════════════
-const GP={rate:0.0525,termYrs:30,downPct:0.20,closingPct:0.03,pointsPct:0.01,landPct:0.20,deprecYrs:27.5,appreci:0.03,propTaxRate:0.019,insurRate:0.006,mgmtRate:0.08,repairRate:0.01,sellCostPct:0.06,cocMin:0.08,cocStrong:0.12,margRate:0.32,ltcgRate:0.20,recapRate:0.25,agi:120000};
+const GP={rate:0.0525,termYrs:30,downPct:0.20,closingPct:0.03,pointsPct:0.01,landPct:0.20,deprecYrs:27.5,appreci:0.03,propTaxRate:0.019,insurRate:0.006,mgmtRate:0.08,repairRate:0.01,sellCostPct:0.06,cocMin:0.08,cocStrong:0.12,margRate:0.32,ltcgRate:0.15,recapRate:0.25,agi:120000};
 const EXIT_YRS=[5,10,15];
+
+// ── 2025 IRS Tax Tables (Rev. Proc. 2024-40 / rp-25-32) ──────────────────────
+const TAX25={
+  stdDed:{single:15000,mfj:30000,hoh:22500,mfs:15000},
+  brackets:{
+    single:[{max:11925,r:.10},{max:48475,r:.12},{max:103350,r:.22},{max:197300,r:.24},{max:250525,r:.32},{max:626350,r:.35},{max:Infinity,r:.37}],
+    mfj:   [{max:23850,r:.10},{max:96950,r:.12},{max:206700,r:.22},{max:394600,r:.24},{max:501050,r:.32},{max:751600,r:.35},{max:Infinity,r:.37}],
+    hoh:   [{max:17000,r:.10},{max:64650,r:.12},{max:103350,r:.22},{max:197300,r:.24},{max:250500,r:.32},{max:626350,r:.35},{max:Infinity,r:.37}],
+    mfs:   [{max:11925,r:.10},{max:48475,r:.12},{max:103350,r:.22},{max:197300,r:.24},{max:250525,r:.32},{max:375800,r:.35},{max:Infinity,r:.37}],
+  },
+  ltcg:{
+    single:[{max:48350,r:.00},{max:533400,r:.15},{max:Infinity,r:.20}],
+    mfj:   [{max:96700,r:.00},{max:600050,r:.15},{max:Infinity,r:.20}],
+    hoh:   [{max:64750,r:.00},{max:533400,r:.15},{max:Infinity,r:.20}],
+    mfs:   [{max:48350,r:.00},{max:300025,r:.15},{max:Infinity,r:.20}],
+  },
+};
+function agiToRates(agi,filing){
+  const fs=['single','mfj','mfs','hoh'].includes(filing)?filing:'single';
+  const taxable=Math.max(0,agi-(TAX25.stdDed[fs]||15000));
+  const marg=(TAX25.brackets[fs].find(b=>taxable<=b.max)||TAX25.brackets[fs].at(-1)).r;
+  const ltcg=(TAX25.ltcg[fs].find(b=>taxable<=b.max)||TAX25.ltcg[fs].at(-1)).r;
+  return{marg,ltcg};
+}
 const COND={distressed:{label:'🔴 Distressed',adj:-0.25},needswork:{label:'🟡 Needs Work',adj:-0.10},good:{label:'🟢 Good',adj:0.00},updated:{label:'🔵 Updated',adj:0.05}};
 const IMPR={asis:{label:'As-Is',costPct:0,upliftPct:0,improvPct:0},cosmetic:{label:'Cosmetic',costPct:0.04,upliftPct:0.08,improvPct:0.02},moderate:{label:'Moderate',costPct:0.10,upliftPct:0.16,improvPct:0.07},fullrehab:{label:'Full Rehab',costPct:0.20,upliftPct:0.28,improvPct:0.16}};
 
@@ -897,7 +921,10 @@ function buildMod(id){
   const p=props.find(x=>x.id===id); if(!p) return;
   const cond=mCond[id]||p.condition||'good';
   const impr=mImpr[id]||p.improvement||'asis';
-  const taxP={marginal:(mTax[id]?.marg??GP.margRate),ltcg:(mTax[id]?.ltcg??GP.ltcgRate),recap:(mTax[id]?.recap??GP.recapRate),agi:(mTax[id]?.agi??GP.agi)};
+  // Seed tax state from AGI on first open
+  if(!mTax[id]){const r=agiToRates(GP.agi,'single');mTax[id]={agi:GP.agi,filing:'single',marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
+  const taxP={filing:(mTax[id].filing||'single'),marginal:mTax[id].marg,ltcg:mTax[id].ltcg,recap:mTax[id].recap,agi:mTax[id].agi};
+  const _autoRates=agiToRates(taxP.agi,taxP.filing);
   const rent=mRent[id]??p.monthlyRent;
   const ofPrc=p._tiers?Math.min(p.listed,p._tiers.consider):p.listed;
   const cocList=rent?cocCalc(p.listed,rent):null;
@@ -1028,10 +1055,24 @@ function buildMod(id){
 
     <div class="sec">🧾 Tax Parameters</div>
     <div class="txs">
-      <div class="tr2"><label>Income bracket</label><input type="range" min="10" max="37" step="1" value="${Math.round(taxP.marginal*100)}" oninput="uTax('${id}','marg',+this.value/100);document.getElementById('tv-mg-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-mg-${id}">${Math.round(taxP.marginal*100)}%</span></div>
-      <div class="tr2"><label>LTCG rate</label><input type="range" min="0" max="20" step="5" value="${Math.round(taxP.ltcg*100)}" oninput="uTax('${id}','ltcg',+this.value/100);document.getElementById('tv-lg-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-lg-${id}">${Math.round(taxP.ltcg*100)}%</span></div>
-      <div class="tr2"><label>§1250 recapture</label><input type="range" min="15" max="25" step="5" value="${Math.round(taxP.recap*100)}" oninput="uTax('${id}','recap',+this.value/100);document.getElementById('tv-rc-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-rc-${id}">${Math.round(taxP.recap*100)}%</span></div>
-      <div class="tr2"><label>AGI</label><input type="number" value="${taxP.agi}" step="1" min="0" max="10000000" inputmode="numeric" oninput="uTax('${id}','agi',Math.min(10000000,Math.round(+this.value)||0))" class="no-spin" style="width:110px"><span style="font-size:.68rem;color:var(--text2);flex-shrink:0">$25K allow ≤$100K</span></div>
+      <div class="tr2">
+        <label>Filing Status</label>
+        <select onchange="uTax('${id}','filing',this.value)" style="background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.25rem .4rem;font-size:.72rem;cursor:pointer">
+          <option value="single" ${taxP.filing==='single'?'selected':''}>Single</option>
+          <option value="mfj"    ${taxP.filing==='mfj'   ?'selected':''}>Married Filing Jointly</option>
+          <option value="hoh"    ${taxP.filing==='hoh'   ?'selected':''}>Head of Household</option>
+          <option value="mfs"    ${taxP.filing==='mfs'   ?'selected':''}>Married Filing Separately</option>
+        </select>
+      </div>
+      <div class="tr2"><label>AGI</label><input type="number" value="${taxP.agi}" step="1" min="0" max="10000000" inputmode="numeric" oninput="uTax('${id}','agi',Math.min(10000000,Math.round(+this.value)||0))" class="no-spin" style="width:120px"><span style="font-size:.65rem;color:var(--text3);flex-shrink:0">→ sets rates below</span></div>
+      <div class="tr2"><label>Income Tax Rate</label><input type="range" min="10" max="37" step="1" value="${Math.round(taxP.marginal*100)}" oninput="uTax('${id}','marg',+this.value/100);document.getElementById('tv-mg-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-mg-${id}">${Math.round(taxP.marginal*100)}%</span></div>
+      <div class="tr2">
+        <label>LTCG Rate <span style="font-size:.6rem;color:${Math.round(taxP.ltcg*100)===Math.round(_autoRates.ltcg*100)?'var(--amber)':'var(--text3)'};">${Math.round(taxP.ltcg*100)===Math.round(_autoRates.ltcg*100)?'(auto)':'(manual)'}</span></label>
+        <input type="range" min="0" max="20" step="5" value="${Math.round(taxP.ltcg*100)}" oninput="uTax('${id}','ltcg',+this.value/100);document.getElementById('tv-lg-${id}').textContent=this.value+'%'">
+        <span class="tv2" id="tv-lg-${id}">${Math.round(taxP.ltcg*100)}%</span>
+      </div>
+      <div class="tr2"><label>§1250 Recapture</label><input type="range" min="15" max="25" step="5" value="${Math.round(taxP.recap*100)}" oninput="uTax('${id}','recap',+this.value/100);document.getElementById('tv-rc-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-rc-${id}">${Math.round(taxP.recap*100)}%</span></div>
+      <div style="font-size:.6rem;color:var(--text3);margin-top:.25rem;padding-left:.1rem">2025 brackets · std deduction applied · drag sliders to override</div>
     </div>
 
     ${y1?`<div class="sec">📋 Schedule E — Year 1</div>
@@ -1095,7 +1136,16 @@ async function saveRent(id){
 function togAcc(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
 function setMC(id,v){mCond[id]=v;buildMod(id);}
 function setMI(id,v){mImpr[id]=v;buildMod(id);}
-function uTax(id,key,val){if(!mTax[id])mTax[id]={};mTax[id][key]=val;clearTimeout(uTax._t);uTax._t=setTimeout(()=>buildMod(id),150);}
+function uTax(id,key,val){
+  if(!mTax[id]){const r=agiToRates(GP.agi,'single');mTax[id]={agi:GP.agi,filing:'single',marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
+  mTax[id][key]=val;
+  // When AGI or filing status changes, auto-derive marginal and LTCG rates
+  if(key==='agi'||key==='filing'){
+    const r=agiToRates(mTax[id].agi??GP.agi, mTax[id].filing||'single');
+    mTax[id].marg=r.marg; mTax[id].ltcg=r.ltcg;
+  }
+  clearTimeout(uTax._t);uTax._t=setTimeout(()=>buildMod(id),150);
+}
 function openM(id){openId=id;buildMod(id);document.getElementById('ov').classList.add('open');document.getElementById('ov').scrollTop=0;}
 function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;document.getElementById('ov').classList.remove('open');openId=null;}
 function srt(col){if(sCol===col)sDir*=-1;else{sCol=col;sDir=-1;}renderApp();}
