@@ -198,6 +198,8 @@ td{padding:.75rem 1rem;vertical-align:middle}
 .rent-input-row label{font-size:.72rem;color:var(--text2);flex:1}
 .rent-input-row input{width:120px;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-family:'DM Mono',monospace;font-size:.85rem;text-align:right;-moz-appearance:textfield}
 .rent-input-row input::-webkit-outer-spin-button,.rent-input-row input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.no-spin{-moz-appearance:textfield}
+.no-spin::-webkit-outer-spin-button,.no-spin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .rent-input-row .save-btn{background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:6px;padding:.32rem .65rem;font-size:.68rem;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap}
 
 .ot{width:100%;border-collapse:collapse;margin-bottom:1rem}
@@ -1029,7 +1031,7 @@ function buildMod(id){
       <div class="tr2"><label>Income bracket</label><input type="range" min="10" max="37" step="1" value="${Math.round(taxP.marginal*100)}" oninput="uTax('${id}','marg',+this.value/100);document.getElementById('tv-mg-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-mg-${id}">${Math.round(taxP.marginal*100)}%</span></div>
       <div class="tr2"><label>LTCG rate</label><input type="range" min="0" max="20" step="5" value="${Math.round(taxP.ltcg*100)}" oninput="uTax('${id}','ltcg',+this.value/100);document.getElementById('tv-lg-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-lg-${id}">${Math.round(taxP.ltcg*100)}%</span></div>
       <div class="tr2"><label>§1250 recapture</label><input type="range" min="15" max="25" step="5" value="${Math.round(taxP.recap*100)}" oninput="uTax('${id}','recap',+this.value/100);document.getElementById('tv-rc-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-rc-${id}">${Math.round(taxP.recap*100)}%</span></div>
-      <div class="tr2"><label>AGI</label><input type="number" value="${taxP.agi}" step="1" min="0" max="10000000" inputmode="numeric" oninput="uTax('${id}','agi',Math.min(10000000,Math.round(+this.value)||0))" style="width:110px;-moz-appearance:textfield"><span style="font-size:.68rem;color:var(--text2);flex-shrink:0">$25K allow ≤$100K</span></div>
+      <div class="tr2"><label>AGI</label><input type="number" value="${taxP.agi}" step="1" min="0" max="10000000" inputmode="numeric" oninput="uTax('${id}','agi',Math.min(10000000,Math.round(+this.value)||0))" class="no-spin" style="width:110px"><span style="font-size:.68rem;color:var(--text2);flex-shrink:0">$25K allow ≤$100K</span></div>
     </div>
 
     ${y1?`<div class="sec">📋 Schedule E — Year 1</div>
