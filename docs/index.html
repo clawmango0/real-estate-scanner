@@ -958,13 +958,13 @@ function buildMod(id){
     <div class="sec">✏️ Edit Property Data</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem">
       <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Address</label><input id="ep-addr" value="${(p.address||'').replace(/"/g,'&quot;')}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Listed Price ($)</label><input id="ep-price" type="number" step="1" inputmode="numeric" value="${p.listed||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem;-moz-appearance:textfield"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Beds</label><input id="ep-beds" type="number" step="1" inputmode="numeric" value="${p.beds||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem;-moz-appearance:textfield"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Baths</label><input id="ep-baths" type="number" step="0.5" inputmode="decimal" value="${p.baths||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem;-moz-appearance:textfield"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Sqft</label><input id="ep-sqft" type="number" step="1" inputmode="numeric" value="${p.sqft||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem;-moz-appearance:textfield"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Lot Size (sqft)</label><input id="ep-lot" type="number" step="1" inputmode="numeric" value="${p.lotSize||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem;-moz-appearance:textfield"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Rent Estimate ($/mo)</label><input id="ep-rent-est" type="number" step="1" inputmode="numeric" value="${p.rentRange?.mid||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem;-moz-appearance:textfield"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Monthly Rent (confirmed)</label><input id="ep-rent" type="number" step="1" inputmode="numeric" value="${p.monthlyRent||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem;-moz-appearance:textfield"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Listed Price ($)</label><input id="ep-price" type="number" step="1" inputmode="numeric" value="${p.listed||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Beds</label><input id="ep-beds" type="number" step="1" inputmode="numeric" value="${p.beds||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Baths</label><input id="ep-baths" type="number" step="0.5" inputmode="decimal" value="${p.baths||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Sqft</label><input id="ep-sqft" type="number" step="1" inputmode="numeric" value="${p.sqft||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Lot Size (sqft)</label><input id="ep-lot" type="number" step="1" inputmode="numeric" value="${p.lotSize||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Rent Estimate ($/mo)</label><input id="ep-rent-est" type="number" step="1" inputmode="numeric" value="${p.rentRange?.mid||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Monthly Rent (confirmed)</label><input id="ep-rent" type="number" step="1" inputmode="numeric" value="${p.monthlyRent||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
     </div>
     <div style="display:flex;gap:.5rem">
       <button onclick="savePropertyEdit('${id}')" style="flex:1;padding:.55rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">💾 Save Changes</button>
@@ -1002,7 +1002,7 @@ function buildMod(id){
     </div>`:''}
     <div class="rent-input-row">
       <label>Set estimated rent to unlock offer analysis</label>
-      <input type="number" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" step="1" inputmode="numeric" oninput="mRent['${id}']=Math.round(+this.value)||0;buildMod('${id}')">
+      <input type="number" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" step="1" inputmode="numeric" class="no-spin" oninput="mRent['${id}']=Math.round(+this.value)||0" onblur="if(mRent['${id}'])buildMod('${id}')">
       <button class="save-btn" onclick="saveRent('${id}')">Save</button>
     </div>
 
@@ -1064,11 +1064,11 @@ function buildMod(id){
           <option value="mfs"    ${taxP.filing==='mfs'   ?'selected':''}>Married Filing Separately</option>
         </select>
       </div>
-      <div class="tr2"><label>AGI</label><input type="number" value="${taxP.agi}" step="1" min="0" max="10000000" inputmode="numeric" oninput="uTax('${id}','agi',Math.min(10000000,Math.round(+this.value)||0))" class="no-spin" style="width:120px"><span style="font-size:.65rem;color:var(--text3);flex-shrink:0">→ sets rates below</span></div>
-      <div class="tr2"><label>Income Tax Rate</label><input type="range" min="10" max="37" step="1" value="${Math.round(taxP.marginal*100)}" oninput="uTax('${id}','marg',+this.value/100);document.getElementById('tv-mg-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-mg-${id}">${Math.round(taxP.marginal*100)}%</span></div>
+      <div class="tr2"><label>AGI</label><input type="number" value="${taxP.agi}" step="1" min="0" max="10000000" inputmode="numeric" oninput="uTaxAgi('${id}',Math.min(10000000,Math.round(+this.value)||0))" onblur="buildMod('${id}')" class="no-spin" style="width:120px"><span style="font-size:.65rem;color:var(--text3);flex-shrink:0">→ sets rates below</span></div>
+      <div class="tr2"><label>Income Tax Rate</label><input type="range" min="10" max="37" step="1" value="${Math.round(taxP.marginal*100)}" id="tax-marg-${id}" oninput="uTax('${id}','marg',+this.value/100);document.getElementById('tv-mg-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-mg-${id}">${Math.round(taxP.marginal*100)}%</span></div>
       <div class="tr2">
         <label>LTCG Rate <span style="font-size:.6rem;color:${Math.round(taxP.ltcg*100)===Math.round(_autoRates.ltcg*100)?'var(--amber)':'var(--text3)'};">${Math.round(taxP.ltcg*100)===Math.round(_autoRates.ltcg*100)?'(auto)':'(manual)'}</span></label>
-        <input type="range" min="0" max="20" step="5" value="${Math.round(taxP.ltcg*100)}" oninput="uTax('${id}','ltcg',+this.value/100);document.getElementById('tv-lg-${id}').textContent=this.value+'%'">
+        <input type="range" min="0" max="20" step="5" value="${Math.round(taxP.ltcg*100)}" id="tax-ltcg-${id}" oninput="uTax('${id}','ltcg',+this.value/100);document.getElementById('tv-lg-${id}').textContent=this.value+'%'">
         <span class="tv2" id="tv-lg-${id}">${Math.round(taxP.ltcg*100)}%</span>
       </div>
       <div class="tr2"><label>§1250 Recapture</label><input type="range" min="15" max="25" step="5" value="${Math.round(taxP.recap*100)}" oninput="uTax('${id}','recap',+this.value/100);document.getElementById('tv-rc-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-rc-${id}">${Math.round(taxP.recap*100)}%</span></div>
@@ -1139,12 +1139,27 @@ function setMI(id,v){mImpr[id]=v;buildMod(id);}
 function uTax(id,key,val){
   if(!mTax[id]){const r=agiToRates(GP.agi,'single');mTax[id]={agi:GP.agi,filing:'single',marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
   mTax[id][key]=val;
-  // When AGI or filing status changes, auto-derive marginal and LTCG rates
-  if(key==='agi'||key==='filing'){
+  // When filing status changes, auto-derive marginal and LTCG rates
+  if(key==='filing'){
     const r=agiToRates(mTax[id].agi??GP.agi, mTax[id].filing||'single');
     mTax[id].marg=r.marg; mTax[id].ltcg=r.ltcg;
   }
   clearTimeout(uTax._t);uTax._t=setTimeout(()=>buildMod(id),150);
+}
+// AGI input: update state + sliders in-place (no modal rebuild while typing; buildMod fires on blur)
+function uTaxAgi(id,val){
+  if(!mTax[id]){const r=agiToRates(GP.agi,'single');mTax[id]={agi:GP.agi,filing:'single',marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
+  mTax[id].agi=val;
+  const r=agiToRates(val,mTax[id].filing||'single');
+  mTax[id].marg=r.marg;mTax[id].ltcg=r.ltcg;
+  const ms=document.getElementById('tax-marg-'+id);
+  const ls=document.getElementById('tax-ltcg-'+id);
+  const ml=document.getElementById('tv-mg-'+id);
+  const ll=document.getElementById('tv-lg-'+id);
+  if(ms)ms.value=Math.round(r.marg*100);
+  if(ml)ml.textContent=Math.round(r.marg*100)+'%';
+  if(ls)ls.value=Math.round(r.ltcg*100);
+  if(ll)ll.textContent=Math.round(r.ltcg*100)+'%';
 }
 function openM(id){openId=id;buildMod(id);document.getElementById('ov').classList.add('open');document.getElementById('ov').scrollTop=0;}
 function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;document.getElementById('ov').classList.remove('open');openId=null;}
