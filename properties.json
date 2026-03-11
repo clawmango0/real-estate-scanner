@@ -1172,6 +1172,23 @@
       "isNew": true,
       "priceCut": false,
       "listedDate": "2026-03-11"
+    },
+    {
+      "id": "609-Misty-Mountain-Dr",
+      "address": "609 Misty Mountain Dr, Fort Worth, TX 76140",
+      "listed": 232300,
+      "offer": 116150,
+      "type": "Single Family Residence",
+      "cashFlow": 29,
+      "coc": 0.3,
+      "status": "FAIL",
+      "url": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1144",
+      "isNew": true,
+      "priceCut": false,
+      "listedDate": "2026-03-11"
     }
   ]
 }
