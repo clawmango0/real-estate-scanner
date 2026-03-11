@@ -1121,6 +1121,40 @@
       "isNew": true,
       "priceCut": false,
       "listedDate": "2026-03-10"
+    },
+    {
+      "id": "4321-Sweetgum-Way",
+      "address": "4321 Sweetgum Way, Fort Worth, TX",
+      "listed": 253000,
+      "offer": 126500,
+      "type": "Single Family Residence",
+      "cashFlow": 950,
+      "coc": 9.0,
+      "status": "PASS",
+      "url": "",
+      "beds": "3",
+      "baths": "2",
+      "sqft": "1502",
+      "isNew": true,
+      "priceCut": false,
+      "listedDate": "2026-03-10"
+    },
+    {
+      "id": "8321-Cloverglen-Ln",
+      "address": "8321 Cloverglen Ln, Fort Worth, TX",
+      "listed": 260000,
+      "offer": 130000,
+      "type": "Single Family Residence",
+      "cashFlow": 1000,
+      "coc": 9.2,
+      "status": "PASS",
+      "url": "",
+      "beds": "3",
+      "baths": "3",
+      "sqft": "1858",
+      "isNew": true,
+      "priceCut": false,
+      "listedDate": "2026-03-10"
     }
   ]
 }
