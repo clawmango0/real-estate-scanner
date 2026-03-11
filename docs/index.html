@@ -196,10 +196,12 @@ td{padding:.75rem 1rem;vertical-align:middle}
 /* rent input in modal */
 .rent-input-row{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.75rem}
 .rent-input-row label{font-size:.72rem;color:var(--text2);flex:1}
-.rent-input-row input{width:120px;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-family:'DM Mono',monospace;font-size:.85rem;text-align:right;-moz-appearance:textfield}
-.rent-input-row input::-webkit-outer-spin-button,.rent-input-row input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.no-spin{-moz-appearance:textfield}
-.no-spin::-webkit-outer-spin-button,.no-spin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.rent-input-row input{width:120px;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-family:'DM Mono',monospace;font-size:.85rem;text-align:right;-moz-appearance:textfield;appearance:textfield}
+.rent-input-row input::-webkit-outer-spin-button,.rent-input-row input::-webkit-inner-spin-button{-webkit-appearance:none!important;appearance:none!important;margin:0}
+.no-spin{-moz-appearance:textfield!important;appearance:textfield!important}
+.no-spin::-webkit-outer-spin-button,.no-spin::-webkit-inner-spin-button{-webkit-appearance:none!important;appearance:none!important;margin:0!important}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none!important;appearance:none!important;margin:0!important}
+input[type="number"]{-moz-appearance:textfield!important;appearance:textfield!important}
 .rent-input-row .save-btn{background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:6px;padding:.32rem .65rem;font-size:.68rem;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap}
 
 .ot{width:100%;border-collapse:collapse;margin-bottom:1rem}
@@ -958,13 +960,13 @@ function buildMod(id){
     <div class="sec">✏️ Edit Property Data</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem">
       <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Address</label><input id="ep-addr" value="${(p.address||'').replace(/"/g,'&quot;')}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Listed Price ($)</label><input id="ep-price" type="number" step="1" inputmode="numeric" value="${p.listed||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Beds</label><input id="ep-beds" type="number" step="1" inputmode="numeric" value="${p.beds||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Baths</label><input id="ep-baths" type="number" step="0.5" inputmode="decimal" value="${p.baths||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Sqft</label><input id="ep-sqft" type="number" step="1" inputmode="numeric" value="${p.sqft||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Lot Size (sqft)</label><input id="ep-lot" type="number" step="1" inputmode="numeric" value="${p.lotSize||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Rent Estimate ($/mo)</label><input id="ep-rent-est" type="number" step="1" inputmode="numeric" value="${p.rentRange?.mid||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Monthly Rent (confirmed)</label><input id="ep-rent" type="number" step="1" inputmode="numeric" value="${p.monthlyRent||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Listed Price ($)</label><input id="ep-price" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.listed||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Beds</label><input id="ep-beds" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.beds||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Baths</label><input id="ep-baths" type="text" inputmode="decimal" pattern="[0-9.]*" value="${p.baths||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Sqft</label><input id="ep-sqft" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.sqft||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Lot Size (sqft)</label><input id="ep-lot" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.lotSize||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Rent Estimate ($/mo)</label><input id="ep-rent-est" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.rentRange?.mid||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Monthly Rent (confirmed)</label><input id="ep-rent" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.monthlyRent||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
     </div>
     <div style="display:flex;gap:.5rem">
       <button onclick="savePropertyEdit('${id}')" style="flex:1;padding:.55rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">💾 Save Changes</button>
@@ -1002,7 +1004,7 @@ function buildMod(id){
     </div>`:''}
     <div class="rent-input-row">
       <label>Set estimated rent to unlock offer analysis</label>
-      <input type="number" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" step="1" inputmode="numeric" class="no-spin" oninput="mRent['${id}']=Math.round(+this.value)||0" onblur="if(mRent['${id}'])buildMod('${id}')">
+      <input type="text" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" inputmode="numeric" pattern="[0-9]*" class="no-spin" oninput="mRent['${id}']=Math.round(+this.value.replace(/[^0-9]/g,''))||0" onblur="if(mRent['${id}'])buildMod('${id}')">
       <button class="save-btn" onclick="saveRent('${id}')">Save</button>
     </div>
 
@@ -1064,7 +1066,7 @@ function buildMod(id){
           <option value="mfs"    ${taxP.filing==='mfs'   ?'selected':''}>Married Filing Separately</option>
         </select>
       </div>
-      <div class="tr2"><label>AGI</label><input type="number" value="${taxP.agi}" step="1" min="0" max="10000000" inputmode="numeric" oninput="uTaxAgi('${id}',Math.min(10000000,Math.round(+this.value)||0))" onblur="buildMod('${id}')" class="no-spin" style="width:120px"><span style="font-size:.65rem;color:var(--text3);flex-shrink:0">→ sets rates below</span></div>
+      <div class="tr2"><label>AGI</label><input type="text" value="${taxP.agi}" inputmode="numeric" pattern="[0-9]*" oninput="uTaxAgi('${id}',Math.min(10000000,Math.round(+this.value.replace(/[^0-9]/g,''))||0))" onblur="buildMod('${id}')" class="no-spin" style="width:120px"><span style="font-size:.65rem;color:var(--text3);flex-shrink:0">→ sets rates below</span></div>
       <div class="tr2"><label>Income Tax Rate</label><input type="range" min="10" max="37" step="1" value="${Math.round(taxP.marginal*100)}" id="tax-marg-${id}" oninput="uTax('${id}','marg',+this.value/100);document.getElementById('tv-mg-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-mg-${id}">${Math.round(taxP.marginal*100)}%</span></div>
       <div class="tr2">
         <label>LTCG Rate <span style="font-size:.6rem;color:${Math.round(taxP.ltcg*100)===Math.round(_autoRates.ltcg*100)?'var(--amber)':'var(--text3)'};">${Math.round(taxP.ltcg*100)===Math.round(_autoRates.ltcg*100)?'(auto)':'(manual)'}</span></label>
