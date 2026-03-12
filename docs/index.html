@@ -132,6 +132,43 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .rm{background:var(--card);border:1px solid var(--border);color:var(--text2);padding:.25rem .55rem;border-radius:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.65rem;cursor:pointer;transition:all .15s;white-space:nowrap}
 .rm.on{border-color:#60a5fa;color:#60a5fa;background:rgba(96,165,250,.1);font-weight:600}
 
+/* ── Project cards row ────────────────────────────────── */
+.prow{display:flex;align-items:stretch;overflow-x:auto;border-bottom:2px solid var(--border);scroll-snap-type:x mandatory;scrollbar-width:none;background:var(--bg2)}
+.prow::-webkit-scrollbar{display:none}
+.pcard{flex:0 0 auto;min-width:158px;max-width:200px;padding:.65rem 1rem .6rem;border-right:1px solid var(--border);cursor:pointer;transition:background .12s;position:relative;scroll-snap-align:start;user-select:none}
+.pcard:hover{background:rgba(255,255,255,.04)}
+.pcard.pactive{background:rgba(251,191,36,.07);border-bottom:2px solid var(--amber);margin-bottom:-2px}
+.pc-name{font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.22rem;color:var(--text)}
+.pc-meta{font-size:.56rem;color:var(--text3);margin-bottom:.42rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:.8rem}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px 10px}
+.pcl{font-size:.52rem;color:var(--text3);line-height:1.1}
+.pcv{font-size:.68rem;font-weight:700;line-height:1.3}
+.pc-act{display:none;position:absolute;top:5px;right:5px;gap:3px}
+.pcard:hover .pc-act{display:flex}
+.pc-act button{background:var(--bg);border:1px solid var(--border2);color:var(--text3);border-radius:5px;padding:.15rem .3rem;font-size:.58rem;cursor:pointer;line-height:1;transition:color .1s}
+.pc-act button:hover{color:var(--text);border-color:var(--text2)}
+.pcard-add{flex:0 0 auto;min-width:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:1.3rem;font-weight:300;padding:0 1.1rem;transition:color .12s}
+.pcard-add:hover{color:var(--amber)}
+/* ── Project modal ────────────────────────────────────── */
+.proj-modal{max-width:520px}
+.pf-row{display:flex;align-items:center;gap:.65rem;padding:.38rem 0;border-bottom:1px solid var(--border)}
+.pf-row:last-child{border-bottom:none}
+.pf-lbl{font-size:.67rem;color:var(--text2);flex:0 0 110px}
+.pf-row input,.pf-row select{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.28rem .5rem;font-family:inherit;font-size:.73rem;min-width:0}
+.pf-row input[type=number]{width:82px;text-align:right}
+.pf-row select{flex:1}
+.ptypes{display:flex;gap:4px;flex-wrap:wrap}
+.ptyp{background:var(--bg);border:1px solid var(--border);color:var(--text3);border-radius:5px;padding:.2rem .5rem;font-size:.63rem;cursor:pointer;transition:all .12s;font-family:inherit}
+.ptyp.on{background:var(--adim);border-color:var(--amber);color:var(--amber)}
+.tag-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:.3rem 0;flex:1}
+.ptag{background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:20px;padding:.12rem .45rem;font-size:.63rem;display:flex;align-items:center;gap:.2rem}
+.ptag button{background:none;border:none;color:inherit;cursor:pointer;line-height:1;font-size:.68rem;padding:0 .1rem}
+.tag-in{background:none;border:none;color:var(--text);font-family:inherit;font-size:.7rem;min-width:90px;outline:none;flex:1;padding:.1rem 0}
+.psave-btn{background:var(--amber);color:#000;border:none;border-radius:8px;padding:.55rem 1.2rem;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;width:100%;margin-top:.7rem;transition:opacity .12s}
+.psave-btn:hover{opacity:.88}
+.pdel-btn{width:100%;margin-top:.4rem;padding:.42rem;background:none;border:1px solid var(--border);color:#f87171;border-radius:8px;cursor:pointer;font-size:.73rem;font-family:inherit;transition:border-color .12s}
+.pdel-btn:hover{border-color:#f87171}
+
 .tw{margin:1.25rem 1.5rem 2rem;border:1px solid var(--border);border-radius:10px;overflow:hidden}
 table{width:100%;border-collapse:collapse}
 thead th{text-align:left;padding:.65rem 1rem;background:var(--bg2);color:var(--text2);font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;font-weight:400;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
@@ -347,6 +384,9 @@ tbody tr{animation:fi .18s ease both}
     </div>
   </header>
 
+  <!-- Project cards row -->
+  <div class="prow" id="prow"></div>
+
   <div class="sbar">
     <div class="sc"><div class="sl">Properties</div><div class="sv" id="s-tot">—</div></div>
     <div class="sc"><div class="sl">Pass Criteria</div><div class="sv g" id="s-pass">—</div></div>
@@ -402,6 +442,17 @@ tbody tr{animation:fi .18s ease both}
         </div>
       </div>
       <div class="mb" id="m-body"></div>
+    </div>
+  </div>
+
+  <!-- Project create/edit modal -->
+  <div class="ov" id="pov" onclick="closeProjMod(event)">
+    <div class="modal proj-modal">
+      <div class="mhd">
+        <div><div class="madr" id="pm-title">New Project</div></div>
+        <button class="xcl" onclick="closeProjMod()">✕</button>
+      </div>
+      <div class="mb" id="pm-body"></div>
     </div>
   </div>
 </div>
@@ -473,6 +524,12 @@ let props=[], aV='all', aF='all', sCol=null, sDir=-1, openId=null;
 let mCond={}, mImpr={}, mTax={}, mRent={}, mEdit={};
 let gRentMode='mid'; // global rent assumption: 'low' | 'mid' | 'high' | 'mid+5'
 
+// ── PROJECTS STATE ──────────────────────────────────────
+let projects=[];       // loaded from DB
+let activeProject=null; // null = "All Properties"
+let _gpOrig={};        // snapshot of GP before project overrides
+let _editProj=null;    // in-progress project form state
+
 // Returns the effective rent for a property given the global assumption.
 // Confirmed monthlyRent always wins; otherwise applies gRentMode to rentRange.
 function effectiveRent(p){
@@ -503,6 +560,287 @@ function setRentMode(mode){
   document.querySelectorAll(`.rm[data-m="${mode}"]`).forEach(b=>b.classList.add('on'));
   recomputeRents();
   renderApp();
+}
+
+// ══════════════════════════════════════════════════════════
+//  PROJECTS
+// ══════════════════════════════════════════════════════════
+
+// GP override helpers — save/restore global financial params per project
+function _applyProjectGP(proj){
+  if(!Object.keys(_gpOrig).length) _gpOrig={rate:GP.rate,downPct:GP.downPct};
+  if(proj.rate!=null)     GP.rate=proj.rate;
+  if(proj.down_pct!=null) GP.downPct=proj.down_pct;
+}
+function _restoreGP(){
+  if(_gpOrig.rate!==undefined)    GP.rate=_gpOrig.rate;
+  if(_gpOrig.downPct!==undefined) GP.downPct=_gpOrig.downPct;
+  _gpOrig={};
+}
+
+// City match: p.city = "Fort Worth, TX 76116"; cities = ["Fort Worth","Benbrook"]
+function _matchCity(p,cities){
+  if(!cities||!cities.length) return true;
+  const c=(p.city||'').toLowerCase();
+  return cities.some(x=>c.includes(x.toLowerCase().trim()));
+}
+
+// Returns true if property passes all project criteria
+function projectFilter(p,proj){
+  if(!proj) return true;
+  if(!_matchCity(p,proj.cities)) return false;
+  if(proj.prop_types&&proj.prop_types.length&&!proj.prop_types.includes(p.type)) return false;
+  if(proj.min_beds !=null&&(p.beds ==null||p.beds <proj.min_beds))  return false;
+  if(proj.max_beds !=null&&(p.beds ==null||p.beds >proj.max_beds))  return false;
+  if(proj.min_baths!=null&&(p.baths==null||p.baths<proj.min_baths)) return false;
+  if(proj.max_baths!=null&&(p.baths==null||p.baths>proj.max_baths)) return false;
+  if(proj.max_price!=null&&p.listed>proj.max_price) return false;
+  return true;
+}
+
+// Compute card stats for an array of properties
+function _projStats(list){
+  const v=list.filter(p=>p.curated!=='blk');
+  const pass=v.filter(p=>p.status==='pass');
+  const cfs=pass.filter(p=>p._cfL>0).map(p=>p._cfL);
+  return{count:v.length,pass:pass.length,
+         favs:v.filter(p=>p.curated==='fav').length,
+         newDrop:v.filter(p=>p.isNew||p.priceDrop).length,
+         avgCf:cfs.length?Math.round(cfs.reduce((a,b)=>a+b,0)/cfs.length):0};
+}
+
+// Switch active project — applies GP overrides and re-renders everything
+function setProject(proj){
+  _restoreGP();
+  activeProject=proj;
+  if(proj) _applyProjectGP(proj);
+  recomputeRents();
+  renderProjectCards();
+  renderApp();
+}
+
+// Build and inject the project cards row
+function renderProjectCards(){
+  const row=document.getElementById('prow');
+  if(!row) return;
+  const M2=v=>v==null?'—':'$'+Math.round(v/1000)+'k';
+  const allSt=_projStats(props);
+  const allActive=activeProject===null;
+  let html=`<div class="pcard${allActive?' pactive':''}" onclick="setProject(null)">
+    <div class="pc-name">All Properties</div>
+    <div class="pc-meta">No filters active</div>
+    <div class="pc-grid">
+      <div><div class="pcl">Props</div><div class="pcv">${allSt.count}</div></div>
+      <div><div class="pcl">Pass</div><div class="pcv" style="color:var(--green)">${allSt.pass}</div></div>
+      <div><div class="pcl">Favs</div><div class="pcv" style="color:var(--amber)">${allSt.favs}</div></div>
+      <div><div class="pcl">New/Drop</div><div class="pcv">${allSt.newDrop}</div></div>
+    </div>
+  </div>`;
+  projects.forEach(proj=>{
+    const filtered=props.filter(p=>projectFilter(p,proj));
+    const st=_projStats(filtered);
+    const isActive=activeProject&&activeProject.id===proj.id;
+    const cfSign=st.avgCf>=0?'+':'';
+    const cfStr=st.avgCf?cfSign+'$'+Math.abs(st.avgCf).toLocaleString():'—';
+    const parts=[];
+    if(proj.cities&&proj.cities.length) parts.push(proj.cities.slice(0,2).join(', ')+(proj.cities.length>2?'…':''));
+    if(proj.prop_types&&proj.prop_types.length) parts.push(proj.prop_types.join('/'));
+    if(proj.max_price) parts.push('≤'+M2(proj.max_price));
+    const meta=parts.join(' · ')||'All types';
+    html+=`<div class="pcard${isActive?' pactive':''}" onclick="setProject(projects.find(x=>x.id==='${proj.id}'))">
+      <div class="pc-act">
+        <button onclick="event.stopPropagation();openProjMod('${proj.id}')">✏️</button>
+        <button onclick="event.stopPropagation();deleteProject('${proj.id}')">🗑</button>
+      </div>
+      <div class="pc-name">${proj.name}</div>
+      <div class="pc-meta">${meta}</div>
+      <div class="pc-grid">
+        <div><div class="pcl">Props</div><div class="pcv">${st.count}</div></div>
+        <div><div class="pcl">Pass</div><div class="pcv" style="color:var(--green)">${st.pass}</div></div>
+        <div><div class="pcl">Favs</div><div class="pcv" style="color:var(--amber)">${st.favs}</div></div>
+        <div><div class="pcl">AvgCF</div><div class="pcv" style="color:${st.avgCf>=0?'var(--green)':'#f87171'}">${cfStr}</div></div>
+      </div>
+    </div>`;
+  });
+  html+=`<div class="pcard-add" onclick="openProjMod(null)" title="New project">+</div>`;
+  row.innerHTML=html;
+}
+
+// Load projects from DB
+async function loadProjects(){
+  if(!currentUser) return;
+  const{data,error}=await sb.from('projects').select('*').eq('user_id',currentUser.id).order('created_at');
+  if(error){console.error('loadProjects:',error);return;}
+  projects=data||[];
+  renderProjectCards();
+}
+
+// ── Project modal ─────────────────────────────────────────
+const _PTYPES=['SFR','DUPLEX','TRIPLEX','QUAD','CONDO','LOT'];
+
+function openProjMod(id){
+  _editProj=id
+    ?{...projects.find(p=>p.id===id)}
+    :{id:null,name:'',cities:[],prop_types:[],min_beds:null,max_beds:null,
+      min_baths:null,max_baths:null,max_price:null,down_pct:null,rate:null,hold_yrs:null};
+  _buildProjModal();
+  document.getElementById('pov').classList.add('open');
+}
+
+function closeProjMod(e){
+  if(e&&e.target!==document.getElementById('pov')) return;
+  document.getElementById('pov').classList.remove('open');
+  _editProj=null;
+}
+
+function _buildProjModal(){
+  const p=_editProj;
+  document.getElementById('pm-title').textContent=p.id?'Edit Project':'New Project';
+  const cityTags=(p.cities||[]).map(c=>`<span class="ptag">${c}<button onclick="_projRemoveCity('${c.replace(/'/g,"\\'")}')">✕</button></span>`).join('');
+  const typeBoxes=_PTYPES.map(t=>`<button class="ptyp${(p.prop_types||[]).includes(t)?' on':''}" onclick="_projToggleType('${t}')">${t}</button>`).join('');
+  document.getElementById('pm-body').innerHTML=`
+    <div class="txs">
+      <div class="pf-row"><span class="pf-lbl">Project Name</span>
+        <input type="text" id="pf-name" value="${(p.name||'').replace(/"/g,'&quot;')}" placeholder="e.g. SFR Duplex FW" style="flex:1">
+      </div>
+    </div>
+    <div class="sec" style="margin:.6rem 0 .3rem;font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Filters</div>
+    <div class="txs">
+      <div class="pf-row" style="flex-direction:column;align-items:flex-start">
+        <span class="pf-lbl" style="margin-bottom:.3rem">Cities</span>
+        <div class="tag-wrap" id="pf-city-tags">${cityTags}
+          <input class="tag-in" id="pf-city-in" placeholder="Type city, press Enter"
+            onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();_projAddCity();}">
+        </div>
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Property Types</span><div class="ptypes">${typeBoxes}</div></div>
+      <div class="pf-row">
+        <span class="pf-lbl">Beds</span>
+        <input type="number" class="no-spin" id="pf-minbeds" placeholder="Min" value="${p.min_beds??''}">
+        <span style="color:var(--text3);font-size:.7rem">–</span>
+        <input type="number" class="no-spin" id="pf-maxbeds" placeholder="Max" value="${p.max_beds??''}">
+      </div>
+      <div class="pf-row">
+        <span class="pf-lbl">Baths</span>
+        <input type="number" class="no-spin" id="pf-minbaths" placeholder="Min" value="${p.min_baths??''}">
+        <span style="color:var(--text3);font-size:.7rem">–</span>
+        <input type="number" class="no-spin" id="pf-maxbaths" placeholder="Max" value="${p.max_baths??''}">
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Max Listed Price</span>
+        <input type="number" class="no-spin" id="pf-maxprice" placeholder="e.g. 350000" value="${p.max_price??''}" style="flex:1">
+      </div>
+    </div>
+    <div class="sec" style="margin:.6rem 0 .3rem;font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Financial Overrides <span style="font-size:.55rem;opacity:.6">(blank = use global)</span></div>
+    <div class="txs">
+      <div class="pf-row"><span class="pf-lbl">Down Payment</span>
+        <input type="number" class="no-spin" id="pf-down" placeholder="${(GP.downPct*100).toFixed(0)}" value="${p.down_pct!=null?(p.down_pct*100).toFixed(0):''}">
+        <span style="color:var(--text3);font-size:.7rem">%</span>
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Interest Rate</span>
+        <input type="number" class="no-spin" id="pf-rate" placeholder="${(GP.rate*100).toFixed(2)}" value="${p.rate!=null?(p.rate*100).toFixed(2):''}">
+        <span style="color:var(--text3);font-size:.7rem">%</span>
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Hold Period</span>
+        <select id="pf-hold">
+          <option value="">None (global)</option>
+          <option value="5"  ${p.hold_yrs===5 ?'selected':''}>5 years</option>
+          <option value="10" ${p.hold_yrs===10?'selected':''}>10 years</option>
+          <option value="15" ${p.hold_yrs===15?'selected':''}>15 years</option>
+        </select>
+      </div>
+    </div>
+    <button class="psave-btn" onclick="saveProject()">${p.id?'Save Changes':'Create Project'}</button>
+    ${p.id?`<button class="pdel-btn" onclick="deleteProject('${p.id}')">Delete Project</button>`:''}`;
+}
+
+function _projAddCity(){
+  const inp=document.getElementById('pf-city-in');
+  if(!inp) return;
+  const val=inp.value.replace(/,/g,'').trim();
+  if(!val) return;
+  if(!_editProj.cities) _editProj.cities=[];
+  if(!_editProj.cities.map(x=>x.toLowerCase()).includes(val.toLowerCase())){
+    _editProj.cities.push(val);
+    const tags=document.getElementById('pf-city-tags');
+    if(tags){
+      const span=document.createElement('span');
+      span.className='ptag';
+      span.innerHTML=`${val}<button onclick="_projRemoveCity('${val.replace(/'/g,"\\'")}')">✕</button>`;
+      tags.insertBefore(span,document.getElementById('pf-city-in'));
+    }
+  }
+  inp.value='';
+  inp.focus();
+}
+
+function _projRemoveCity(city){
+  if(!_editProj) return;
+  _editProj.cities=(_editProj.cities||[]).filter(c=>c!==city);
+  _buildProjModal();
+  setTimeout(()=>{const i=document.getElementById('pf-city-in');if(i)i.focus();},0);
+}
+
+function _projToggleType(t){
+  if(!_editProj) return;
+  if(!_editProj.prop_types) _editProj.prop_types=[];
+  const idx=_editProj.prop_types.indexOf(t);
+  if(idx>=0) _editProj.prop_types.splice(idx,1);
+  else       _editProj.prop_types.push(t);
+  // Toggle the button visually without full rebuild
+  const btns=document.querySelectorAll('#pm-body .ptyp');
+  btns.forEach(b=>{if(b.textContent===t)b.classList.toggle('on');});
+}
+
+async function saveProject(){
+  if(!_editProj) return;
+  const name=(document.getElementById('pf-name')?.value||'').trim();
+  if(!name){alert('Please enter a project name.');return;}
+  const downRaw =document.getElementById('pf-down')?.value;
+  const rateRaw =document.getElementById('pf-rate')?.value;
+  const holdRaw =document.getElementById('pf-hold')?.value;
+  const maxP    =document.getElementById('pf-maxprice')?.value;
+  const n=v=>v!==''&&v!=null?+v:null;
+  const record={
+    user_id:currentUser.id, name,
+    cities:_editProj.cities||[],
+    prop_types:_editProj.prop_types||[],
+    min_beds: n(document.getElementById('pf-minbeds')?.value),
+    max_beds: n(document.getElementById('pf-maxbeds')?.value),
+    min_baths:n(document.getElementById('pf-minbaths')?.value),
+    max_baths:n(document.getElementById('pf-maxbaths')?.value),
+    max_price:n(maxP),
+    down_pct: downRaw?+downRaw/100:null,
+    rate:     rateRaw?+rateRaw/100:null,
+    hold_yrs: holdRaw?+holdRaw:null
+  };
+  let saved;
+  if(_editProj.id){
+    const{data,error}=await sb.from('projects').update(record).eq('id',_editProj.id).select().single();
+    if(error){console.error('saveProject:',error);return;}
+    saved=data;
+    const idx=projects.findIndex(x=>x.id===_editProj.id);
+    if(idx>=0) projects[idx]=saved;
+    if(activeProject&&activeProject.id===saved.id) setProject(saved);
+  } else {
+    const{data,error}=await sb.from('projects').insert(record).select().single();
+    if(error){console.error('saveProject:',error);return;}
+    saved=data;
+    projects.push(saved);
+  }
+  document.getElementById('pov').classList.remove('open');
+  _editProj=null;
+  renderProjectCards();
+}
+
+async function deleteProject(id){
+  if(!confirm('Delete this project? This cannot be undone.')) return;
+  const{error}=await sb.from('projects').delete().eq('id',id);
+  if(error){console.error('deleteProject:',error);return;}
+  projects=projects.filter(x=>x.id!==id);
+  if(activeProject&&activeProject.id===id) setProject(null);
+  else renderProjectCards();
+  document.getElementById('pov').classList.remove('open');
+  _editProj=null;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -594,6 +932,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   if(firstLogin){
     loadMailboxBg();
     loadProperties();
+    loadProjects();
   }
 });
 
@@ -724,6 +1063,7 @@ async function loadProperties(){
     });
     recomputeRents();
     renderApp();
+    renderProjectCards(); // refresh project stats now that props are loaded
   } catch(e) {
     console.error('loadProperties exception:', e);
     _showPropsError(e.message||String(e));
@@ -807,6 +1147,7 @@ async function savePropertyEdit(id){
 // ══════════════════════════════════════════════════════════
 function vis(){
   let l=[...props];
+  if(activeProject) l=l.filter(p=>projectFilter(p,activeProject)); // project primary filter
   if(aV==='favs')l=l.filter(p=>p.curated==='fav');
   else if(aV==='ni')l=l.filter(p=>p.curated==='ni');
   else l=l.filter(p=>p.curated!=='blk');
