@@ -24,7 +24,7 @@ serve(async (req) => {
     if (req.method === "GET" && isCollection) {
       const { data, error } = await supabase
         .from("properties")
-        .select("*, neighborhoods(area_name, schools, crime_safety, walk_score, rent_growth)")
+        .select("*, neighborhoods(area_name, schools, crime_safety, walk_score, rent_growth, appreci_1yr, appreci_3yr, appreci_5yr, zhvi_current)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return new Response(JSON.stringify((data || []).map(shapeProperty)), { headers: { ...cors, "Content-Type": "application/json" } });
@@ -106,7 +106,10 @@ function shapeProperty(row: Record<string, unknown>) {
     hood: hood ? {
       area: hood.area_name, schools: hood.schools,
       crime: hood.crime_safety, walkScore: hood.walk_score,
-      rentGrowth: hood.rent_growth, zip: row.zip
+      rentGrowth: hood.rent_growth,
+      appreci1: hood.appreci_1yr, appreci3: hood.appreci_3yr,
+      appreci5: hood.appreci_5yr, zhvi: hood.zhvi_current,
+      zip: row.zip
     } : null,
   };
 }
