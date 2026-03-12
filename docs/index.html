@@ -536,6 +536,9 @@ async function doAuth(){
       const {error}=await sb.auth.signInWithPassword({email,password:pass});
       if(error)throw error;
     }
+    // Auth succeeded — re-enable button as a safety net (auth state change will show app)
+    btn.disabled=false;
+    btn.textContent=authMode==='signup'?'Create Account':'Sign In';
   } catch(e){
     errEl.textContent=e.message||'Authentication failed';
     errEl.style.display='block';
@@ -562,6 +565,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('auth-screen').style.display='flex';
     document.getElementById('setup-screen').style.display='none';
     document.getElementById('app').style.display='none';
+    return;
+  }
+  if(event === 'TOKEN_REFRESHED') {
+    // Keep currentUser in sync after token refresh
+    currentUser = session.user;
     return;
   }
   if(event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
@@ -674,6 +682,12 @@ async function loadProperties(){
       let errBody='';
       try{ errBody=await res.text(); }catch(_){}
       console.error('loadProperties failed',res.status,errBody);
+      if(res.status===401){
+        // Session expired or invalid — force sign-out and show login screen
+        console.warn('loadProperties: 401 — signing out');
+        await sb.auth.signOut();
+        return;
+      }
       _showPropsError(`HTTP ${res.status} — ${errBody||'unknown error'}`);
       return;
     }
