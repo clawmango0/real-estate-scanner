@@ -578,23 +578,31 @@ function _restoreGP(){
   _gpOrig={};
 }
 
-// City match: p.city = "Fort Worth, TX 76116"; cities = ["Fort Worth","Benbrook"]
+// City match: checks p.city (hood area_name fallback) AND p.address (contains city for properties
+// where DB city column is empty — e.g. "534 NE 23rd St Grand Prairie, TX 75050")
 function _matchCity(p,cities){
   if(!cities||!cities.length) return true;
   const c=(p.city||'').toLowerCase();
-  return cities.some(x=>c.includes(x.toLowerCase().trim()));
+  const area=(p.hood?.area||'').toLowerCase();
+  const addr=(p.address||'').toLowerCase();
+  return cities.some(x=>{
+    const xL=x.toLowerCase().trim();
+    return c.includes(xL)||area.includes(xL)||addr.includes(xL);
+  });
 }
 
-// Returns true if property passes all project criteria
+// Returns true if property passes all project criteria.
+// Beds/baths filters are skipped when property has no value (unknown = include).
+// Price filter uses Number() coercion to handle string listed_price from DB.
 function projectFilter(p,proj){
   if(!proj) return true;
   if(!_matchCity(p,proj.cities)) return false;
   if(proj.prop_types&&proj.prop_types.length&&!proj.prop_types.includes(p.type)) return false;
-  if(proj.min_beds !=null&&(p.beds ==null||p.beds <proj.min_beds))  return false;
-  if(proj.max_beds !=null&&(p.beds ==null||p.beds >proj.max_beds))  return false;
-  if(proj.min_baths!=null&&(p.baths==null||p.baths<proj.min_baths)) return false;
-  if(proj.max_baths!=null&&(p.baths==null||p.baths>proj.max_baths)) return false;
-  if(proj.max_price!=null&&p.listed>proj.max_price) return false;
+  if(proj.min_beds !=null&&p.beds !=null&&Number(p.beds) <Number(proj.min_beds))  return false;
+  if(proj.max_beds !=null&&p.beds !=null&&Number(p.beds) >Number(proj.max_beds))  return false;
+  if(proj.min_baths!=null&&p.baths!=null&&Number(p.baths)<Number(proj.min_baths)) return false;
+  if(proj.max_baths!=null&&p.baths!=null&&Number(p.baths)>Number(proj.max_baths)) return false;
+  if(proj.max_price!=null&&p.listed!=null&&Number(p.listed)>Number(proj.max_price)) return false;
   return true;
 }
 
