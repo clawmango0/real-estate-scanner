@@ -555,10 +555,27 @@ async function signOut(){
 // ══════════════════════════════════════════════════════════
 //  SESSION HANDLER
 // ══════════════════════════════════════════════════════════
+
+// Cached access-token — always kept fresh by onAuthStateChange
+let _accessToken = null;
+
+// Helper: get a guaranteed-valid access token.
+// 1) Returns cached token from last auth event (always fresh).
+// 2) Fallback: getSession → refreshSession.  Never calls signOut.
+async function getAccessToken(){
+  if(_accessToken) return _accessToken;
+  const {data:{session}} = await sb.auth.getSession();
+  if(session?.access_token){ _accessToken=session.access_token; return _accessToken; }
+  const {data:r} = await sb.auth.refreshSession();
+  if(r?.session?.access_token){ _accessToken=r.session.access_token; return _accessToken; }
+  return null;
+}
+
 sb.auth.onAuthStateChange(async (event, session) => {
   console.log('Auth event:', event, session?.user?.email);
   if(event === 'SIGNED_OUT' || !session?.user) {
     currentUser = null;
+    _accessToken = null;
     // Re-enable sign-in button in case it was left spinning
     const authBtn=document.getElementById('auth-submit');
     if(authBtn){authBtn.disabled=false;authBtn.textContent=authMode==='signup'?'Create Account':'Sign In';}
@@ -568,6 +585,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
     return;
   }
   // Any authenticated event: SIGNED_IN, INITIAL_SESSION, TOKEN_REFRESHED, etc.
+  // Always cache the latest access-token so API calls use a fresh one.
+  _accessToken = session.access_token;
   const firstLogin = !currentUser;
   currentUser = session.user;
   document.getElementById('user-email-btn').textContent = currentUser.email;
@@ -619,10 +638,11 @@ async function loadMailbox(){
 }
 
 async function createMailbox(){
-  const {data:{session}}=await sb.auth.getSession();
+  const token = await getAccessToken();
+  if(!token) return;
   const res=await fetch(`${EDGE_BASE}/create-mailbox`,{
     method:'POST',
-    headers:{'Authorization':`Bearer ${session.access_token}`,'Content-Type':'application/json'},
+    headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
     body:JSON.stringify({display_name:'My Alerts'})
   });
   const mb=await res.json();
@@ -664,24 +684,31 @@ function showInbox(){
 // ══════════════════════════════════════════════════════════
 async function loadProperties(){
   try {
-    let {data:{session}}=await sb.auth.getSession();
-    if(!session){
-      console.warn('loadProperties: no active session');
+    let token = await getAccessToken();
+    if(!token){
+      console.warn('loadProperties: no access token available');
+      _showPropsError('Not signed in. Please reload and sign in.');
       return;
     }
-    const res=await fetch(`${EDGE_BASE}/properties`,{
-      headers:{'Authorization':`Bearer ${session.access_token}`}
+    let res=await fetch(`${EDGE_BASE}/properties`,{
+      headers:{'Authorization':`Bearer ${token}`}
     });
+    // On 401, try ONE refresh then retry — never auto-signout
+    if(res.status===401){
+      console.warn('loadProperties: 401, refreshing token…');
+      const {data:refreshed} = await sb.auth.refreshSession();
+      if(refreshed?.session?.access_token){
+        _accessToken = refreshed.session.access_token;
+        token = _accessToken;
+        res = await fetch(`${EDGE_BASE}/properties`,{
+          headers:{'Authorization':`Bearer ${token}`}
+        });
+      }
+    }
     if(!res.ok){
       let errBody='';
       try{ errBody=await res.text(); }catch(_){}
       console.error('loadProperties failed',res.status,errBody);
-      if(res.status===401){
-        // Session expired or invalid — force sign-out and show login screen
-        console.warn('loadProperties: 401 — signing out');
-        await sb.auth.signOut();
-        return;
-      }
       _showPropsError(`HTTP ${res.status} — ${errBody||'unknown error'}`);
       return;
     }
@@ -715,10 +742,11 @@ function _showPropsError(msg){
 }
 
 async function saveProperty(id, updates){
-  const {data:{session}}=await sb.auth.getSession();
+  const token = await getAccessToken();
+  if(!token) return;
   await fetch(`${EDGE_BASE}/properties/${id}`,{
     method:'PATCH',
-    headers:{'Authorization':`Bearer ${session.access_token}`,'Content-Type':'application/json'},
+    headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
     body:JSON.stringify(updates)
   });
   // Update local state
