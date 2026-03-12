@@ -1263,9 +1263,11 @@ function renderApp(){
 }
 
 function updateStats(){
-  const visible=props.filter(p=>p.curated!=='blk');
+  // When a project is active, scope all stats + Top Deal to that project's filtered set
+  const base=activeProject?props.filter(p=>projectFilter(p,activeProject)):props;
+  const visible=base.filter(p=>p.curated!=='blk');
   const pass=visible.filter(p=>p.status==='pass');
-  const favs=props.filter(p=>p.curated==='fav');
+  const favs=base.filter(p=>p.curated==='fav');
   const news=visible.filter(p=>p.isNew||p.priceDrop).length;
   const cfs=pass.filter(p=>p._cfL>0).map(p=>p._cfL);
   const avgCf=cfs.length?Math.round(cfs.reduce((a,b)=>a+b,0)/cfs.length):0;
@@ -1274,9 +1276,11 @@ function updateStats(){
   document.getElementById('s-favs').textContent=favs.length;
   document.getElementById('s-new').textContent=news;
   document.getElementById('s-cf').textContent=(avgCf>=0?'+':'')+M(avgCf)+'/mo';
-  document.getElementById('tc-a').textContent=visible.length;
-  document.getElementById('tc-f').textContent=favs.length;
+  // Tab counts always use full props list (not project-scoped)
+  document.getElementById('tc-a').textContent=props.filter(p=>p.curated!=='blk').length;
+  document.getElementById('tc-f').textContent=props.filter(p=>p.curated==='fav').length;
   document.getElementById('tc-n').textContent=props.filter(p=>p.curated==='ni').length;
+  // Top Deal: best CoC within the current project scope (or all if no project)
   const topDeal=pass.filter(p=>p._tiers&&effectiveRent(p)).sort((a,b)=>(b._cocL||0)-(a._cocL||0))[0];
   if(topDeal){
     document.getElementById('td-name').textContent=`${topDeal.address} — ${topDeal.type}`;
@@ -1285,6 +1289,9 @@ function updateStats(){
     const er=effectiveRent(topDeal);
     document.getElementById('td-rent').textContent=er?M(er)+'/mo':'—';
     document.getElementById('td-nbhd').textContent=topDeal._nbScore!==null?topDeal._nbScore+' / 100':'—';
+  } else {
+    // No qualifying deal in this project scope — clear the panel
+    ['td-name','td-list','td-s','td-rent','td-nbhd'].forEach(id=>document.getElementById(id).textContent='—');
   }
 }
 
