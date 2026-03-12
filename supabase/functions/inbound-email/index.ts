@@ -91,40 +91,55 @@ function parseSubjectLine(subject:string):any[]|null {
 // ══════════════════════════════════════════════════════════
 //  CLAUDE PARSER
 // ══════════════════════════════════════════════════════════
+// Strip zero-width Unicode junk that Zillow/Realtor emails use for tracking.
+// These chars pollute tag-stripped HTML and confuse Claude parsing.
+function cleanContent(s: string): string {
+  return s
+    .replace(/[\u034F\u200B-\u200F\u2028-\u202F\uFEFF\u00AD\u2007\u2060]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 async function parseWithClaude(subject:string, html:string, plain:string) {
   // Only prefer plain text when it actually contains property data
   // (prices, bed/bath counts, sqft). Zillow digest emails have plain text
   // that exceeds 200 chars due to long tracking URLs but contains no listings.
-  const plainHasData = plain && plain.length > 100 &&
-    /\$[\d,.]+K?M?|\d+\s*(?:bd|bed|ba|bath)|\d,\d{3}\s*sq/i.test(plain.slice(0, 3000));
+  const cleanPlain = cleanContent(plain || "");
+  const plainHasData = cleanPlain.length > 100 &&
+    /\$[\d,.]+K?M?|\d+\s*(?:bd|bed|ba|bath)|\d,\d{3}\s*sq/i.test(cleanPlain.slice(0, 3000));
 
   let content: string;
   if (plainHasData) {
-    content = plain.replace(/\s+/g, " ").trim().slice(0, 20000);
+    content = cleanPlain.slice(0, 30000);
   } else {
-    // Use HTML (strip tags) — catches digest emails whose plain text is just a link
-    content = (html ? html.replace(/<[^>]+>/g, " ") : plain).replace(/\s+/g, " ").trim().slice(0, 20000);
+    // Use HTML (strip tags) — catches digest emails whose plain text is just junk
+    content = cleanContent(html ? html.replace(/<[^>]+>/g, " ") : plain || "").slice(0, 30000);
   }
   if (!content || content.length < 50) return null;
+
+  console.log(`Claude content: ${content.length} chars, first 200: ${content.slice(0, 200)}`);
 
   const prompt=`Extract ALL property listings from this real estate alert email.
 Subject: "${subject}"
 Content: ${content}
 
 Rules:
+- This may be a Zillow, Realtor.com, Redfin, or other real estate alert
 - Convert shorthand prices: "$265K" → 265000, "$1.2M" → 1200000, "$265,000" → 265000
 - "3 bd | 2 ba | 1,684 sqft" means beds:3, baths:2, sqft:1684
 - zip may be null if not present; default state to "TX" for unspecified Texas cities
 - Include ALL properties found even when some fields are missing
-- Extract zillow.com/homedetails/ URLs when present; otherwise leave listing_url empty
+- Extract listing URLs when present; otherwise leave listing_url empty
 - price_drop is true for "Price Cut" / "Price Reduced" emails
+- source should be "zillow", "realtor", "redfin", etc. based on the email sender/content
 
 Return JSON array only (no markdown). Each object: {address, city, state, zip, listed_price, beds, baths, sqft, property_type, listing_url, source, price_drop, price_drop_amt}. Return [] only if truly no property listings exist.`;
 
   const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4096,messages:[{role:"user",content:prompt}]})});
   const data=await res.json();
   const text=(data.content?.[0]?.text||"[]").replace(/```json|```/g,"").trim();
-  try{return JSON.parse(text);}catch{return[];}
+  console.log(`Claude response: ${text.slice(0, 300)}`);
+  try{return JSON.parse(text);}catch{ console.error("JSON parse failed:", text.slice(0, 200)); return[];}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -308,6 +323,11 @@ interface ZillowDetails {
   lot_size?: number;
   rent_estimate?: number;
   listing_url?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  property_type?: string;
 }
 
 async function scrapeZillow(listingUrl: string): Promise<ZillowDetails | null> {
@@ -377,6 +397,29 @@ function parseNextData(html: string, listingUrl: string): ZillowDetails | null {
       lot_size = u.includes("acre") ? Math.round(v * 43560) : Math.round(v);
     }
 
+    // Extract address from prop.address object
+    const addr = prop.address as Record<string, unknown> | undefined;
+    const streetAddress = addr?.streetAddress ? String(addr.streetAddress) : undefined;
+    const city = addr?.city ? String(addr.city) : undefined;
+    const state = addr?.state ? String(addr.state) : undefined;
+    const zip = addr?.zipcode ? String(addr.zipcode) : undefined;
+
+    // Build full address string: "123 Main St, Fort Worth, TX 76116"
+    let fullAddress: string | undefined;
+    if (streetAddress) {
+      const parts = [streetAddress, city, state && zip ? `${state} ${zip}` : state || zip].filter(Boolean);
+      fullAddress = parts.join(", ");
+    }
+
+    // Determine property type from homeType
+    const homeType = prop.homeType ? String(prop.homeType) : undefined;
+    const typeMap: Record<string, string> = {
+      SINGLE_FAMILY: "SFR", TOWNHOUSE: "Townhouse", CONDO: "Condo",
+      MULTI_FAMILY: "Multi-Family", MANUFACTURED: "Manufactured",
+      LOT: "Land", APARTMENT: "Apartment",
+    };
+    const property_type = homeType ? (typeMap[homeType] || homeType) : undefined;
+
     const details: ZillowDetails = {
       price: prop.price ? Number(prop.price) : undefined,
       beds: prop.bedrooms ? Number(prop.bedrooms) : undefined,
@@ -385,6 +428,11 @@ function parseNextData(html: string, listingUrl: string): ZillowDetails | null {
       lot_size,
       rent_estimate: prop.rentZestimate ? Number(prop.rentZestimate) : undefined,
       listing_url: listingUrl,
+      address: fullAddress,
+      city,
+      state,
+      zip,
+      property_type,
     };
     console.log("__NEXT_DATA__ parsed:", JSON.stringify(details));
     return details;
@@ -536,6 +584,44 @@ serve(async(req)=>{
     return new Response("error",{status:500});
   }
 
+  // ── ZPID Fallback: if Claude found nothing but we have ZPIDs, scrape each directly ──
+  if (!props.length && urlScan.zpids.length > 0) {
+    console.log(`Claude returned 0 listings but found ${urlScan.zpids.length} ZPIDs — using ZPID fallback`);
+    for (const zpid of urlScan.zpids) {
+      const hdUrl = `https://www.zillow.com/homedetails/${zpid}_zpid/`;
+      console.log(`ZPID fallback: scraping ${hdUrl}`);
+      try {
+        const details = await scrapeZillow(hdUrl);
+        if (details?.address) {
+          props.push({
+            address: details.address,
+            city: details.city || "",
+            state: details.state || "TX",
+            zip: details.zip || null,
+            listed_price: details.price || null,
+            beds: details.beds || null,
+            baths: details.baths || null,
+            sqft: details.sqft || null,
+            property_type: details.property_type || "SFR",
+            listing_url: details.listing_url || hdUrl,
+            source: "zillow",
+            price_drop: false,
+            price_drop_amt: 0,
+            rent_estimate: details.rent_estimate || null,
+            lot_size: details.lot_size || null,
+            _from_zpid_fallback: true,
+          });
+          console.log(`ZPID ${zpid} → ${details.address} ($${details.price || "?"})`);
+        } else {
+          console.log(`ZPID ${zpid}: scrape returned no address — skipping`);
+        }
+      } catch (e) {
+        console.error(`ZPID ${zpid} scrape error:`, e);
+      }
+    }
+    console.log(`ZPID fallback produced ${props.length} properties`);
+  }
+
   if(!props.length){
     if(logId)await supabase.from("email_log").update({parse_status:"no_listings",properties_found:0}).eq("id",logId);
     return new Response("no listings",{status:200});
@@ -547,7 +633,7 @@ serve(async(req)=>{
   let n=0;
   for(const p of props){
     if(!p.address)continue;
-    const{error}=await supabase.from("properties").upsert({
+    const record: Record<string, unknown> = {
       user_id:mb.user_id, mailbox_id:mb.id, email_log_id:logId,
       address:p.address, city:p.city??"", state:p.state??"TX", zip:p.zip||null,
       listed_price:p.listed_price?Number(p.listed_price):null,
@@ -558,7 +644,11 @@ serve(async(req)=>{
       condition:"good", improvement:"asis", status:"new", is_new:true,
       price_drop:Boolean(p.price_drop), price_drop_amt:Number(p.price_drop_amt??0),
       raw_json:p,
-    },{onConflict:"user_id,address,listed_price"});
+    };
+    // ZPID fallback properties already have rent_estimate and lot_size from scraping
+    if (p.rent_estimate) record.rent_estimate = Number(p.rent_estimate);
+    if (p.lot_size) record.lot_size = Number(p.lot_size);
+    const{error}=await supabase.from("properties").upsert(record,{onConflict:"user_id,address,listed_price"});
     if(!error)n++;else console.error("upsert err:",error.message);
   }
   if(logId)await supabase.from("email_log").update({parse_status:"success",properties_found:n}).eq("id",logId);
@@ -582,6 +672,8 @@ serve(async(req)=>{
 
     for (const p of props) {
       if (!p.address) continue;
+      // ZPID fallback properties were already scraped during fallback — skip re-scraping
+      if (p._from_zpid_fallback) { console.log(`Skipping re-scrape for ZPID fallback: ${p.address}`); continue; }
 
       console.log(`── Resolving URL for: ${p.address}`);
       const scrapeUrl = await resolveZillowUrl(
