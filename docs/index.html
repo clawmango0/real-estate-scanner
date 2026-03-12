@@ -1280,8 +1280,10 @@ function updateStats(){
   document.getElementById('tc-a').textContent=props.filter(p=>p.curated!=='blk').length;
   document.getElementById('tc-f').textContent=props.filter(p=>p.curated==='fav').length;
   document.getElementById('tc-n').textContent=props.filter(p=>p.curated==='ni').length;
-  // Top Deal: best CoC within the current project scope (or all if no project)
-  const topDeal=pass.filter(p=>p._tiers&&effectiveRent(p)).sort((a,b)=>(b._cocL||0)-(a._cocL||0))[0];
+  // Top Deal: when project active → best available in scope (visible, regardless of pass/fail)
+  //           when no project → pass-only (global view keeps quality bar high)
+  const topPool=activeProject?visible:pass;
+  const topDeal=topPool.filter(p=>p._tiers&&effectiveRent(p)).sort((a,b)=>(b._cocL||0)-(a._cocL||0))[0];
   if(topDeal){
     document.getElementById('td-name').textContent=`${topDeal.address} — ${topDeal.type}`;
     document.getElementById('td-list').textContent=M(topDeal.listed);
