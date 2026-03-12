@@ -56,23 +56,38 @@ function parseSubjectLine(subject:string):any[]|null {
   } catch { return null; }
 }
 
-async function parseWithClaude(subject:string,html:string,plain:string) {
-  // Prefer plain text — it's compact and Claude reads it more reliably than
-  // stripped HTML (Zillow emails are 80-100KB HTML; plain is ~14KB and contains
-  // the price, beds, baths clearly formatted). Fall back to stripped HTML only
-  // when plain is absent or very short.
+async function parseWithClaude(subject:string, html:string, plain:string) {
+  // Only prefer plain text when it actually contains property data
+  // (prices, bed/bath counts, sqft). Zillow digest emails have plain text
+  // that exceeds 200 chars due to long tracking URLs but contains no listings —
+  // "Daily results straight to your inbox. [500-char URL]". In those cases
+  // the HTML has the actual property cards and should be used instead.
+  const plainHasData = plain && plain.length > 100 &&
+    /\$[\d,.]+K?M?|\d+\s*(?:bd|bed|ba|bath)|\d,\d{3}\s*sq/i.test(plain.slice(0, 3000));
+
   let content: string;
-  if (plain && plain.length > 200) {
+  if (plainHasData) {
     content = plain.replace(/\s+/g, " ").trim().slice(0, 20000);
   } else {
+    // Use HTML (strip tags) — catches digest emails whose plain text is just a link
     content = (html ? html.replace(/<[^>]+>/g, " ") : plain).replace(/\s+/g, " ").trim().slice(0, 20000);
   }
   if (!content || content.length < 50) return null; // signal empty body
+
   const prompt=`Extract ALL property listings from this real estate alert email.
 Subject: "${subject}"
 Content: ${content}
 
-Return JSON array only (no markdown). Each item: address,city,state,zip,listed_price(number),beds(number),baths(number),sqft(number),property_type(SFR/DUPLEX/etc),listing_url,source(zillow/realtor/etc),price_drop(bool),price_drop_amt(number). Return [] if none.`;
+Rules:
+- Convert shorthand prices: "$265K" → 265000, "$1.2M" → 1200000, "$265,000" → 265000
+- "3 bd | 2 ba | 1,684 sqft" means beds:3, baths:2, sqft:1684
+- zip may be null if not present; default state to "TX" for unspecified Texas cities
+- Include ALL properties found even when some fields are missing
+- Extract zillow.com/homedetails/ URLs when present; otherwise leave listing_url empty
+- price_drop is true for "Price Cut" / "Price Reduced" emails
+
+Return JSON array only (no markdown). Each object: {address, city, state, zip, listed_price, beds, baths, sqft, property_type, listing_url, source, price_drop, price_drop_amt}. Return [] only if truly no property listings exist.`;
+
   const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4096,messages:[{role:"user",content:prompt}]})});
   const data=await res.json();
   const text=(data.content?.[0]?.text||"[]").replace(/```json|```/g,"").trim();
@@ -110,6 +125,32 @@ function extractZillowUrl(html: string, plain: string = ""): string | null {
 
     return null;
   } catch { return null; }
+}
+
+// Look up a property on Zillow by address using their public autocomplete API.
+// Returns a homedetails URL if found (e.g. https://www.zillow.com/homedetails/12345678_zpid/).
+// Used as fallback when the alert email doesn't contain a direct homedetails link.
+async function findZillowUrl(address: string): Promise<string | null> {
+  try {
+    const q = encodeURIComponent(address);
+    const r = await fetch(
+      `https://www.zillowstatic.com/autocomplete/v3/suggestions?q=${q}&abKey=1`,
+      { headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" } }
+    );
+    if (!r.ok) { console.log("autocomplete status:", r.status); return null; }
+    const data = await r.json();
+    const result = data?.results?.find((x: any) => x.metaData?.zpid);
+    if (result?.metaData?.zpid) {
+      const url = `https://www.zillow.com/homedetails/${result.metaData.zpid}_zpid/`;
+      console.log(`Autocomplete found ZPID ${result.metaData.zpid} → ${url}`);
+      return url;
+    }
+    console.log("Autocomplete: no ZPID in results, count=", data?.results?.length ?? 0);
+    return null;
+  } catch (e) {
+    console.error("findZillowUrl error:", e);
+    return null;
+  }
 }
 
 interface ZillowDetails {
@@ -226,9 +267,9 @@ serve(async(req)=>{
   const{data:log}=await supabase.from("email_log").insert({user_id:mb.user_id,mailbox_id:mb.id,from_address:sender,subject,parse_status:"pending",raw_payload:{recipient,sender,subject,html_len:html.length,plain_len:plain.length,plain_preview:plain.slice(0,500)}}).select("id").single();
   const logId=log?.id;
 
-  // Extract Zillow URL from email HTML + plain text for scraping later
+  // Extract Zillow homedetails URL from email HTML + plain text for scraping later
   const zillowEmailUrl = extractZillowUrl(html, plain);
-  if (zillowEmailUrl) console.log("Found Zillow URL:", zillowEmailUrl.slice(0, 100));
+  if (zillowEmailUrl) console.log("Found Zillow URL in email:", zillowEmailUrl.slice(0, 100));
 
   // Try Claude first, fall back to subject line parsing
   let props:any[]=[];
@@ -274,9 +315,22 @@ serve(async(req)=>{
   if(logId)await supabase.from("email_log").update({parse_status:"success",properties_found:n}).eq("id",logId);
   console.log(`inserted ${n} for ${slug}`);
 
-  // Scrape Zillow listing for each property to get price, beds, baths, sqft, lot size, rentZestimate
-  // Use URL from email HTML (most reliable) or fallback to listing_url from parsed data
-  const scrapeUrl = zillowEmailUrl || (props[0]?.listing_url || "");
+  // ── Zillow scraping: enrich properties with price, beds, baths, sqft, rentZestimate ──
+  // Priority for URL: (1) homedetails URL directly from email HTML/plain text,
+  //                  (2) homedetails URL from Claude-parsed listing_url,
+  //                  (3) Zillow autocomplete lookup by street address (new).
+  // Option 3 handles the common case where Zillow new-listing alerts only contain
+  // a tracking link to the saved-search page, not to the individual listing.
+  let scrapeUrl = zillowEmailUrl || (props[0]?.listing_url?.includes("homedetails") ? props[0].listing_url : "");
+
+  if (!scrapeUrl && n > 0 && props[0]?.address) {
+    // Try autocomplete lookup — free, no API key required
+    const p0 = props[0];
+    const searchAddr = [p0.address, p0.city, p0.state || "TX", p0.zip].filter(Boolean).join(" ");
+    console.log("No homedetails URL in email, trying autocomplete for:", searchAddr);
+    scrapeUrl = (await findZillowUrl(searchAddr)) ?? "";
+  }
+
   if (scrapeUrl && n > 0) {
     console.log("Scraping Zillow:", scrapeUrl.slice(0, 100));
     try {
@@ -309,6 +363,8 @@ serve(async(req)=>{
     } catch (e) {
       console.error("zillow scrape error:", e);
     }
+  } else if (n > 0) {
+    console.log("No scrape URL found — property saved without Zillow enrichment");
   }
 
   return new Response(JSON.stringify({ok:true,properties_found:n}),{status:200,headers:{"Content-Type":"application/json"}});
