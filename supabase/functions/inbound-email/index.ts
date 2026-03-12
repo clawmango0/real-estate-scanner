@@ -10,7 +10,44 @@ const SCRAPER_KEY=Deno.env.get("SCRAPER_API_KEY")??"";
 
 async function verify(ts:string,tok:string,sig:string):Promise<boolean>{if(!MAILGUN_KEY)return true;try{const v=ts+tok;const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(MAILGUN_KEY),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(v));const c=Array.from(new Uint8Array(s)).map(b=>b.toString(16).padStart(2,"0")).join("");return c===sig;}catch{return true;}}
 
-function getVerifyUrl(subject:string,html:string,plain:string):string|null{try{const sl=(subject||"").toLowerCase();if(!sl.includes("confirm")&&!sl.includes("verify")&&!sl.includes("verif")&&!sl.includes("activate")&&!sl.includes("subscri"))return null;const c=html||plain||"";const patterns=[/https?:\/\/[^\s"'<>]+confirm[^\s"'<>]*/gi,/https?:\/\/[^\s"'<>]+verif[^\s"'<>]*/gi,/https?:\/\/[^\s"'<>]+activate[^\s"'<>]*/gi,/https?:\/\/[^\s"'<>]+subscri[^\s"'<>]*/gi,/https?:\/\/[^\s"'<>]+token=[^\s"'<>]*/gi];for(const p of patterns){const m=c.match(p);if(m?.[0])return m[0].replace(/&amp;/g,"&").replace(/['"]/g,"");}return null;}catch{return null;}}
+// Find the REAL verification/confirm link from an email.
+// Old version matched ANY URL containing "confirm" — which grabbed static image
+// URLs like password-reset-confirm-icon.png before the actual verify link.
+function getVerifyUrl(subject:string, html:string, plain:string): string|null {
+  try {
+    const sl = (subject||"").toLowerCase();
+    if (!sl.includes("confirm") && !sl.includes("verify") && !sl.includes("verif") &&
+        !sl.includes("activate") && !sl.includes("subscri")) return null;
+
+    const c = html || plain || "";
+
+    // Collect ALL URLs from the email content
+    const allUrls = c.match(/https?:\/\/[^\s"'<>]+/gi) || [];
+
+    // Filter to verification-action URLs, excluding static assets
+    const verifyKeyword = /confirm|verif|activate|subscri|token=/i;
+    const staticAsset   = /\.(png|jpg|jpeg|gif|svg|css|js|ico|woff2?|ttf|eot)([?#]|$)/i;
+    const staticDomain  = /zillowstatic\.com|\.amazonaws\.com\/static|cloudfront\.net\/static|cdn\./i;
+
+    const candidates = allUrls
+      .map(u => u.replace(/&amp;/g, "&").replace(/['"]/g, ""))
+      .filter(u => verifyKeyword.test(u) && !staticAsset.test(u) && !staticDomain.test(u));
+
+    if (!candidates.length) return null;
+
+    // Prefer: (a) tracking links (click.mail.*) since they redirect to verify endpoint,
+    //         (b) URLs with token/verification query params,
+    //         (c) anything else that passed filters
+    const best =
+      candidates.find(u => /click\.mail\./i.test(u)) ||
+      candidates.find(u => /[?&](token|t)=/i.test(u)) ||
+      candidates.find(u => /VerifyEmail|verify-email|email.confirm/i.test(u)) ||
+      candidates[0];
+
+    console.log(`Verify URL candidates: ${candidates.length}, selected: ${best.slice(0, 150)}`);
+    return best;
+  } catch { return null; }
+}
 
 // ══════════════════════════════════════════════════════════
 //  SUBJECT LINE PARSER
@@ -426,8 +463,33 @@ serve(async(req)=>{
   const vUrl=getVerifyUrl(subject,html,plain);
   if(vUrl){
     let ok=false;
-    try{const r=await fetch(vUrl,{method:"GET",headers:{"User-Agent":"Mozilla/5.0"},redirect:"follow"});ok=r.status<500;}catch(e){console.error("verify err:",e);}
-    await supabase.from("email_log").insert({user_id:mb.user_id,mailbox_id:mb.id,from_address:sender,subject,parse_status:ok?"verified":"verify_failed",properties_found:0,raw_payload:{recipient,sender,subject,verify_url:vUrl.slice(0,500)}});
+    let finalUrl="";
+    let statusCode=0;
+    try{
+      // Follow full redirect chain with a real browser-like UA so Zillow/Realtor accept the click
+      const r=await fetch(vUrl,{
+        method:"GET",
+        headers:{
+          "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+        redirect:"follow"
+      });
+      statusCode=r.status;
+      finalUrl=r.url||"";
+      ok=r.status<400; // 2xx/3xx = success, 4xx/5xx = failure
+      console.log(`Verify click: status=${r.status}, final=${finalUrl.slice(0,150)}`);
+    }catch(e){console.error("verify err:",e);}
+    await supabase.from("email_log").insert({
+      user_id:mb.user_id, mailbox_id:mb.id, from_address:sender, subject,
+      parse_status:ok?"verified":"verify_failed", properties_found:0,
+      raw_payload:{
+        recipient, sender, subject,
+        verify_url: vUrl.slice(0,500),
+        verify_final_url: finalUrl.slice(0,500),
+        verify_status: statusCode,
+      }
+    });
     return new Response(JSON.stringify({ok:true,type:"verification",auto_verified:ok}),{status:200,headers:{"Content-Type":"application/json"}});
   }
 
