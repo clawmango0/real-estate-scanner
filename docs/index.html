@@ -567,18 +567,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('app').style.display='none';
     return;
   }
-  if(event === 'TOKEN_REFRESHED') {
-    // Keep currentUser in sync after token refresh
-    currentUser = session.user;
-    return;
-  }
-  if(event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-    if(currentUser) return; // already handled
-    currentUser = session.user;
-    document.getElementById('user-email-btn').textContent = currentUser.email;
-    // Show app immediately — don't block on mailbox fetch
-    showApp();
-    // Load mailbox and properties in background
+  // Any authenticated event: SIGNED_IN, INITIAL_SESSION, TOKEN_REFRESHED, etc.
+  const firstLogin = !currentUser;
+  currentUser = session.user;
+  document.getElementById('user-email-btn').textContent = currentUser.email;
+  showApp(); // idempotent — always ensure app is visible
+  if(firstLogin){
     loadMailboxBg();
     loadProperties();
   }
