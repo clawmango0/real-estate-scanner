@@ -997,8 +997,8 @@ function buildMod(id){
     :`<div class="sec">📍 Neighborhood</div><div class="infobox" style="color:var(--text2)">No ZIP data available.</div>`}
 
     <div class="sec">💰 Est. Monthly Rent</div>
-    ${p.rentRange&&!p.monthlyRent?`<div class="infobox" style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem">
-      <span style="color:var(--amber);font-size:.72rem">💡 Zillow Rent Estimate:</span>
+    ${p.rentRange?`<div class="infobox" style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap">
+      <span style="color:var(--amber);font-size:.72rem">💡 Zillow Rent Est:</span>
       <strong style="color:var(--amber)">${M(p.rentRange.low)} – ${M(p.rentRange.high)}/mo</strong>
       <button onclick="mRent['${id}']=${Math.round((p.rentRange.low+p.rentRange.high)/2)};document.getElementById('rent-inp-${id}').value=mRent['${id}'];buildMod('${id}')" style="background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:5px;padding:.2rem .5rem;font-size:.65rem;cursor:pointer;margin-left:auto">Use midpoint</button>
     </div>`:''}
