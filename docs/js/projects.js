@@ -164,6 +164,8 @@ function openProjMod(id){
       min_baths:null,max_baths:null,max_price:null,down_pct:null,rate:null,hold_yrs:null};
   _buildProjModal();
   document.getElementById('pov').classList.add('open');
+  // Init map AFTER modal is visible (display:flex) + animation settles (0.2s)
+  setTimeout(()=>_initModalMap(),350);
 }
 
 function closeProjMod(e){
@@ -174,6 +176,8 @@ function closeProjMod(e){
 }
 
 function _buildProjModal(){
+  // Destroy existing map before innerHTML replaces its container
+  if(window._projModalMap){try{window._projModalMap.remove()}catch(e){};window._projModalMap=null;}
   const p=_editProj;
   document.getElementById('pm-title').textContent=p.id?'Edit Project':'New Project';
   const cityTags=(p.cities||[]).map(c=>`<span class="ptag">${c}<button onclick="_projRemoveCity('${c.replace(/'/g,"\\'")}')">✕</button></span>`).join('');
@@ -232,21 +236,33 @@ function _buildProjModal(){
     </div>
     <button class="psave-btn" onclick="saveProject()">${p.id?'Save Changes':'Create Project'}</button>
     ${p.id?`<button class="pdel-btn" onclick="deleteProject('${p.id}')">Delete Project</button>`:''}`;
-  _initModalMap();
+  // Note: _initModalMap() is NOT called here because the modal may still be display:none.
+  // It's called from openProjMod() after the modal becomes visible,
+  // or directly from _projRemoveCity() when the modal is already visible.
 }
 
-// Initialize interactive map in project modal
+// Initialize interactive map in project modal.
+// IMPORTANT: Only call this when the modal container is visible (display:flex),
+// otherwise Leaflet calculates 0×0 dimensions and the map breaks.
 function _initModalMap(){
   if(typeof L==='undefined') return;
   const el=document.getElementById('pm-map');
   if(!el) return;
+  // Destroy previous map instance (container may have been replaced by innerHTML)
   if(window._projModalMap){try{window._projModalMap.remove()}catch(e){};window._projModalMap=null;}
   const allWithCoords=props.filter(p=>p.lat&&p.lng);
   if(!allWithCoords.length){
     el.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--text3)">No geocoded properties</div>';
     return;
   }
+  // Verify the container is actually visible and has dimensions
+  if(el.offsetWidth===0||el.offsetHeight===0){
+    console.warn('_initModalMap: container has 0 dimensions, deferring...');
+    setTimeout(()=>_initModalMap(),200);
+    return;
+  }
   const proj=_editProj;
+  if(!proj) return;
   const matching=proj.id?allWithCoords.filter(p=>projectFilter(p,proj)):allWithCoords;
   const excluded=proj.id?allWithCoords.filter(p=>!projectFilter(p,proj)):[];
   const map=L.map(el,{zoomControl:true,attributionControl:false});
@@ -262,17 +278,15 @@ function _initModalMap(){
       .bindPopup(`<b>${p.address}</b><br>$${Number(p.listed||0).toLocaleString()}`,{className:'dark-popup'})
       .addTo(map);
   });
-  if(bounds.length===1) map.setView(bounds[0],12);
-  else if(bounds.length>1) map.fitBounds(bounds,{padding:[20,20]});
-  else{const all=allWithCoords.map(p=>[p.lat,p.lng]);map.fitBounds(all,{padding:[20,20]});}
-  window._projModalMap=map;
-  // Leaflet needs the container to be fully rendered before it can calculate tile positions.
-  // The modal may still be animating, so delay invalidateSize.
-  setTimeout(()=>{map.invalidateSize();
+  function fitMap(){
     if(bounds.length===1) map.setView(bounds[0],12);
     else if(bounds.length>1) map.fitBounds(bounds,{padding:[20,20]});
     else{const all=allWithCoords.map(p=>[p.lat,p.lng]);map.fitBounds(all,{padding:[20,20]});}
-  },150);
+  }
+  fitMap();
+  window._projModalMap=map;
+  // Safety: invalidateSize after CSS animation fully settles (.2s ease on .modal)
+  setTimeout(()=>{map.invalidateSize();fitMap();},300);
 }
 
 function _projAddCity(){
@@ -299,6 +313,7 @@ function _projRemoveCity(city){
   if(!_editProj) return;
   _editProj.cities=(_editProj.cities||[]).filter(c=>c!==city);
   _buildProjModal();
+  _initModalMap(); // modal already visible, safe to create map immediately
   setTimeout(()=>{const i=document.getElementById('pf-city-in');if(i)i.focus();},0);
 }
 
