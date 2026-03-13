@@ -566,16 +566,17 @@ function _restoreGP(){
   _gpOrig={};
 }
 
-// City match: checks p.city (hood area_name fallback) AND p.address (contains city for properties
-// where DB city column is empty — e.g. "534 NE 23rd St Grand Prairie, TX 75050")
+// City match: uses rawCity (the actual DB city column) for exact case-insensitive comparison.
+// rawCity is populated for all properties (backfilled from address parsing 2026-03-13).
+// Falls back to hood.area substring check only if rawCity is empty (shouldn't happen).
 function _matchCity(p,cities){
   if(!cities||!cities.length) return true;
-  const c=(p.city||'').toLowerCase();
-  const area=(p.hood?.area||'').toLowerCase();
-  const addr=(p.address||'').toLowerCase();
+  const raw=(p.rawCity||'').toLowerCase().trim();
   return cities.some(x=>{
     const xL=x.toLowerCase().trim();
-    return c.includes(xL)||area.includes(xL)||addr.includes(xL);
+    if(raw) return raw===xL;
+    // fallback: substring on display city (includes "City, ST ZIP")
+    return (p.city||'').toLowerCase().includes(xL);
   });
 }
 
