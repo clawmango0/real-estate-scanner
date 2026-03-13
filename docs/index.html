@@ -7,6 +7,8 @@
 <title><span class="brand-text">LockBox<span class="iq">IQ</span></span></title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --bg:#0B162E;--bg2:#0F1B35;--card:#13213D;
@@ -123,7 +125,7 @@ body{font-family:'Poppins',system-ui,-apple-system,sans-serif;background:var(--b
 /* ── Project cards row ────────────────────────────────── */
 .prow{display:flex;align-items:stretch;overflow-x:auto;border-bottom:2px solid var(--border);scroll-snap-type:x mandatory;scrollbar-width:none;background:var(--bg2)}
 .prow::-webkit-scrollbar{display:none}
-.pcard{flex:0 0 auto;min-width:158px;max-width:200px;padding:.65rem 1rem .6rem;border-right:1px solid var(--border);cursor:pointer;transition:background .12s;position:relative;scroll-snap-align:start;user-select:none}
+.pcard{flex:0 0 auto;min-width:180px;max-width:220px;padding:.65rem 1rem .6rem;border-right:1px solid var(--border);cursor:pointer;transition:background .12s;position:relative;scroll-snap-align:start;user-select:none}
 .pcard:hover{background:rgba(255,255,255,.04)}
 .pcard.pactive{background:rgba(251,191,36,.07);border-bottom:2px solid var(--amber);margin-bottom:-2px}
 .pc-name{font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.22rem;color:var(--text)}
@@ -136,6 +138,13 @@ body{font-family:'Poppins',system-ui,-apple-system,sans-serif;background:var(--b
 .pc-act button:hover{color:var(--text);border-color:var(--text2);background:rgba(255,255,255,.06)}
 .pc-act .del-btn:hover{color:#f87171;border-color:#f87171}
 .pcard-add{flex:0 0 auto;min-width:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:1.3rem;font-weight:300;padding:0 1.1rem;transition:color .12s}
+.pc-map{width:100%;height:70px;border-radius:4px;margin-bottom:.35rem;overflow:hidden;background:var(--bg)}
+.pc-map .leaflet-tile-pane{filter:brightness(.6) invert(1) contrast(3) hue-rotate(200deg) saturate(.3) brightness(.7)}
+.pc-map .leaflet-control-zoom,.pc-map .leaflet-control-attribution{display:none}
+.pm-map-wrap{height:250px;border-radius:8px;margin-bottom:.8rem;overflow:hidden;background:var(--bg)}
+.pm-map-wrap .leaflet-tile-pane{filter:brightness(.6) invert(1) contrast(3) hue-rotate(200deg) saturate(.3) brightness(.7)}
+.dark-popup .leaflet-popup-content-wrapper{background:var(--card);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-family:Poppins,sans-serif;font-size:.72rem}
+.dark-popup .leaflet-popup-tip{background:var(--card)}
 .pcard-add:hover{color:var(--amber)}
 /* ── Project modal ────────────────────────────────────── */
 .proj-modal{max-width:520px}
@@ -626,6 +635,7 @@ function renderProjectCards(){
   let html=`<div class="pcard${allActive?' pactive':''}" onclick="setProject(null)">
     <div class="pc-name">All Properties</div>
     <div class="pc-meta">No filters active</div>
+    <div class="pc-map" data-proj-id="all"></div>
     <div class="pc-grid">
       <div><div class="pcl">Props</div><div class="pcv">${allSt.count}</div></div>
       <div><div class="pcl">Pass</div><div class="pcv" style="color:var(--green)">${allSt.pass}</div></div>
@@ -651,6 +661,7 @@ function renderProjectCards(){
       </div>
       <div class="pc-name">${proj.name}</div>
       <div class="pc-meta">${meta}</div>
+      <div class="pc-map" data-proj-id="${proj.id}"></div>
       <div class="pc-grid">
         <div><div class="pcl">Props</div><div class="pcv">${st.count}</div></div>
         <div><div class="pcl">Pass</div><div class="pcv" style="color:var(--green)">${st.pass}</div></div>
@@ -661,6 +672,39 @@ function renderProjectCards(){
   });
   html+=`<div class="pcard-add" onclick="openProjMod(null)" title="New project">+</div>`;
   row.innerHTML=html;
+  _initProjectMaps();
+}
+
+// Initialize mini-maps on project cards
+function _initProjectMaps(){
+  if(typeof L==='undefined') return;
+  if(window._projMaps){window._projMaps.forEach(m=>{try{m.remove()}catch(e){}});}
+  window._projMaps=[];
+  document.querySelectorAll('.pc-map').forEach(el=>{
+    const pid=el.dataset.projId;
+    let filtered;
+    if(pid==='all'){
+      filtered=props.filter(p=>p.lat&&p.lng);
+    }else{
+      const proj=projects.find(x=>x.id===pid);
+      filtered=props.filter(p=>p.lat&&p.lng&&projectFilter(p,proj));
+    }
+    if(!filtered.length){
+      el.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:.5rem;color:var(--text3)">No map data</div>';
+      return;
+    }
+    const map=L.map(el,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false,boxZoom:false,keyboard:false});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+    const bounds=[];
+    filtered.forEach(p=>{
+      const ll=[p.lat,p.lng];
+      bounds.push(ll);
+      L.circleMarker(ll,{radius:3,color:'#1CCEBB',fillColor:'#1CCEBB',fillOpacity:.8,weight:1}).addTo(map);
+    });
+    if(bounds.length===1) map.setView(bounds[0],12);
+    else map.fitBounds(bounds,{padding:[8,8]});
+    window._projMaps.push(map);
+  });
 }
 
 // Load projects from DB
@@ -685,6 +729,7 @@ function openProjMod(id){
 }
 
 function closeProjMod(e){
+  if(window._projModalMap){try{window._projModalMap.remove()}catch(e){};window._projModalMap=null;}
   if(e&&e.target!==document.getElementById('pov')) return;
   document.getElementById('pov').classList.remove('open');
   _editProj=null;
@@ -696,6 +741,7 @@ function _buildProjModal(){
   const cityTags=(p.cities||[]).map(c=>`<span class="ptag">${c}<button onclick="_projRemoveCity('${c.replace(/'/g,"\\'")}')">✕</button></span>`).join('');
   const typeBoxes=_PTYPES.map(t=>`<button class="ptyp${(p.prop_types||[]).includes(t)?' on':''}" onclick="_projToggleType('${t}')">${t}</button>`).join('');
   document.getElementById('pm-body').innerHTML=`
+    <div class="pm-map-wrap" id="pm-map"></div>
     <div class="txs">
       <div class="pf-row"><span class="pf-lbl">Project Name</span>
         <input type="text" id="pf-name" value="${(p.name||'').replace(/"/g,'&quot;')}" placeholder="e.g. SFR Duplex FW" style="flex:1">
@@ -748,6 +794,40 @@ function _buildProjModal(){
     </div>
     <button class="psave-btn" onclick="saveProject()">${p.id?'Save Changes':'Create Project'}</button>
     ${p.id?`<button class="pdel-btn" onclick="deleteProject('${p.id}')">Delete Project</button>`:''}`;
+  _initModalMap();
+}
+
+// Initialize interactive map in project modal
+function _initModalMap(){
+  if(typeof L==='undefined') return;
+  const el=document.getElementById('pm-map');
+  if(!el) return;
+  if(window._projModalMap){try{window._projModalMap.remove()}catch(e){};window._projModalMap=null;}
+  const allWithCoords=props.filter(p=>p.lat&&p.lng);
+  if(!allWithCoords.length){
+    el.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--text3)">No geocoded properties</div>';
+    return;
+  }
+  const proj=_editProj;
+  const matching=proj.id?allWithCoords.filter(p=>projectFilter(p,proj)):allWithCoords;
+  const excluded=proj.id?allWithCoords.filter(p=>!projectFilter(p,proj)):[];
+  const map=L.map(el,{zoomControl:true,attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+  excluded.forEach(p=>{
+    L.circleMarker([p.lat,p.lng],{radius:5,color:'#4A5E7A',fillColor:'#4A5E7A',fillOpacity:.4,weight:1}).addTo(map);
+  });
+  const bounds=[];
+  matching.forEach(p=>{
+    const ll=[p.lat,p.lng];
+    bounds.push(ll);
+    L.circleMarker(ll,{radius:5,color:'#1CCEBB',fillColor:'#1CCEBB',fillOpacity:.8,weight:1})
+      .bindPopup(`<b>${p.address}</b><br>$${Number(p.listed||0).toLocaleString()}`,{className:'dark-popup'})
+      .addTo(map);
+  });
+  if(bounds.length===1) map.setView(bounds[0],12);
+  else if(bounds.length>1) map.fitBounds(bounds,{padding:[20,20]});
+  else{const all=allWithCoords.map(p=>[p.lat,p.lng]);map.fitBounds(all,{padding:[20,20]});}
+  window._projModalMap=map;
 }
 
 function _projAddCity(){

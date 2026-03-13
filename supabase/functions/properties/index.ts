@@ -32,7 +32,7 @@ serve(async (req) => {
     if (req.method === "PATCH" && !isCollection) {
       const body = await req.json();
       const allowed = ["monthly_rent", "condition", "improvement", "status", "curated", "notes", "price_drop", "price_drop_amt",
-                       "rent_estimate", "beds", "baths", "sqft", "lot_size", "listed_price", "address"];
+                       "rent_estimate", "beds", "baths", "sqft", "lot_size", "listed_price", "address", "latitude", "longitude"];
       const updates: Record<string, unknown> = {};
       for (const k of allowed) if (k in body) updates[k] = body[k];
       const { data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single();
@@ -87,6 +87,7 @@ function shapeProperty(row: Record<string, unknown>) {
   return {
     id: row.id, address: streetAddr,
     city: cityDisplay,
+    rawCity: (row.city as string || "").trim(),
     listed: row.listed_price,
     type: t(row.property_type as string),
     beds: row.beds, baths: row.baths, sqft: row.sqft, lotSize: row.lot_size,
@@ -102,6 +103,7 @@ function shapeProperty(row: Record<string, unknown>) {
     dropAmt: row.price_drop_amt || 0,
     curated: row.curated,
     notes: row.notes,
+    lat: row.latitude, lng: row.longitude,
     createdAt: row.created_at,
     hood: hood ? {
       area: hood.area_name, schools: hood.schools,

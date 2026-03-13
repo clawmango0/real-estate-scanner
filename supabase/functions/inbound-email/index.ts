@@ -328,6 +328,8 @@ interface ZillowDetails {
   state?: string;
   zip?: string;
   property_type?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 async function scrapeZillow(listingUrl: string): Promise<ZillowDetails | null> {
@@ -433,6 +435,8 @@ function parseNextData(html: string, listingUrl: string): ZillowDetails | null {
       state,
       zip,
       property_type,
+      latitude: prop.latitude ? Number(prop.latitude) : undefined,
+      longitude: prop.longitude ? Number(prop.longitude) : undefined,
     };
     console.log("__NEXT_DATA__ parsed:", JSON.stringify(details));
     return details;
@@ -609,6 +613,8 @@ serve(async(req)=>{
             price_drop_amt: 0,
             rent_estimate: details.rent_estimate || null,
             lot_size: details.lot_size || null,
+            latitude: details.latitude || null,
+            longitude: details.longitude || null,
             _from_zpid_fallback: true,
           });
           console.log(`ZPID ${zpid} → ${details.address} ($${details.price || "?"})`);
@@ -648,6 +654,8 @@ serve(async(req)=>{
     // ZPID fallback properties already have rent_estimate and lot_size from scraping
     if (p.rent_estimate) record.rent_estimate = Number(p.rent_estimate);
     if (p.lot_size) record.lot_size = Number(p.lot_size);
+    if (p.latitude) record.latitude = Number(p.latitude);
+    if (p.longitude) record.longitude = Number(p.longitude);
     const{error}=await supabase.from("properties").upsert(record,{onConflict:"user_id,address,listed_price"});
     if(!error)n++;else console.error("upsert err:",error.message);
   }
@@ -698,6 +706,8 @@ serve(async(req)=>{
           if (details.lot_size) updates.lot_size = details.lot_size;
           if (details.rent_estimate) updates.rent_estimate = details.rent_estimate;
           if (details.listing_url) updates.listing_url = details.listing_url;
+          if (details.latitude) updates.latitude = details.latitude;
+          if (details.longitude) updates.longitude = details.longitude;
           if (Object.keys(updates).length > 0) {
             const { error: ue } = await supabase.from("properties")
               .update(updates)
