@@ -95,9 +95,11 @@ supabase/functions/         # Edge Functions (Deno)
 | [DECISIONS.md](docs/DECISIONS.md) | Technical decisions log with rationale |
 | [SCHEMA.md](docs/SCHEMA.md) | Database schema (all 6 tables) |
 | [ASSUMPTIONS.md](docs/ASSUMPTIONS.md) | Financial assumptions and pass/fail criteria |
+| [SPEC.md](docs/SPEC.md) | Dashboard UI specification |
 | [INVESTMENT_STRATEGIES.md](docs/INVESTMENT_STRATEGIES.md) | Investment metrics and strategies reference |
 | [IMPROVEMENTS.md](docs/IMPROVEMENTS.md) | Roadmap and future features |
 | [DATA_STANDARDS.md](docs/DATA_STANDARDS.md) | Data integrity policy |
+| [RESOURCES.md](docs/RESOURCES.md) | Learning resources, tools, and market data links |
 
 ## Quick Start
 

@@ -1,145 +1,84 @@
-# Property Business Plans
+# Deal Evaluation Framework
 
-Comprehensive business plans with pass/fail criteria and task lists.
-
----
-
-## Summary: Go/No-Go Recommendations
-
-| Rank | Property | Price | Cash Flow | CoC | Cap Rate | Decision |
-|------|----------|-------|-----------|-----|----------|----------|
-| 1 | 7652 Colorado Creek | $212K | +$1,025/mo | 12.3% | 7.4% | ✅ PROCEED |
-| 2 | 8812 Texas Risinger | $203K | +$1,069/mo | 12.8% | 7.8% | ✅ PROCEED |
-| 3 | 4516 Rutland | $215K | +$701/mo | 8.4% | 4.9% | ⚠️ CAUTION |
-| 4 | 5113 Bob Dr | $170K | +$596/mo | 7.2% | 5.2% | ⚠️ CONDITIONAL |
-| 5 | 2933 Sycamore | $450K | -$313/mo | -3.8% | 1.8% | ❌ PASS |
-
----
-
-## Detailed Decisions
-
-### ✅ Tier 1: Proceed
-
-#### 1. 7652 Colorado Creek Ct - RECOMMENDED
-- Cash-on-Cash: **12.3%** ✅
-- Cap Rate: **7.4%** ✅
-- DSCR: **1.65** ✅
-- **Action:** Submit offer, proceed with due diligence
-
-#### 2. 8812 Texas Risinger Dr - RECOMMENDED
-- Cash-on-Cash: **12.8%** ✅
-- Cap Rate: **7.8%** ✅
-- DSCR: **1.80** ✅
-- **Action:** Verify lease, proceed with due diligence
-
----
-
-### ⚠️ Tier 2: Conditional
-
-#### 3. 4516 Rutland Ave - PROCEED WITH CAUTION
-- Cash-on-Cash: **8.4%** ✅
-- Cap Rate: **4.9%** ⚠️ (marginal)
-- DSCR: **1.41** ✅
-- **Action:** Complete inspection, verify no major repairs
-
-#### 4. 5113 Bob Dr - NEGOTIATE PRICE
-- Cash-on-Cash: **7.2%** ⚠️ (under target)
-- Cap Rate: **5.2%** ✅
-- DSCR: **1.57** ✅
-- **Action:** Must negotiate to <$175K to proceed
-
----
-
-### ❌ Tier 3: Pass
-
-#### 5. 2933 Sycamore School Rd - DO NOT PROCEED
-- Cash-on-Cash: **-3.8%** ❌
-- Cap Rate: **1.8%** ❌
-- DSCR: **0.91** ❌
-- **Action:** Pass unless seller accepts <$260K
+How properties are evaluated for go/no-go investment decisions.
 
 ---
 
 ## Pass/Fail Criteria
 
-### Must Pass (ALL required)
-- [x] Cash Flow > $0/mo
-- [x] Cash-on-Cash > 8%
-- [x] DSCR > 1.25
-- [x] Price/Sqft < Market Average
+### Must Pass (all required)
 
-### Should Pass (At least 3/4)
-- [ ] Cap Rate > 5%
-- [ ] GRM < 12
-- [ ] 1% Rule met
-- [ ] Low vacancy risk
+| Metric | Threshold | Source |
+|--------|-----------|--------|
+| Cash Flow | > $0/mo | `financial.js` → `cocCalc()` |
+| Cash-on-Cash | ≥ 8% | GP.cocMin (configurable per project) |
+| DSCR | > 1.25 | Debt Service Coverage Ratio |
 
----
+### Should Pass (at least 3 of 4)
 
-## Required Tasks Summary
-
-### 7652 Colorado Creek
-- [ ] Verify dual parcel financing
-- [ ] Property inspection
-- [ ] Verify rent comps
-- [ ] HOA verification
-- [ ] Insurance quotes
-
-### 8812 Texas Risinger
-- [ ] Verify lease terms
-- [ ] Confirm tenant staying
-- [ ] HOA rules review
-- [ ] Insurance quotes
-
-### 4516 Rutland
-- [ ] **Full inspection (critical)**
-- [ ] Foundation inspection
-- [ ] Contractor estimate
-- [ ] Verify rent potential
-
-### 5113 Bob Dr
-- [ ] **Negotiate price to <$175K**
-- [ ] Full inspection
-- [ ] Research market time issues
-- [ ] Code violation check
-
-### 2933 Sycamore
-- [ ] **Do not proceed at asking price**
-- [ ] Only consider if price <$260K
+| Metric | Threshold | Notes |
+|--------|-----------|-------|
+| Cap Rate | > 5% | NOI / Purchase Price |
+| GRM | < 12 | Gross Rent Multiplier |
+| 1% Rule | rent ≥ 1% of price | Quick screen |
+| Vacancy risk | Low | DFW market currently ~5% |
 
 ---
 
-## Next Steps
+## Tier Classification
 
-### Immediate (This Week)
-1. Submit offer on 7652 Colorado Creek
-2. Request lease documents for 8812 Texas Risinger
-3. Schedule inspection for 4516 Rutland
+Properties are auto-classified by the dashboard based on CoC at listing price:
 
-### Short-term (2-4 Weeks)
-1. Complete due diligence on top properties
-2. Finalize financing
-3. Close on best opportunity
-
-### If Top Deals Fall Through
-1. Re-evaluate 4516 Rutland
-2. Negotiate 5113 Bob Dr price
-3. Continue searching for new deals
+| Tier | CoC | Action |
+|------|-----|--------|
+| **Strong Buy** | ≥ 10% | Move fast — submit offer at or near ask |
+| **Consider** | ≥ 8% | Good deal — negotiate for better terms |
+| **Stretch** | ≥ 5% | Marginal — only proceed with significant price reduction |
+| **Walk Away** | < 5% | Pass unless major value-add opportunity |
 
 ---
 
-## Key Metrics Comparison
+## Scoring Formula
 
-| Property | Price | Cash Flow | CoC | Cap Rate | DSCR | Score |
-|----------|-------|-----------|-----|----------|------|-------|
-| Colorado Creek | $212K | +$1,025 | 12.3% | 7.4% | 1.65 | **9.5** |
-| Texas Risinger | $203K | +$1,069 | 12.8% | 7.8% | 1.80 | **9.7** |
-| Rutland | $215K | +$701 | 8.4% | 4.9% | 1.41 | **7.5** |
-| Bob Dr | $170K | +$596 | 7.2% | 5.2% | 1.57 | **6.5** |
-| Sycamore | $450K | -$313 | -3.8% | 1.8% | 0.91 | **2.0** |
+When comparing multiple deals:
 
-**Score = Cash Flow(30%) + CoC(25%) + Cap(15%) + DSCR(15%) + Price/Sqft(15%)**
+**Score = Cash Flow (30%) + CoC (25%) + Cap Rate (15%) + DSCR (15%) + Price/Sqft (15%)**
+
+Each metric is normalized to a 0–10 scale relative to the analysis set.
 
 ---
 
-*Last Updated: 2026-02-24*
+## Due Diligence Checklist
+
+For any property reaching "Consider" or higher:
+
+- [ ] Verify listing data (price, beds, baths, sqft) against MLS
+- [ ] Confirm rent estimate with local comps (Zillow, Rentometer)
+- [ ] Property inspection (structure, roof, HVAC, plumbing, electrical)
+- [ ] Foundation inspection (Texas-specific concern)
+- [ ] Insurance quotes (at least 2)
+- [ ] Tax assessment verification (Tarrant County Appraisal District)
+- [ ] HOA rules review (if applicable)
+- [ ] Lease review (if tenant-occupied)
+- [ ] Title search
+- [ ] Contractor estimate for any needed repairs
+
+---
+
+## Historical Analysis (2026-02-24)
+
+> **Note:** This analysis is from early project development, before the automated email ingestion pipeline was built. Included as a methodology example.
+
+| Property | Price | Cash Flow | CoC | Decision |
+|----------|-------|-----------|-----|----------|
+| 7652 Colorado Creek | $212K | +$1,025/mo | 12.3% | PROCEED |
+| 8812 Texas Risinger | $203K | +$1,069/mo | 12.8% | PROCEED |
+| 4516 Rutland | $215K | +$701/mo | 8.4% | CAUTION |
+| 5113 Bob Dr | $170K | +$596/mo | 7.2% | CONDITIONAL |
+| 2933 Sycamore | $450K | −$313/mo | −3.8% | PASS |
+
+Current deal analysis is done live on the dashboard at [lockboxiq.com](https://lockboxiq.com/).
+
+---
+
+*See [ASSUMPTIONS.md](../docs/ASSUMPTIONS.md) for financial parameters and [INVESTMENT_STRATEGIES.md](../docs/INVESTMENT_STRATEGIES.md) for strategy reference.*
