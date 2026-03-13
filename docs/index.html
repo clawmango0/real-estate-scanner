@@ -141,7 +141,7 @@ body{font-family:'Poppins',system-ui,-apple-system,sans-serif;background:var(--b
 .pc-map{width:100%;height:70px;border-radius:4px;margin-bottom:.35rem;overflow:hidden;background:var(--bg)}
 .pc-map .leaflet-tile-pane{filter:brightness(.6) invert(1) contrast(3) hue-rotate(200deg) saturate(.3) brightness(.7)}
 .pc-map .leaflet-control-zoom,.pc-map .leaflet-control-attribution{display:none}
-.pm-map-wrap{height:250px;border-radius:8px;margin-bottom:.8rem;overflow:hidden;background:var(--bg)}
+.pm-map-wrap{width:100%;height:250px;border-radius:8px;margin-bottom:.8rem;overflow:hidden;background:var(--bg);position:relative}
 .pm-map-wrap .leaflet-tile-pane{filter:brightness(.6) invert(1) contrast(3) hue-rotate(200deg) saturate(.3) brightness(.7)}
 .dark-popup .leaflet-popup-content-wrapper{background:var(--card);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-family:Poppins,sans-serif;font-size:.72rem}
 .dark-popup .leaflet-popup-tip{background:var(--card)}
@@ -705,6 +705,8 @@ function _initProjectMaps(){
     else map.fitBounds(bounds,{padding:[8,8]});
     window._projMaps.push(map);
   });
+  // Invalidate sizes after DOM paint to fix tile rendering
+  setTimeout(()=>{if(window._projMaps) window._projMaps.forEach(m=>{try{m.invalidateSize()}catch(e){}});},100);
 }
 
 // Load projects from DB
@@ -828,6 +830,13 @@ function _initModalMap(){
   else if(bounds.length>1) map.fitBounds(bounds,{padding:[20,20]});
   else{const all=allWithCoords.map(p=>[p.lat,p.lng]);map.fitBounds(all,{padding:[20,20]});}
   window._projModalMap=map;
+  // Leaflet needs the container to be fully rendered before it can calculate tile positions.
+  // The modal may still be animating, so delay invalidateSize.
+  setTimeout(()=>{map.invalidateSize();
+    if(bounds.length===1) map.setView(bounds[0],12);
+    else if(bounds.length>1) map.fitBounds(bounds,{padding:[20,20]});
+    else{const all=allWithCoords.map(p=>[p.lat,p.lng]);map.fitBounds(all,{padding:[20,20]});}
+  },150);
 }
 
 function _projAddCity(){
