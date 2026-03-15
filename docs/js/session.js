@@ -154,6 +154,7 @@ const _settingsFields=[
     {key:'sellCostPct',label:'Selling Costs',unit:'%',min:3,max:10,step:0.5,mult:100},
   ]},
   {group:'Tax Defaults',items:[
+    {key:'filingStatus',label:'Filing Status',type:'select',options:['single','mfj','hoh','mfs'],optionLabels:{single:'Single',mfj:'Married Filing Jointly',hoh:'Head of Household',mfs:'Married Filing Separately'}},
     {key:'agi',label:'Adjusted Gross Income',unit:'$',type:'text'},
     {key:'landPct',label:'Land % of Value',unit:'%',min:10,max:40,step:5,mult:100},
   ]},
@@ -167,8 +168,8 @@ function _buildSettingsHTML(){
       const val=GP[f.key];
       const displayVal=f.mult?(val*f.mult):val;
       if(f.type==='select'){
-        const opts=f.options.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
-        html+=`<div class="s-row"><label>${f.label}</label><select id="sg-${f.key}" class="s-sel">${opts}</select><span class="s-unit">${f.unit}</span></div>`;
+        const opts=f.options.map(o=>`<option value="${o}" ${val===o||val+''===o+''?'selected':''}>${f.optionLabels?f.optionLabels[o]:o}</option>`).join('');
+        html+=`<div class="s-row"><label>${f.label}</label><select id="sg-${f.key}" class="s-sel">${opts}</select>${f.unit?`<span class="s-unit">${f.unit}</span>`:''}</div>`;
       }else if(f.type==='text'){
         html+=`<div class="s-row"><label>${f.label}</label><input id="sg-${f.key}" type="text" inputmode="numeric" value="${Math.round(val).toLocaleString()}" class="s-text no-spin"><span class="s-unit">${f.unit}</span></div>`;
       }else{
@@ -203,7 +204,7 @@ function saveSettings(){
       const el=document.getElementById('sg-'+f.key);
       if(!el)return;
       let v;
-      if(f.type==='select')v=+el.value;
+      if(f.type==='select')v=f.optionLabels?el.value:+el.value;
       else if(f.type==='text')v=Math.round(+el.value.replace(/[^0-9]/g,''))||0;
       else v=f.mult?(+el.value/f.mult):(+el.value);
       GP[f.key]=v;

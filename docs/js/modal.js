@@ -3,8 +3,8 @@ function buildMod(id){
   const cond=mCond[id]||p.condition||'good';
   const impr=mImpr[id]||p.improvement||'asis';
   // Seed tax state from AGI on first open
-  if(!mTax[id]){const r=agiToRates(GP.agi,'single');mTax[id]={agi:GP.agi,filing:'single',marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
-  const taxP={filing:(mTax[id].filing||'single'),marginal:mTax[id].marg,ltcg:mTax[id].ltcg,recap:mTax[id].recap,agi:mTax[id].agi};
+  if(!mTax[id]){const fs=GP.filingStatus||'single';const r=agiToRates(GP.agi,fs);mTax[id]={agi:GP.agi,filing:fs,marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
+  const taxP={filing:(mTax[id].filing||GP.filingStatus||'single'),marginal:mTax[id].marg,ltcg:mTax[id].ltcg,recap:mTax[id].recap,agi:mTax[id].agi};
   const _autoRates=agiToRates(taxP.agi,taxP.filing);
   const rent=mRent[id]??p.monthlyRent;
   const ofPrc=p._tiers?Math.min(p.listed,p._tiers.consider):p.listed;
@@ -221,20 +221,20 @@ function togAcc(id){const el=document.getElementById(id);if(el)el.classList.togg
 function setMC(id,v){mCond[id]=v;buildMod(id);}
 function setMI(id,v){mImpr[id]=v;buildMod(id);}
 function uTax(id,key,val){
-  if(!mTax[id]){const r=agiToRates(GP.agi,'single');mTax[id]={agi:GP.agi,filing:'single',marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
+  if(!mTax[id]){const fs=GP.filingStatus||'single';const r=agiToRates(GP.agi,fs);mTax[id]={agi:GP.agi,filing:fs,marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
   mTax[id][key]=val;
   // When filing status changes, auto-derive marginal and LTCG rates
   if(key==='filing'){
-    const r=agiToRates(mTax[id].agi??GP.agi, mTax[id].filing||'single');
+    const r=agiToRates(mTax[id].agi??GP.agi, mTax[id].filing||GP.filingStatus||'single');
     mTax[id].marg=r.marg; mTax[id].ltcg=r.ltcg;
   }
   clearTimeout(uTax._t);uTax._t=setTimeout(()=>buildMod(id),150);
 }
 // AGI input: update state + sliders in-place (no modal rebuild while typing; buildMod fires on blur)
 function uTaxAgi(id,val){
-  if(!mTax[id]){const r=agiToRates(GP.agi,'single');mTax[id]={agi:GP.agi,filing:'single',marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
+  if(!mTax[id]){const fs=GP.filingStatus||'single';const r=agiToRates(GP.agi,fs);mTax[id]={agi:GP.agi,filing:fs,marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
   mTax[id].agi=val;
-  const r=agiToRates(val,mTax[id].filing||'single');
+  const r=agiToRates(val,mTax[id].filing||GP.filingStatus||'single');
   mTax[id].marg=r.marg;mTax[id].ltcg=r.ltcg;
   const ms=document.getElementById('tax-marg-'+id);
   const ls=document.getElementById('tax-ltcg-'+id);
