@@ -1,0 +1,158 @@
+{
+  "methods": {
+    "requests": {
+      "total_attempts": 2,
+      "successes": 1,
+      "failures": 1,
+      "avg_duration_ms": 96.5,
+      "last_used": "2026-03-15T11:10:48.662489",
+      "last_success": "2026-03-15T11:10:48.662486",
+      "last_failure": "2026-03-15T11:10:39.513741"
+    },
+    "playwright": {
+      "total_attempts": 2,
+      "successes": 0,
+      "failures": 2,
+      "avg_duration_ms": 0.0,
+      "last_used": "2026-03-15T11:10:48.662505",
+      "last_success": null,
+      "last_failure": "2026-03-15T11:10:48.662503"
+    },
+    "selenium": {
+      "total_attempts": 2,
+      "successes": 0,
+      "failures": 2,
+      "avg_duration_ms": 0.0,
+      "last_used": "2026-03-15T11:10:48.662515",
+      "last_success": null,
+      "last_failure": "2026-03-15T11:10:48.662513"
+    },
+    "httpx": {
+      "total_attempts": 2,
+      "successes": 0,
+      "failures": 2,
+      "avg_duration_ms": 0.0,
+      "last_used": "2026-03-15T11:10:48.662522",
+      "last_success": null,
+      "last_failure": "2026-03-15T11:10:48.662521"
+    },
+    "aiohttp": {
+      "total_attempts": 2,
+      "successes": 0,
+      "failures": 2,
+      "avg_duration_ms": 0.0,
+      "last_used": "2026-03-15T11:10:48.662529",
+      "last_success": null,
+      "last_failure": "2026-03-15T11:10:48.662527"
+    },
+    "curl": {
+      "total_attempts": 4,
+      "successes": 4,
+      "failures": 0,
+      "avg_duration_ms": 70.75,
+      "last_used": "2026-03-15T11:10:48.790579",
+      "last_success": "2026-03-15T11:10:48.790576",
+      "last_failure": null
+    }
+  },
+  "probes": [
+    {
+      "method": "requests",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:10:39.513734"
+    },
+    {
+      "method": "playwright",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:10:39.513756"
+    },
+    {
+      "method": "selenium",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:10:39.513782"
+    },
+    {
+      "method": "httpx",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:10:39.513795"
+    },
+    {
+      "method": "aiohttp",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:10:39.513806"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 93,
+      "timestamp": "2026-03-15T11:10:39.607327"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 63,
+      "timestamp": "2026-03-15T11:10:39.671408"
+    },
+    {
+      "method": "requests",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 193,
+      "timestamp": "2026-03-15T11:10:48.662475"
+    },
+    {
+      "method": "playwright",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:10:48.662500"
+    },
+    {
+      "method": "selenium",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:10:48.662511"
+    },
+    {
+      "method": "httpx",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:10:48.662519"
+    },
+    {
+      "method": "aiohttp",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:10:48.662526"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 66,
+      "timestamp": "2026-03-15T11:10:48.728637"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 61,
+      "timestamp": "2026-03-15T11:10:48.790565"
+    }
+  ]
+}
