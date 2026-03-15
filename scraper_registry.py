@@ -175,22 +175,106 @@ def selenium_scraper(url: str, **kwargs) -> Dict[str, Any]:
     return {"success": False, "error": "Selenium not implemented", "method": "selenium"}
 
 def httpx_scraper(url: str, **kwargs) -> Dict[str, Any]:
-    """HTTPX async scraper."""
-    # Placeholder
-    return {"success": False, "error": "HTTPX not implemented", "method": "httpx"}
+    """HTTPX async/scync scraper - fast with HTTP/2 support."""
+    import httpx
+    try:
+        timeout = kwargs.get('timeout', 10)
+        client = httpx.Client(timeout=timeout, follow_redirects=True)
+        response = client.get(url)
+        client.close()
+        return {"success": True, "status_code": response.status_code, 
+                "content": response.text[:1000], "method": "httpx"}
+    except Exception as e:
+        return {"success": False, "error": str(e), "method": "httpx"}
+
 
 def aiohttp_scraper(url: str, **kwargs) -> Dict[str, Any]:
-    """Aiohttp async scraper."""
-    # Placeholder
-    return {"success": False, "error": "Aiohttp not implemented", "method": "aiohttp"}
+    """Aiohttp async scraper - high performance for concurrent requests."""
+    import asyncio
+    import aiohttp
+    try:
+        timeout = aiohttp.ClientTimeout(total=kwargs.get('timeout', 10))
+        # Run async in sync context
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        async def fetch():
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(url, allow_redirects=True) as response:
+                    content = await response.text()
+                    return {"success": True, "status_code": response.status,
+                            "content": content[:1000], "method": "aiohttp"}
+        
+        result = loop.run_until_complete(fetch())
+        return result
+    except Exception as e:
+        return {"success": False, "error": str(e), "method": "aiohttp"}
+
+
+def requests_html_scraper(url: str, **kwargs) -> Dict[str, Any]:
+    """Requests-HTML scraper - parses JavaScript and renders HTML."""
+    from requests_html import HTMLSession
+    try:
+        timeout = kwargs.get('timeout', 15)
+        session = HTMLSession()
+        response = session.get(url, timeout=timeout)
+        # Render JavaScript if needed
+        if kwargs.get('render_js', False):
+            response.html.render(timeout=timeout)
+        session.close()
+        return {"success": True, "status_code": response.status_code, 
+                "content": response.html.html[:1000], "method": "requests_html",
+                "links": [str(l) for l in response.html.absolute_links][:10]}
+    except Exception as e:
+        return {"success": False, "error": str(e), "method": "requests_html"}
+
+
+def wget_scraper(url: str, **kwargs) -> Dict[str, Any]:
+    """Wget-based scraper using subprocess."""
+    import subprocess
+    import tempfile
+    import os
+    try:
+        timeout = kwargs.get('timeout', 10)
+        with tempfile.NamedTemporaryFile(mode='w+b', suffix='.html', delete=False) as f:
+            temp_path = f.name
+        
+        result = subprocess.run(
+            ['wget', '-q', '-O', temp_path, '-T', str(timeout), url],
+            capture_output=True, timeout=timeout
+        )
+        
+        if result.returncode == 0 and os.path.exists(temp_path):
+            with open(temp_path, 'rb') as f:
+                content = f.read().decode('utf-8', errors='ignore')[:1000]
+            os.unlink(temp_path)
+            return {"success": True, "content": content, "method": "wget"}
+        else:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+            return {"success": False, "error": "wget failed", "method": "wget"}
+    except subprocess.TimeoutExpired:
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.unlink(temp_path)
+        return {"success": False, "error": "Timeout", "method": "wget"}
+    except Exception as e:
+        return {"success": False, "error": str(e), "method": "wget"}
+
 
 def curl_scraper(url: str, **kwargs) -> Dict[str, Any]:
     """Curl-based scraper using subprocess."""
     import subprocess
     try:
-        result = subprocess.run(['curl', '-s', '-L', url], 
-                               capture_output=True, timeout=kwargs.get('timeout', 10))
-        return {"success": result.returncode == 0, "content": result.stdout.decode('utf-8', errors='ignore')[:1000],
+        timeout = kwargs.get('timeout', 10)
+        result = subprocess.run(
+            ['curl', '-s', '-L', '--max-time', str(timeout), 
+             '-A', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+             url], 
+            capture_output=True, timeout=timeout + 2)
+        return {"success": result.returncode == 0, 
+                "content": result.stdout.decode('utf-8', errors='ignore')[:1000],
                 "method": "curl"}
     except Exception as e:
         return {"success": False, "error": str(e), "method": "curl"}
@@ -245,6 +329,24 @@ def create_default_registry() -> ScraperRegistry:
         speed_rating="fast",
         reliability_rating="high",
         scraper_func=aiohttp_scraper
+    )
+    
+    registry.register(
+        name="requests_html",
+        description="Requests-HTML with JavaScript rendering support",
+        capabilities=["html", "javascript", "dynamic", "links"],
+        speed_rating="medium",
+        reliability_rating="high",
+        scraper_func=requests_html_scraper
+    )
+    
+    registry.register(
+        name="wget",
+        description="GNU wget for robust command-line fetching",
+        capabilities=["html", "simple", "resume", "redirects"],
+        speed_rating="fast",
+        reliability_rating="medium",
+        scraper_func=wget_scraper
     )
     
     registry.register(

@@ -1,57 +1,57 @@
 {
   "methods": {
     "requests": {
-      "total_attempts": 2,
-      "successes": 1,
+      "total_attempts": 6,
+      "successes": 5,
       "failures": 1,
-      "avg_duration_ms": 96.5,
-      "last_used": "2026-03-15T11:10:48.662489",
-      "last_success": "2026-03-15T11:10:48.662486",
+      "avg_duration_ms": 162.66666666666666,
+      "last_used": "2026-03-15T13:07:53.493686",
+      "last_success": "2026-03-15T13:07:53.493684",
       "last_failure": "2026-03-15T11:10:39.513741"
     },
     "playwright": {
-      "total_attempts": 2,
+      "total_attempts": 6,
       "successes": 0,
-      "failures": 2,
+      "failures": 6,
       "avg_duration_ms": 0.0,
-      "last_used": "2026-03-15T11:10:48.662505",
+      "last_used": "2026-03-15T13:07:53.493704",
       "last_success": null,
-      "last_failure": "2026-03-15T11:10:48.662503"
+      "last_failure": "2026-03-15T13:07:53.493702"
     },
     "selenium": {
-      "total_attempts": 2,
+      "total_attempts": 6,
       "successes": 0,
-      "failures": 2,
+      "failures": 6,
       "avg_duration_ms": 0.0,
-      "last_used": "2026-03-15T11:10:48.662515",
+      "last_used": "2026-03-15T13:07:53.493713",
       "last_success": null,
-      "last_failure": "2026-03-15T11:10:48.662513"
+      "last_failure": "2026-03-15T13:07:53.493712"
     },
     "httpx": {
-      "total_attempts": 2,
-      "successes": 0,
-      "failures": 2,
-      "avg_duration_ms": 0.0,
-      "last_used": "2026-03-15T11:10:48.662522",
-      "last_success": null,
-      "last_failure": "2026-03-15T11:10:48.662521"
+      "total_attempts": 6,
+      "successes": 3,
+      "failures": 3,
+      "avg_duration_ms": 99.5,
+      "last_used": "2026-03-15T13:07:53.691661",
+      "last_success": "2026-03-15T13:07:53.691659",
+      "last_failure": "2026-03-15T11:11:21.286027"
     },
     "aiohttp": {
-      "total_attempts": 2,
-      "successes": 0,
-      "failures": 2,
-      "avg_duration_ms": 0.0,
-      "last_used": "2026-03-15T11:10:48.662529",
-      "last_success": null,
-      "last_failure": "2026-03-15T11:10:48.662527"
+      "total_attempts": 6,
+      "successes": 3,
+      "failures": 3,
+      "avg_duration_ms": 73.66666666666667,
+      "last_used": "2026-03-15T13:07:53.827264",
+      "last_success": "2026-03-15T13:07:53.827261",
+      "last_failure": "2026-03-15T11:11:21.286056"
     },
     "curl": {
-      "total_attempts": 4,
-      "successes": 4,
+      "total_attempts": 12,
+      "successes": 12,
       "failures": 0,
-      "avg_duration_ms": 70.75,
-      "last_used": "2026-03-15T11:10:48.790579",
-      "last_success": "2026-03-15T11:10:48.790576",
+      "avg_duration_ms": 106.83333333333333,
+      "last_used": "2026-03-15T13:07:54.389223",
+      "last_success": "2026-03-15T13:07:54.389220",
       "last_failure": null
     }
   },
@@ -153,6 +153,244 @@
       "success": true,
       "duration_ms": 61,
       "timestamp": "2026-03-15T11:10:48.790565"
+    },
+    {
+      "method": "requests",
+      "url": "https://httpbin.org/html",
+      "success": true,
+      "duration_ms": 326,
+      "timestamp": "2026-03-15T11:11:21.285840"
+    },
+    {
+      "method": "playwright",
+      "url": "https://httpbin.org/html",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:11:21.285931"
+    },
+    {
+      "method": "selenium",
+      "url": "https://httpbin.org/html",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:11:21.285982"
+    },
+    {
+      "method": "httpx",
+      "url": "https://httpbin.org/html",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:11:21.286018"
+    },
+    {
+      "method": "aiohttp",
+      "url": "https://httpbin.org/html",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T11:11:21.286048"
+    },
+    {
+      "method": "curl",
+      "url": "https://httpbin.org/html",
+      "success": true,
+      "duration_ms": 240,
+      "timestamp": "2026-03-15T11:11:21.526321"
+    },
+    {
+      "method": "curl",
+      "url": "https://httpbin.org/html",
+      "success": true,
+      "duration_ms": 228,
+      "timestamp": "2026-03-15T11:11:21.756777"
+    },
+    {
+      "method": "requests",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 157,
+      "timestamp": "2026-03-15T13:07:38.255444"
+    },
+    {
+      "method": "playwright",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T13:07:38.255470"
+    },
+    {
+      "method": "selenium",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T13:07:38.255481"
+    },
+    {
+      "method": "httpx",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 221,
+      "timestamp": "2026-03-15T13:07:38.477155"
+    },
+    {
+      "method": "aiohttp",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 172,
+      "timestamp": "2026-03-15T13:07:38.649906"
+    },
+    {
+      "method": "requests_html",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 74,
+      "timestamp": "2026-03-15T13:07:38.724190"
+    },
+    {
+      "method": "wget",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 115,
+      "timestamp": "2026-03-15T13:07:38.839668"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 111,
+      "timestamp": "2026-03-15T13:07:38.951652"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 68,
+      "timestamp": "2026-03-15T13:07:39.021624"
+    },
+    {
+      "method": "requests",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 151,
+      "timestamp": "2026-03-15T13:07:44.718697"
+    },
+    {
+      "method": "playwright",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T13:07:44.718722"
+    },
+    {
+      "method": "selenium",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T13:07:44.718733"
+    },
+    {
+      "method": "httpx",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 179,
+      "timestamp": "2026-03-15T13:07:44.898674"
+    },
+    {
+      "method": "aiohttp",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 135,
+      "timestamp": "2026-03-15T13:07:45.034386"
+    },
+    {
+      "method": "requests_html",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 169,
+      "timestamp": "2026-03-15T13:07:45.204035"
+    },
+    {
+      "method": "wget",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 124,
+      "timestamp": "2026-03-15T13:07:45.328677"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 99,
+      "timestamp": "2026-03-15T13:07:45.428272"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 79,
+      "timestamp": "2026-03-15T13:07:45.508274"
+    },
+    {
+      "method": "requests",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 149,
+      "timestamp": "2026-03-15T13:07:53.493672"
+    },
+    {
+      "method": "playwright",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T13:07:53.493698"
+    },
+    {
+      "method": "selenium",
+      "url": "https://example.com",
+      "success": false,
+      "duration_ms": 0,
+      "timestamp": "2026-03-15T13:07:53.493709"
+    },
+    {
+      "method": "httpx",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 197,
+      "timestamp": "2026-03-15T13:07:53.691649"
+    },
+    {
+      "method": "aiohttp",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 135,
+      "timestamp": "2026-03-15T13:07:53.827252"
+    },
+    {
+      "method": "requests_html",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 246,
+      "timestamp": "2026-03-15T13:07:54.073678"
+    },
+    {
+      "method": "wget",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 139,
+      "timestamp": "2026-03-15T13:07:54.213708"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 103,
+      "timestamp": "2026-03-15T13:07:54.316947"
+    },
+    {
+      "method": "curl",
+      "url": "https://example.com",
+      "success": true,
+      "duration_ms": 71,
+      "timestamp": "2026-03-15T13:07:54.389209"
     }
   ]
 }
