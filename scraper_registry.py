@@ -559,7 +559,68 @@ def create_default_registry() -> ScraperRegistry:
     return registry
 
 
-if __name__ == "__main__":
+# ============================================================
+# PROXY SUPPORT
+# ============================================================
+
+class ProxyPool:
+    """Manages a pool of proxies with health tracking."""
+    
+    def __init__(self, proxies: List[str] = None):
+        self.proxies = proxies or []
+        self.proxy_stats = {}
+        self.current_index = 0
+    
+    def add_proxy(self, proxy: str):
+        if proxy not in self.proxies:
+            self.proxies.append(proxy)
+            self.proxy_stats[proxy] = {"success": 0, "fail": 0}
+    
+    def get_proxy(self) -> Optional[str]:
+        if not self.proxies:
+            return None
+        proxy = self.proxies[self.current_index % len(self.proxies)]
+        self.current_index += 1
+        return proxy
+    
+    def record_success(self, proxy: str):
+        if proxy in self.proxy_stats:
+            self.proxy_stats[proxy]["success"] += 1
+    
+    def record_failure(self, proxy: str):
+        if proxy in self.proxy_stats:
+            self.proxy_stats[proxy]["fail"] += 1
+    
+    def get_best_proxy(self) -> Optional[str]:
+        if not self.proxies:
+            return None
+        best = None
+        best_rate = -1
+        for proxy in self.proxies:
+            stats = self.proxy_stats.get(proxy, {"success": 0, "fail": 0})
+            total = stats["success"] + stats["fail"]
+            if total > 0:
+                rate = stats["success"] / total
+                if rate > best_rate:
+                    best_rate = rate
+                    best = proxy
+            elif not best:
+                best = proxy
+        return best or self.proxies[0]
+
+
+_proxy_pool = ProxyPool()
+
+
+def set_proxies(proxies: List[str]):
+    """Set the proxy pool for all scrapers."""
+    global _proxy_pool
+    _proxy_pool = ProxyPool(proxies)
+
+
+def get_proxy() -> Optional[str]:
+    """Get a proxy from the pool."""
+    return _proxy_pool.get_proxy()
     # Test the registry
     registry = create_default_registry()
     print("Registered methods:")
