@@ -123,3 +123,106 @@ function showInbox(){
   alert(`Your inbound email address:\n\n${addr}\n\nAdd this to your Zillow, Realtor.com, and HAR saved searches.`);
 }
 
+// ── SETTINGS ───────────────────────────────────────────────
+// Load saved GP from localStorage on startup
+(function loadSavedGP(){
+  try{
+    const saved=localStorage.getItem('lbiq_gp');
+    if(saved){const o=JSON.parse(saved);Object.keys(o).forEach(k=>{if(k in GP)GP[k]=o[k];});}
+  }catch(e){console.warn('Failed to load saved settings',e);}
+})();
+
+const _settingsFields=[
+  {group:'Loan & Purchase',items:[
+    {key:'downPct',label:'Down Payment',unit:'%',min:5,max:50,step:1,mult:100},
+    {key:'rate',label:'Interest Rate',unit:'%',min:2,max:12,step:0.125,mult:100},
+    {key:'termYrs',label:'Loan Term',unit:'yr',type:'select',options:[15,20,30]},
+    {key:'closingPct',label:'Closing Costs',unit:'%',min:1,max:6,step:0.5,mult:100},
+    {key:'pointsPct',label:'Loan Points',unit:'%',min:0,max:3,step:0.25,mult:100},
+  ]},
+  {group:'Operating Expenses',items:[
+    {key:'propTaxRate',label:'Property Tax',unit:'%',min:0.5,max:4,step:0.1,mult:100},
+    {key:'insurRate',label:'Insurance',unit:'%',min:0.2,max:2,step:0.1,mult:100},
+    {key:'mgmtRate',label:'Management',unit:'%',min:0,max:15,step:1,mult:100},
+    {key:'repairRate',label:'Repairs / Maint.',unit:'%',min:0,max:5,step:0.5,mult:100},
+    {key:'vacancyRate',label:'Vacancy',unit:'%',min:0,max:15,step:1,mult:100},
+  ]},
+  {group:'Investment Thresholds',items:[
+    {key:'cocMin',label:'CoC Minimum (Pass)',unit:'%',min:4,max:15,step:0.5,mult:100},
+    {key:'cocStrong',label:'CoC Strong Buy',unit:'%',min:6,max:20,step:0.5,mult:100},
+    {key:'appreci',label:'Default Appreciation',unit:'%',min:0,max:10,step:0.5,mult:100},
+    {key:'sellCostPct',label:'Selling Costs',unit:'%',min:3,max:10,step:0.5,mult:100},
+  ]},
+  {group:'Tax Defaults',items:[
+    {key:'agi',label:'Adjusted Gross Income',unit:'$',type:'text'},
+    {key:'landPct',label:'Land % of Value',unit:'%',min:10,max:40,step:5,mult:100},
+  ]},
+];
+
+function _buildSettingsHTML(){
+  let html='';
+  _settingsFields.forEach(g=>{
+    html+=`<div class="s-group">${g.group}</div>`;
+    g.items.forEach(f=>{
+      const val=GP[f.key];
+      const displayVal=f.mult?(val*f.mult):val;
+      if(f.type==='select'){
+        const opts=f.options.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
+        html+=`<div class="s-row"><label>${f.label}</label><select id="sg-${f.key}" class="s-sel">${opts}</select><span class="s-unit">${f.unit}</span></div>`;
+      }else if(f.type==='text'){
+        html+=`<div class="s-row"><label>${f.label}</label><input id="sg-${f.key}" type="text" inputmode="numeric" value="${Math.round(val).toLocaleString()}" class="s-text no-spin"><span class="s-unit">${f.unit}</span></div>`;
+      }else{
+        html+=`<div class="s-row"><label>${f.label}</label><input id="sg-${f.key}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${+displayVal.toFixed(4)}" oninput="document.getElementById('sv-${f.key}').textContent=this.value+'${f.unit}'"><span class="s-val" id="sv-${f.key}">${+displayVal.toFixed(2)}${f.unit}</span></div>`;
+      }
+    });
+  });
+  html+=`<div style="margin-top:1.25rem;display:flex;gap:.5rem">
+    <button class="psave-btn" onclick="saveSettings()">Save & Recalculate</button>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:.75rem">
+    <button onclick="resetSettings()" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:.4rem .75rem;font-size:.7rem;cursor:pointer;font-family:inherit">Reset to Defaults</button>
+    <button onclick="closeSettings();signOut()" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:6px;padding:.4rem .75rem;font-size:.7rem;cursor:pointer;font-family:inherit">Sign Out</button>
+  </div>`;
+  return html;
+}
+
+function openSettings(){
+  document.getElementById('s-body').innerHTML=_buildSettingsHTML();
+  document.getElementById('sov').classList.add('open');
+}
+
+function closeSettings(e){
+  if(e&&e.target!==document.getElementById('sov'))return;
+  document.getElementById('sov').classList.remove('open');
+}
+
+function saveSettings(){
+  const saved={};
+  _settingsFields.forEach(g=>{
+    g.items.forEach(f=>{
+      const el=document.getElementById('sg-'+f.key);
+      if(!el)return;
+      let v;
+      if(f.type==='select')v=+el.value;
+      else if(f.type==='text')v=Math.round(+el.value.replace(/[^0-9]/g,''))||0;
+      else v=f.mult?(+el.value/f.mult):(+el.value);
+      GP[f.key]=v;
+      saved[f.key]=v;
+    });
+  });
+  localStorage.setItem('lbiq_gp',JSON.stringify(saved));
+  recomputeRents();
+  renderApp();
+  if(typeof renderProjectCards==='function')renderProjectCards();
+  document.getElementById('sov').classList.remove('open');
+}
+
+function resetSettings(){
+  Object.keys(GP_DEFAULTS).forEach(k=>{GP[k]=GP_DEFAULTS[k];});
+  localStorage.removeItem('lbiq_gp');
+  document.getElementById('s-body').innerHTML=_buildSettingsHTML();
+  recomputeRents();
+  renderApp();
+  if(typeof renderProjectCards==='function')renderProjectCards();
+}
+

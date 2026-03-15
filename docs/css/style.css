@@ -274,6 +274,18 @@ input[type="number"]{-moz-appearance:textfield!important;appearance:textfield!im
 tbody tr{animation:fi .18s ease both}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 
+/* ── Settings modal ─────────────────────────────────────── */
+.s-group{font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);margin:1.25rem 0 .5rem;padding-bottom:.35rem;border-bottom:1px solid var(--border);font-weight:600}
+.s-group:first-child{margin-top:0}
+.s-row{display:flex;align-items:center;gap:.75rem;padding:.42rem 0;border-bottom:1px solid var(--border)}
+.s-row:last-child{border-bottom:none}
+.s-row label{font-size:.7rem;color:var(--text2);flex:0 0 140px}
+.s-row input[type=range]{flex:1;accent-color:var(--amber);min-width:0}
+.s-val{font-weight:700;color:var(--text);min-width:52px;text-align:right;font-size:.78rem;font-family:'DM Mono',monospace;flex-shrink:0}
+.s-unit{font-size:.62rem;color:var(--text3);min-width:20px;flex-shrink:0}
+.s-sel{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.3rem .5rem;font-family:inherit;font-size:.73rem;cursor:pointer}
+.s-text{width:120px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.3rem .5rem;font-family:'DM Mono',monospace;font-size:.78rem;text-align:right}
+
 @media(max-width:768px){
   .pills,.hdr-pills{display:none}
   .sbar{grid-template-columns:repeat(2,1fr)}

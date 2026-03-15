@@ -83,7 +83,7 @@
     </div>
     <div class="hdr-right">
       <button class="inbox-btn" onclick="showInbox()">📧 My Inbox Address</button>
-      <button class="user-btn" onclick="signOut()" id="user-email-btn">Sign Out</button>
+      <button class="user-btn" onclick="openSettings()" id="user-email-btn">Sign Out</button>
     </div>
   </header>
 
@@ -140,6 +140,7 @@
       <div class="mhd">
         <div><div class="madr" id="m-adr"></div><div id="m-bdg" style="display:flex;gap:4px;flex-wrap:wrap"></div></div>
         <div style="display:flex;gap:.4rem;align-items:center">
+          <button onclick="printMod()" style="background:var(--adim);border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:.3rem .65rem;font-size:.72rem;cursor:pointer">🖨️ Print</button>
           <button id="m-edit-btn" onclick="toggleEdit()" style="background:var(--adim);border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:.3rem .65rem;font-size:.72rem;cursor:pointer">✏️ Edit</button>
           <button class="xcl" onclick="closeMod()">✕</button>
         </div>
@@ -158,18 +159,29 @@
       <div class="mb" id="pm-body"></div>
     </div>
   </div>
+
+  <!-- Settings modal -->
+  <div class="ov" id="sov" onclick="closeSettings(event)">
+    <div class="modal" style="max-width:580px">
+      <div class="mhd">
+        <div><div class="madr">Settings</div><div style="font-size:.68rem;color:var(--text2)">Investment assumptions for all calculations</div></div>
+        <button class="xcl" onclick="closeSettings()">✕</button>
+      </div>
+      <div class="mb" id="s-body"></div>
+    </div>
+  </div>
 </div>
 
 
-<script src="js/config.js"></script>
-<script src="js/financial.js"></script>
-<script src="js/state.js"></script>
-<script src="js/projects.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/session.js"></script>
-<script src="js/data.js"></script>
-<script src="js/render.js"></script>
-<script src="js/curation.js"></script>
+<script src="js/config.js?v=2"></script>
+<script src="js/financial.js?v=2"></script>
+<script src="js/state.js?v=2"></script>
+<script src="js/projects.js?v=2"></script>
+<script src="js/auth.js?v=2"></script>
+<script src="js/session.js?v=2"></script>
+<script src="js/data.js?v=2"></script>
+<script src="js/render.js?v=2"></script>
+<script src="js/curation.js?v=2"></script>
 <script src="js/modal.js"></script>
 </body>
 </html>
