@@ -247,30 +247,10 @@ function uTaxAgi(id,val){
 }
 function printMod(){
   const modal=document.querySelector('#ov .modal');if(!modal)return;
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>${document.getElementById('m-adr').textContent}</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,sans-serif;font-size:12px;color:#111;padding:1.5rem}
-.mhd{margin-bottom:1rem;border-bottom:2px solid #333;padding-bottom:.5rem}.madr{font-size:1.1rem;font-weight:700}
-.sec{font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:#666;margin:.75rem 0 .5rem;padding-bottom:.3rem;border-bottom:1px solid #ccc}
-.sec:first-child{margin-top:0}
-.k3{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:.5rem;margin-bottom:.75rem}
-.kpi{border:1px solid #ddd;border-radius:6px;padding:.5rem}.kl{font-size:.55rem;text-transform:uppercase;letter-spacing:.08em;color:#666;margin-bottom:.15rem}.kv{font-size:.95rem;font-weight:700}.ks{font-size:.58rem;color:#666}
-.nbhd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.5rem;margin-bottom:.75rem}
-.nbhd-card{border:1px solid #ddd;border-radius:6px;padding:.5rem;text-align:center}.nl{font-size:.55rem;text-transform:uppercase;color:#666}.nv{font-size:1rem;font-weight:700}.ns{font-size:.58rem;color:#666}
-.nbhd-bar{display:none}
-table{width:100%;border-collapse:collapse;margin-bottom:.75rem}th,td{padding:.4rem .5rem;border:1px solid #ddd;font-size:.7rem;text-align:left}th{background:#f5f5f5;font-weight:600}
-.ot th,.ext th{background:#f5f5f5;font-size:.6rem;text-transform:uppercase}.ext td.c{text-align:center}
-.infobox{border:1px solid #ddd;border-radius:6px;padding:.5rem;font-size:.7rem;margin-bottom:.75rem}
-.rent-input-row,.curbar,.el,.txs,.tacc,.g4,.g4i{display:none}
-.bdg{display:inline-block;padding:.1rem .3rem;border-radius:3px;font-size:.55rem;font-weight:600;border:1px solid #999;margin-right:2px}
-.ts{color:#16a34a}.tc{color:#d97706}.tx{color:#9a3412}.tw2{color:#dc2626}
-button{display:none}
-@media print{body{padding:0}}</style></head><body>`);
-  w.document.write(modal.innerHTML);
-  w.document.write('</body></html>');
-  w.document.close();
-  w.focus();
-  w.print();
+  // Add print class to body, print, then remove
+  document.body.classList.add('printing-modal');
+  window.print();
+  document.body.classList.remove('printing-modal');
 }
 function openM(id){openId=id;buildMod(id);document.getElementById('ov').classList.add('open');document.getElementById('ov').scrollTop=0;}
 function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;document.getElementById('ov').classList.remove('open');openId=null;}

@@ -286,6 +286,37 @@ tbody tr{animation:fi .18s ease both}
 .s-sel{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.3rem .5rem;font-family:inherit;font-size:.73rem;cursor:pointer}
 .s-text{width:120px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.3rem .5rem;font-family:'DM Mono',monospace;font-size:.78rem;text-align:right}
 
+/* ── Print: modal only ─────────────────────────────────── */
+@media print{
+  body.printing-modal>*{display:none!important}
+  body.printing-modal #ov{display:flex!important}
+  body.printing-modal #ov .modal{max-height:none;max-width:none;width:100%;box-shadow:none;border:none;background:#fff;color:#111}
+  body.printing-modal .mb{max-height:none!important;overflow:visible!important}
+  body.printing-modal .mhd{border-bottom:2px solid #333;margin-bottom:.5rem;padding-bottom:.5rem}
+  body.printing-modal .madr{color:#111;font-size:1.1rem}
+  body.printing-modal .sec{color:#666;border-color:#ccc}
+  body.printing-modal .k3{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
+  body.printing-modal .kpi{border-color:#ddd;background:#fff}
+  body.printing-modal .kl{color:#666}
+  body.printing-modal .kv{color:#111}
+  body.printing-modal .ks{color:#666}
+  body.printing-modal table{border-collapse:collapse}
+  body.printing-modal th{background:#f5f5f5;color:#333;border:1px solid #ddd}
+  body.printing-modal td{color:#111;border:1px solid #ddd}
+  body.printing-modal .tr2 label,body.printing-modal .tl2-l{color:#666}
+  body.printing-modal .tv2,body.printing-modal .tl2-v{color:#111}
+  body.printing-modal .txs{background:#f9f9f9;border-color:#ddd}
+  body.printing-modal .infobox{border-color:#ddd;color:#111}
+  body.printing-modal .nbhd-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+  body.printing-modal .nbhd-card{border-color:#ddd;background:#fff}
+  body.printing-modal .nl{color:#666}
+  body.printing-modal .nv{color:#111}
+  body.printing-modal .nbhd-bar{display:none}
+  body.printing-modal button,body.printing-modal .rent-input-row,body.printing-modal .curbar,body.printing-modal .el,body.printing-modal .g4,body.printing-modal .g4i{display:none!important}
+  body.printing-modal .xcl{display:none!important}
+  body.printing-modal .bdg{border-color:#999}
+}
+
 @media(max-width:768px){
   .pills,.hdr-pills{display:none}
   .sbar{grid-template-columns:repeat(2,1fr)}
