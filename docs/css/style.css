@@ -289,6 +289,8 @@ tbody tr{animation:fi .18s ease both}
 /* ── Print: modal only ─────────────────────────────────── */
 @media print{
   body.printing-modal>*{display:none!important}
+  body.printing-modal #app{display:block!important}
+  body.printing-modal #app>*{display:none!important}
   body.printing-modal #ov{display:flex!important}
   body.printing-modal #ov .modal{max-height:none;max-width:none;width:100%;box-shadow:none;border:none;background:#fff;color:#111}
   body.printing-modal .mb{max-height:none!important;overflow:visible!important}

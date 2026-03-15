@@ -247,10 +247,10 @@ function uTaxAgi(id,val){
 }
 function printMod(){
   const modal=document.querySelector('#ov .modal');if(!modal)return;
-  // Add print class to body, print, then remove
   document.body.classList.add('printing-modal');
+  const cleanup=()=>document.body.classList.remove('printing-modal');
+  window.addEventListener('afterprint',cleanup,{once:true});
   window.print();
-  document.body.classList.remove('printing-modal');
 }
 function openM(id){openId=id;buildMod(id);document.getElementById('ov').classList.add('open');document.getElementById('ov').scrollTop=0;}
 function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;document.getElementById('ov').classList.remove('open');openId=null;}
