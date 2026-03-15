@@ -1,12 +1,149 @@
 """
 Scraper Registry - Defines available scraping methods and their capabilities.
+Includes reliability features: User-Agent rotation, retry logic, rate limiting.
 """
 
 import json
 import os
-from typing import Dict, List, Any, Callable
+import random
+import time
+from typing import Dict, List, Any, Callable, Optional
 from dataclasses import dataclass, asdict
 from datetime import datetime
+
+# User-Agent rotation - list of 10+ common browsers
+COMMON_USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0",
+]
+
+
+def get_random_user_agent() -> str:
+    """Get a random User-Agent string for rotation."""
+    return random.choice(COMMON_USER_AGENTS)
+
+
+def get_default_headers() -> Dict[str, str]:
+    """Get default HTTP headers with rotating User-Agent."""
+    return {
+        "User-Agent": get_random_user_agent(),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+    }
+
+
+# Retry configuration
+DEFAULT_MAX_RETRIES = 3
+DEFAULT_INITIAL_DELAY = 1.0  # seconds
+DEFAULT_BACKOFF_FACTOR = 2.0  # exponential backoff multiplier
+
+
+def retry_with_backoff(
+    func: Callable,
+    max_retries: int = DEFAULT_MAX_RETRIES,
+    initial_delay: float = DEFAULT_INITIAL_DELAY,
+    backoff_factor: float = DEFAULT_BACKOFF_FACTOR,
+    exceptions: tuple = (Exception,),
+    retry_on_status: tuple = (429, 500, 502, 503, 504)
+) -> Any:
+    """
+    Execute a function with exponential backoff retry logic.
+    
+    Args:
+        func: Function to execute
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds (default: 1.0)
+        backoff_factor: Multiplier for each retry (default: 2.0)
+        exceptions: Tuple of exception types to catch and retry
+        retry_on_status: HTTP status codes that trigger a retry
+    
+    Returns:
+        Result from successful function call
+    
+    Raises:
+        Last exception if all retries exhausted
+    """
+    last_exception = None
+    delay = initial_delay
+    
+    for attempt in range(max_retries + 1):
+        try:
+            result = func()
+            
+            # Check for HTTP status code in result (if it's a dict with status_code)
+            if isinstance(result, dict):
+                status_code = result.get("status_code")
+                if status_code in retry_on_status and attempt < max_retries:
+                    print(f"  Retry {attempt + 1}/{max_retries}: Got status {status_code}, waiting {delay:.1f}s")
+                    time.sleep(delay)
+                    delay *= backoff_factor
+                    continue
+                elif status_code == 200:
+                    return result
+            
+            return result
+            
+        except exceptions as e:
+            last_exception = e
+            if attempt < max_retries:
+                print(f"  Retry {attempt + 1}/{max_retries}: {type(e).__name__}, waiting {delay:.1f}s")
+                time.sleep(delay)
+                delay *= backoff_factor
+            else:
+                break
+    
+    # All retries exhausted
+    raise last_exception
+
+
+# Rate limiting
+_rate_limit_delay = 1.0  # default 1 second between requests
+_last_request_time = 0.0
+
+
+def set_rate_limit(delay: float):
+    """Set the rate limit delay between requests (in seconds)."""
+    global _rate_limit_delay
+    _rate_limit_delay = max(0, delay)
+
+
+def get_rate_limit() -> float:
+    """Get the current rate limit delay."""
+    return _rate_limit_delay
+
+
+def apply_rate_limit():
+    """Apply rate limiting - waits if needed to maintain configured delay between requests."""
+    global _last_request_time
+    
+    current_time = time.time()
+    elapsed = current_time - _last_request_time
+    
+    if elapsed < _rate_limit_delay:
+        wait_time = _rate_limit_delay - elapsed
+        # Add small random jitter to avoid synchronized requests
+        wait_time += random.uniform(0, 0.5)
+        time.sleep(wait_time)
+    
+    _last_request_time = time.time()
 
 @dataclass
 class ScraperMethod:
@@ -154,13 +291,38 @@ class ScraperRegistry:
 
 # Built-in scraper methods
 def requests_scraper(url: str, **kwargs) -> Dict[str, Any]:
-    """Basic requests library scraper."""
+    """Basic requests library scraper with reliability features."""
     import requests
-    try:
-        response = requests.get(url, timeout=kwargs.get('timeout', 10), 
-                               headers=kwargs.get('headers', {}))
+    
+    use_retry = kwargs.get('use_retry', True)
+    use_rate_limit = kwargs.get('use_rate_limit', True)
+    max_retries = kwargs.get('max_retries', 3)
+    
+    # Apply rate limiting before request
+    if use_rate_limit:
+        apply_rate_limit()
+    
+    def _make_request():
+        # Use rotating User-Agent if not explicitly provided
+        headers = kwargs.get('headers', {}).copy()
+        if 'User-Agent' not in headers:
+            headers.update(get_default_headers())
+        
+        response = requests.get(
+            url, 
+            timeout=kwargs.get('timeout', 10),
+            headers=headers,
+            allow_redirects=True
+        )
         return {"success": True, "status_code": response.status_code, 
-                "content": response.text[:1000], "method": "requests"}
+                "content": response.text, "method": "requests",
+                "headers": dict(response.headers)}
+    
+    try:
+        if use_retry:
+            return retry_with_backoff(_make_request, max_retries=max_retries)
+        else:
+            return _make_request()
     except Exception as e:
         return {"success": False, "error": str(e), "method": "requests"}
 
@@ -175,15 +337,35 @@ def selenium_scraper(url: str, **kwargs) -> Dict[str, Any]:
     return {"success": False, "error": "Selenium not implemented", "method": "selenium"}
 
 def httpx_scraper(url: str, **kwargs) -> Dict[str, Any]:
-    """HTTPX async/scync scraper - fast with HTTP/2 support."""
+    """HTTPX sync/scync scraper - fast with HTTP/2 support with reliability features."""
     import httpx
-    try:
+    
+    use_retry = kwargs.get('use_retry', True)
+    use_rate_limit = kwargs.get('use_rate_limit', True)
+    max_retries = kwargs.get('max_retries', 3)
+    
+    # Apply rate limiting
+    if use_rate_limit:
+        apply_rate_limit()
+    
+    def _make_request():
         timeout = kwargs.get('timeout', 10)
+        headers = kwargs.get('headers', {}).copy()
+        if 'User-Agent' not in headers:
+            headers.update(get_default_headers())
+        
         client = httpx.Client(timeout=timeout, follow_redirects=True)
-        response = client.get(url)
+        response = client.get(url, headers=headers)
         client.close()
         return {"success": True, "status_code": response.status_code, 
-                "content": response.text[:1000], "method": "httpx"}
+                "content": response.text, "method": "httpx",
+                "headers": dict(response.headers)}
+    
+    try:
+        if use_retry:
+            return retry_with_backoff(_make_request, max_retries=max_retries)
+        else:
+            return _make_request()
     except Exception as e:
         return {"success": False, "error": str(e), "method": "httpx"}
 
@@ -264,18 +446,34 @@ def wget_scraper(url: str, **kwargs) -> Dict[str, Any]:
 
 
 def curl_scraper(url: str, **kwargs) -> Dict[str, Any]:
-    """Curl-based scraper using subprocess."""
+    """Curl-based scraper using subprocess with rotating User-Agent."""
     import subprocess
+    
+    use_rate_limit = kwargs.get('use_rate_limit', True)
+    
+    # Apply rate limiting
+    if use_rate_limit:
+        apply_rate_limit()
+    
     try:
         timeout = kwargs.get('timeout', 10)
+        # Get rotating User-Agent
+        user_agent = get_random_user_agent()
         result = subprocess.run(
             ['curl', '-s', '-L', '--max-time', str(timeout), 
-             '-A', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+             '-A', user_agent,
              url], 
             capture_output=True, timeout=timeout + 2)
-        return {"success": result.returncode == 0, 
-                "content": result.stdout.decode('utf-8', errors='ignore')[:1000],
-                "method": "curl"}
+        
+        if result.returncode == 0:
+            content = result.stdout.decode('utf-8', errors='ignore')
+            return {"success": True, 
+                    "content": content,
+                    "status_code": 200,
+                    "method": "curl",
+                    "user_agent": user_agent}
+        else:
+            return {"success": False, "error": "curl failed", "method": "curl"}
     except Exception as e:
         return {"success": False, "error": str(e), "method": "curl"}
 

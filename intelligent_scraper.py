@@ -13,7 +13,11 @@ from scraper_registry import (
     ScraperRegistry, 
     create_default_registry,
     requests_scraper,
-    curl_scraper
+    curl_scraper,
+    set_rate_limit,
+    get_rate_limit,
+    get_random_user_agent,
+    COMMON_USER_AGENTS
 )
 
 
@@ -31,6 +35,22 @@ class IntelligentScraper:
         if catalog_path:
             self.registry.catalog_path = catalog_path
             self.registry._load_catalog()
+        
+        # Reliability settings
+        self.use_retry = True
+        self.max_retries = 3
+        self.rate_limit_delay = 1.0  # seconds
+        set_rate_limit(self.rate_limit_delay)
+    
+    def set_retry_options(self, enabled: bool = True, max_retries: int = 3):
+        """Configure retry behavior."""
+        self.use_retry = enabled
+        self.max_retries = max_retries
+    
+    def set_rate_limit(self, delay: float):
+        """Configure rate limiting delay between requests."""
+        self.rate_limit_delay = max(0, delay)
+        set_rate_limit(self.rate_limit_delay)
     
     def probe_method(self, url: str, method_name: str, timeout: int = 10) -> Dict[str, Any]:
         """Test a single scraping method with a quick probe."""
@@ -41,9 +61,15 @@ class IntelligentScraper:
         start_time = time.time()
         
         try:
-            # Call the scraper function if available
+            # Call the scraper function if available with reliability options
             if method.scraper_func:
-                result = method.scraper_func(url, timeout=timeout)
+                result = method.scraper_func(
+                    url, 
+                    timeout=timeout,
+                    use_retry=self.use_retry,
+                    max_retries=self.max_retries,
+                    use_rate_limit=True  # Always apply rate limiting during probing
+                )
             else:
                 result = {"success": False, "error": "No scraper function registered"}
         except Exception as e:
@@ -146,7 +172,13 @@ class IntelligentScraper:
             start_time = time.time()
             
             try:
-                scrape_result = method.scraper_func(url, timeout=timeout)
+                scrape_result = method.scraper_func(
+                    url, 
+                    timeout=timeout,
+                    use_retry=self.use_retry,
+                    max_retries=self.max_retries,
+                    use_rate_limit=True
+                )
                 duration_ms = int((time.time() - start_time) * 1000)
                 
                 result["success"] = scrape_result.get("success", False)
@@ -196,14 +228,32 @@ def main():
                        help="Path to effectiveness catalog")
     parser.add_argument("--stats", "-s", action="store_true",
                        help="Show method statistics and exit")
+    # Reliability options
+    parser.add_argument("--no-retry", action="store_true",
+                       help="Disable retry logic")
+    parser.add_argument("--max-retries", type=int, default=3,
+                       help="Maximum retry attempts (default: 3)")
+    parser.add_argument("--rate-limit", type=float, default=1.0,
+                       help="Rate limit delay in seconds between requests (default: 1.0)")
+    parser.add_argument("--show-ua", action="store_true",
+                       help="Show current User-Agent being used")
     
     args = parser.parse_args()
     
     scraper = IntelligentScraper(catalog_path=args.catalog)
     
+    # Configure reliability options
+    scraper.set_retry_options(enabled=not args.no_retry, max_retries=args.max_retries)
+    scraper.set_rate_limit(args.rate_limit)
+    
     if args.stats:
         stats = scraper.get_method_stats()
         print(json.dumps(stats, indent=2))
+        return
+    
+    if args.show_ua:
+        print(f"Current User-Agent: {get_random_user_agent()}")
+        print(f"Available User-Agents: {len(COMMON_USER_AGENTS)}")
         return
     
     # Run the scrape
