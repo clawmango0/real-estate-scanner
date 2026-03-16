@@ -38,9 +38,7 @@ async function loadProperties(){
         _nbScore:h?nbScore({schools:h.schools,crime:h.crime,rentGrowth:h.rentGrowth}):null,
       };
     });
-    recomputeRents();
-    renderApp();
-    renderProjectCards(); // refresh project stats now that props are loaded
+    refreshAll();
   } catch(e) {
     console.error('loadProperties exception:', e);
     _showPropsError(e.message||String(e));
@@ -71,12 +69,6 @@ async function saveProperty(id, updates){
   if(idx>=0){
     Object.assign(props[idx],updates);
     if('monthly_rent' in updates) props[idx].monthlyRent=updates.monthly_rent;
-    // Recompute financials via effectiveRent so gRentMode is respected
-    const er=effectiveRent(props[idx]);
-    props[idx]._tiers=getTiers(er)||null;
-    const rc=er?cocCalc(props[idx].listed,er):null;
-    props[idx]._cocL=rc?rc.coc:null;
-    props[idx]._cfL=rc?rc.cfMo:null;
   }
 }
 
@@ -107,12 +99,7 @@ async function savePropertyEdit(id){
     if(updates.lot_size)p.lotSize=updates.lot_size;
     if(updates.rent_estimate){const re=updates.rent_estimate;p.rentRange={low:Math.round(re*0.88/25)*25,high:Math.round(re*1.12/25)*25,source:'manual'};}
     if(updates.monthly_rent) p.monthlyRent=updates.monthly_rent;
-    // Recompute using effectiveRent so gRentMode is respected
-    const er2=effectiveRent(p);
-    p._tiers=getTiers(er2)||null;
-    const rc2=er2?cocCalc(p.listed,er2):null;
-    p._cocL=rc2?rc2.coc:null;
-    p._cfL=rc2?rc2.cfMo:null;
+    recomputeOne(p);
   }
   mEdit[id]=false;
   buildMod(id);

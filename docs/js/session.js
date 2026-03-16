@@ -212,21 +212,14 @@ function saveSettings(){
     });
   });
   localStorage.setItem('lbiq_gp',JSON.stringify(saved));
-  // Clear per-property tax caches so modals pick up new AGI/filing status
-  Object.keys(mTax).forEach(k=>delete mTax[k]);
-  recomputeRents();
-  renderApp();
-  if(typeof renderProjectCards==='function')renderProjectCards();
+  refreshAll();
   document.getElementById('sov').classList.remove('open');
 }
 
 function resetSettings(){
   Object.keys(GP_DEFAULTS).forEach(k=>{GP[k]=GP_DEFAULTS[k];});
   localStorage.removeItem('lbiq_gp');
-  Object.keys(mTax).forEach(k=>delete mTax[k]);
   document.getElementById('s-body').innerHTML=_buildSettingsHTML();
-  recomputeRents();
-  renderApp();
-  if(typeof renderProjectCards==='function')renderProjectCards();
+  refreshAll();
 }
 

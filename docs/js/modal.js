@@ -206,12 +206,7 @@ async function saveRent(id){
   const p=props.find(x=>x.id===id);
   if(!p)return;
   p.monthlyRent=val;
-  p._tiers=getTiers(val);
-  const r=cocCalc(p.listed,val);
-  p._cocL=r?r.coc:null;
-  p._cfL=r?r.cfMo:null;
-  // Auto-classify status
-  p.status=p._cocL>=GP.cocStrong?'pass':p._cocL>=GP.cocMin?'pass':'fail';
+  recomputeOne(p);
   renderApp();
   buildMod(id);
   await saveProperty(id,{monthly_rent:val,status:p.status});

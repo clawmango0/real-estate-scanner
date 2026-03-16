@@ -22,17 +22,25 @@ function effectiveRent(p){
   return mid; // 'mid' default
 }
 
-// Recompute _tiers / _cocL / _cfL / status for all props using current GP + gRentMode.
-function recomputeRents(){
-  props.forEach(p=>{
-    const r=effectiveRent(p);
-    p._tiers=getTiers(r)||null;
-    const c=r?cocCalc(p.listed,r):null;
-    p._cocL=c?c.coc:null;
-    p._cfL=c?c.cfMo:null;
-    // Reclassify pass/fail against current thresholds
-    if(p._cocL!==null) p.status=p._cocL>=GP.cocMin?'pass':'fail';
-  });
+// Recompute derived fields for a single property using current GP + gRentMode.
+function recomputeOne(p){
+  const r=effectiveRent(p);
+  p._tiers=getTiers(r)||null;
+  const c=r?cocCalc(p.listed,r):null;
+  p._cocL=c?c.coc:null;
+  p._cfL=c?c.cfMo:null;
+  if(p._cocL!==null) p.status=p._cocL>=GP.cocMin?'pass':'fail';
+}
+
+// Recompute _tiers / _cocL / _cfL / status for all props.
+function recomputeRents(){ props.forEach(recomputeOne); }
+
+// Clear tax caches, recompute all props, and re-render everything.
+function refreshAll(){
+  Object.keys(mTax).forEach(k=>delete mTax[k]);
+  recomputeRents();
+  renderApp();
+  if(typeof renderProjectCards==='function') renderProjectCards();
 }
 
 function setRentMode(mode){
@@ -41,5 +49,6 @@ function setRentMode(mode){
   document.querySelectorAll(`.rm[data-m="${mode}"]`).forEach(b=>b.classList.add('on'));
   recomputeRents();
   renderApp();
+  if(typeof renderProjectCards==='function') renderProjectCards();
 }
 
