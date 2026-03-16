@@ -46,6 +46,7 @@ function buildMod(id){
       <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Baths</label><input id="ep-baths" type="text" inputmode="decimal" pattern="[0-9.]*" value="${p.baths||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
       <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Sqft</label><input id="ep-sqft" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.sqft||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
       <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Lot Size (sqft)</label><input id="ep-lot" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.lotSize||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Property Type</label><select id="ep-type" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem">${['SFR','DUPLEX','TRIPLEX','QUAD','CONDO','LOT'].map(t=>`<option value="${t}"${p.type===t?' selected':''}>${t}</option>`).join('')}</select></div>
       <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Rent Estimate ($/mo)</label><input id="ep-rent-est" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.rentRange?.mid||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
       <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Monthly Rent (confirmed)</label><input id="ep-rent" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.monthlyRent||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
     </div>
@@ -247,7 +248,18 @@ function printMod(){
   window.addEventListener('afterprint',cleanup,{once:true});
   window.print();
 }
-function openM(id){openId=id;buildMod(id);document.getElementById('ov').classList.add('open');document.getElementById('ov').scrollTop=0;}
+function openM(id){
+  openId=id;buildMod(id);
+  document.getElementById('ov').classList.add('open');
+  document.getElementById('ov').scrollTop=0;
+  // Mark as viewed — clear "New" badge
+  const p=props.find(x=>x.id===id);
+  if(p&&p.isNew){
+    p.isNew=false;
+    saveProperty(id,{is_new:false});
+    renderApp();
+  }
+}
 function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;document.getElementById('ov').classList.remove('open');openId=null;}
 function srt(col){if(sCol===col)sDir*=-1;else{sCol=col;sDir=-1;}renderApp();}
 function setView(v,el){aV=v;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderApp();}

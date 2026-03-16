@@ -83,6 +83,7 @@ async function savePropertyEdit(id){
   const baths=+g('ep-baths')?.value||0; if(baths)updates.baths=baths;
   const sqft=Math.round(+g('ep-sqft')?.value||0); if(sqft)updates.sqft=sqft;
   const lot=Math.round(+g('ep-lot')?.value||0); if(lot)updates.lot_size=lot;
+  const ptype=(g('ep-type')?.value||'').trim(); if(ptype)updates.property_type=ptype;
   const rentEst=Math.round(+g('ep-rent-est')?.value||0); if(rentEst)updates.rent_estimate=rentEst;
   const rent=Math.round(+g('ep-rent')?.value||0); if(rent)updates.monthly_rent=rent;
   if(!Object.keys(updates).length)return;
@@ -97,6 +98,7 @@ async function savePropertyEdit(id){
     if(updates.baths)p.baths=updates.baths;
     if(updates.sqft)p.sqft=updates.sqft;
     if(updates.lot_size)p.lotSize=updates.lot_size;
+    if(updates.property_type)p.type=updates.property_type;
     if(updates.rent_estimate){const re=updates.rent_estimate;p.rentRange={low:Math.round(re*0.88/25)*25,high:Math.round(re*1.12/25)*25,source:'manual'};}
     if(updates.monthly_rent) p.monthlyRent=updates.monthly_rent;
     recomputeOne(p);
