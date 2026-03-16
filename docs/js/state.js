@@ -22,7 +22,7 @@ function effectiveRent(p){
   return mid; // 'mid' default
 }
 
-// Recompute _tiers / _cocL / _cfL for all props using current gRentMode.
+// Recompute _tiers / _cocL / _cfL / status for all props using current GP + gRentMode.
 function recomputeRents(){
   props.forEach(p=>{
     const r=effectiveRent(p);
@@ -30,6 +30,8 @@ function recomputeRents(){
     const c=r?cocCalc(p.listed,r):null;
     p._cocL=c?c.coc:null;
     p._cfL=c?c.cfMo:null;
+    // Reclassify pass/fail against current thresholds
+    if(p._cocL!==null) p.status=p._cocL>=GP.cocMin?'pass':'fail';
   });
 }
 
