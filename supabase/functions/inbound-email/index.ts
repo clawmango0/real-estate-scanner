@@ -636,28 +636,65 @@ serve(async(req)=>{
   console.log(`Parsed ${props.length} properties from email`);
 
   // ── Upsert properties ──
+  // On conflict (same user + address), update price and data fields but
+  // preserve user-edited fields (condition, improvement, curated, notes, monthly_rent).
+  // Detect price drops by comparing incoming price to existing listed_price.
   let n=0;
   for(const p of props){
     if(!p.address)continue;
-    const record: Record<string, unknown> = {
-      user_id:mb.user_id, mailbox_id:mb.id, email_log_id:logId,
-      address:p.address, city:p.city??"", state:p.state??"TX", zip:p.zip||null,
-      listed_price:p.listed_price?Number(p.listed_price):null,
-      beds:p.beds?Number(p.beds):null, baths:p.baths?Number(p.baths):null,
-      sqft:p.sqft?Number(p.sqft):null,
-      property_type:p.property_type??"SFR", listing_url:p.listing_url??"",
-      source:p.source??"zillow",
-      condition:"good", improvement:"asis", status:"new", is_new:true,
-      price_drop:Boolean(p.price_drop), price_drop_amt:Number(p.price_drop_amt??0),
-      raw_json:p,
-    };
-    // ZPID fallback properties already have rent_estimate and lot_size from scraping
-    if (p.rent_estimate) record.rent_estimate = Number(p.rent_estimate);
-    if (p.lot_size) record.lot_size = Number(p.lot_size);
-    if (p.latitude) record.latitude = Number(p.latitude);
-    if (p.longitude) record.longitude = Number(p.longitude);
-    const{error}=await supabase.from("properties").upsert(record,{onConflict:"user_id,address,listed_price"});
-    if(!error)n++;else console.error("upsert err:",error.message);
+    const newPrice = p.listed_price?Number(p.listed_price):null;
+
+    // Check if property already exists (to detect price changes)
+    const {data:existing} = await supabase.from("properties")
+      .select("id,listed_price")
+      .eq("user_id",mb.user_id).eq("address",p.address)
+      .maybeSingle();
+
+    const oldPrice = existing?.listed_price ? Number(existing.listed_price) : null;
+    const isPriceDrop = Boolean(p.price_drop) || (oldPrice && newPrice && newPrice < oldPrice);
+    const dropAmt = isPriceDrop && oldPrice && newPrice ? oldPrice - newPrice : Number(p.price_drop_amt??0);
+
+    if(existing){
+      // UPDATE — only overwrite data fields, never user-curated fields
+      const updates: Record<string, unknown> = {
+        email_log_id:logId,
+        listed_price:newPrice,
+        beds:p.beds?Number(p.beds):null, baths:p.baths?Number(p.baths):null,
+        sqft:p.sqft?Number(p.sqft):null,
+        property_type:p.property_type??"SFR", listing_url:p.listing_url??"",
+        source:p.source??"zillow",
+        is_new:true,
+        price_drop:isPriceDrop, price_drop_amt:dropAmt,
+        raw_json:p, updated_at:new Date().toISOString(),
+      };
+      if (p.rent_estimate) updates.rent_estimate = Number(p.rent_estimate);
+      if (p.lot_size) updates.lot_size = Number(p.lot_size);
+      if (p.latitude) updates.latitude = Number(p.latitude);
+      if (p.longitude) updates.longitude = Number(p.longitude);
+      const{error}=await supabase.from("properties").update(updates).eq("id",existing.id);
+      if(!error){n++;if(isPriceDrop)console.log(`Price drop: ${p.address} ${oldPrice}→${newPrice} (-${dropAmt})`);}
+      else console.error("update err:",error.message);
+    }else{
+      // INSERT — new property
+      const record: Record<string, unknown> = {
+        user_id:mb.user_id, mailbox_id:mb.id, email_log_id:logId,
+        address:p.address, city:p.city??"", state:p.state??"TX", zip:p.zip||null,
+        listed_price:newPrice,
+        beds:p.beds?Number(p.beds):null, baths:p.baths?Number(p.baths):null,
+        sqft:p.sqft?Number(p.sqft):null,
+        property_type:p.property_type??"SFR", listing_url:p.listing_url??"",
+        source:p.source??"zillow",
+        condition:"good", improvement:"asis", status:"new", is_new:true,
+        price_drop:isPriceDrop, price_drop_amt:dropAmt,
+        raw_json:p,
+      };
+      if (p.rent_estimate) record.rent_estimate = Number(p.rent_estimate);
+      if (p.lot_size) record.lot_size = Number(p.lot_size);
+      if (p.latitude) record.latitude = Number(p.latitude);
+      if (p.longitude) record.longitude = Number(p.longitude);
+      const{error}=await supabase.from("properties").insert(record);
+      if(!error)n++;else console.error("insert err:",error.message);
+    }
   }
   if(logId)await supabase.from("email_log").update({parse_status:"success",properties_found:n}).eq("id",logId);
   console.log(`Upserted ${n} properties for ${slug}`);
