@@ -23,6 +23,7 @@ function buildMod(id){
   let badges='';
   if(p.source==='auction')badges=`<span class="bdg ba">Auction</span>`;
   else if(p.source==='har')badges=`<span class="bdg bz">HAR</span>`;
+  else if(p.source==='realtor')badges=`<span class="bdg bz">Realtor</span>`;
   else badges=`<span class="bdg bz">Zillow</span>`;
   if(p.isNew)badges+=`<span class="bdg bn">🆕 New</span>`;
   if(p.priceDrop)badges+=`<span class="bdg bd">📉 −${M(p.dropAmt||0)}</span>`;
@@ -67,7 +68,7 @@ function buildMod(id){
       ${p.listed&&p.sqft?`<div class="kpi"><div class="kl">Price/sqft</div><div class="kv" style="font-size:1.1rem">${M(Math.round(p.listed/p.sqft))}</div></div>`:''}
       ${p.listed?`<div class="kpi"><div class="kl">Listed</div><div class="kv" style="font-size:1.1rem">${M(p.listed)}</div></div>`:''}
     </div>
-    ${p.listingUrl?`<div style="margin-bottom:.75rem"><a href="${p.listingUrl}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--amber);text-decoration:none">🔗 View on Zillow ↗</a></div>`:''}
+    ${p.listingUrl?`<div style="margin-bottom:.75rem"><a href="${p.listingUrl}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--amber);text-decoration:none">🔗 View Property ↗</a></div>`:''}
     ${h?`<div class="sec">📍 Neighborhood — ${h.area} (${h.zip||''})</div>
     <div class="nbhd-grid">
       <div class="nbhd-card"><div class="nl">Schools</div><div class="nv" style="color:${h.schools>=7?'var(--green)':h.schools>=5?'var(--amber)':'var(--red)'}">${h.schools}/10</div><div class="nbhd-bar"><div class="nbhd-fill" style="width:${h.schools*10}%;background:${h.schools>=7?'var(--green)':h.schools>=5?'var(--amber)':'var(--red)'}"></div></div><div class="ns">GreatSchools</div></div>
