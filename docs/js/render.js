@@ -65,6 +65,7 @@ function renderApp(){
     else if(p.source==='tax')badges+=`<span class="bdg bt">Tax Sale</span>`;
     else if(p.source==='har')badges+=`<span class="bdg bz">HAR</span>`;
     else if(p.source==='realtor')badges+=`<span class="bdg br">Realtor</span>`;
+    else if(p.source==='redfin')badges+=`<span class="bdg bf">Redfin</span>`;
     else badges+=`<span class="bdg bz">Zillow</span>`;
     if(p.isNew)badges+=`<span class="bdg bn">🆕</span>`;
     if(p.priceDrop)badges+=`<span class="bdg bd">📉</span>`;

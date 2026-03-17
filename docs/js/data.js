@@ -110,7 +110,7 @@ async function savePropertyEdit(id){
 
 /* ── Add Property from URL ─────────────────────────────── */
 
-// Parse a Zillow or Realtor URL into address components.
+// Parse a Zillow, Realtor, or Redfin URL into address components.
 // Strips tracking params (everything after _zpid/ or after the path slug).
 function parseListingUrl(raw){
   try{
@@ -123,10 +123,8 @@ function parseListingUrl(raw){
     const zm=path.match(/\/homedetails\/([^/]+)\/(\d+)_zpid/);
     if(zm){
       const parts=zm[1].split('-');
-      // Last part is zip, before that is state, rest is address+city
       const zip=parts.pop();
       const state=parts.pop();
-      // Find where city starts — typically after the street type (Dr, St, Ln, Rd, Blvd, Ave, Ct, Pl, Way, Trl, Cir, Loop)
       const streetTypes=/^(Dr|St|Ln|Rd|Blvd|Ave|Ct|Pl|Way|Trl|Cir|Loop|Pkwy|Ter|Pass|Cv|Run|Xing|Holw|Mdw|Brk)$/i;
       let splitIdx=parts.length;
       for(let i=parts.length-1;i>=2;i--){
@@ -140,7 +138,6 @@ function parseListingUrl(raw){
     // Realtor: /realestateandhomes-detail/1912-Shadowood-Trl_Colleyville_TX_76034_M87442-23548
     const rm=path.match(/\/realestateandhomes-detail\/([^/]+)/);
     if(rm){
-      // Strip MLS ID suffix (e.g. _M87442-23548)
       const slug=rm[1].replace(/_M\d[\w-]*$/, '');
       const parts=slug.split('_');
       const zip=parts.pop()||'';
@@ -148,6 +145,24 @@ function parseListingUrl(raw){
       const city=(parts.pop()||'').replace(/-/g,' ');
       const street=(parts.join('_')).replace(/-/g,' ');
       return{street,city,state,zip,source:'realtor',listingUrl:clean};
+    }
+
+    // Redfin: /TX/Euless/816-Midcreek-Dr-76039/home/32211524
+    if(u.hostname.includes('redfin.com')){
+      const rfm=path.match(/\/([A-Z]{2})\/([^/]+)\/([^/]+?)(?:-(\d{5}))?\/(home|unit)\/(\d+)/);
+      if(rfm){
+        const state=rfm[1];
+        const city=rfm[2].replace(/-/g,' ');
+        const streetSlug=rfm[3];
+        const zip=rfm[4]||'';
+        const street=streetSlug.replace(/-/g,' ');
+        return{street,city,state,zip,source:'redfin',listingUrl:clean};
+      }
+    }
+
+    // Redfin short link: redf.in/sOZLBS — pass through, edge function resolves it
+    if(u.hostname==='redf.in'){
+      return{street:'',city:'',state:'',zip:'',source:'redfin',listingUrl:raw.trim()};
     }
 
     return null;
@@ -166,7 +181,7 @@ function closeAddProp(e){
 
 function _buildAddPropHTML(){
   return`<div style="margin-bottom:1rem">
-    <label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:4px">Paste Zillow or Realtor.com URL</label>
+    <label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:4px">Paste Zillow, Realtor, or Redfin URL</label>
     <div style="display:flex;gap:.4rem">
       <input id="ap-url" type="url" placeholder="https://www.zillow.com/homedetails/..." style="flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.45rem .6rem;font-size:.8rem" oninput="parseAddUrl()">
     </div>
@@ -264,7 +279,7 @@ async function submitAddProp(){
   const body={
     address:fullAddr,
     city, state, zip,
-    source:g('ap-url')?(g('ap-url').includes('realtor.com')?'realtor':'zillow'):'manual',
+    source:g('ap-url')?(g('ap-url').includes('realtor.com')?'realtor':g('ap-url').includes('redfin.com')||g('ap-url').includes('redf.in')?'redfin':'zillow'):'manual',
     property_type:g('ap-type')||'SFR',
   };
   // Clean the listing URL — strip tracking params

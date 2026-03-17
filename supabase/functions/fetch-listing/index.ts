@@ -51,6 +51,7 @@ async function fetchHtml(url: string): Promise<string> {
     html.includes("initialReduxState") ||      // Realtor __NEXT_DATA__
     html.includes("ldp-page-content") ||       // Realtor rendered content
     html.includes('"list_price"') ||           // Realtor JSON data
+    html.includes("RealEstateListing") ||      // Redfin JSON-LD
     (html.includes('"price"') && html.includes('"bedrooms"')) // Generic property data
   );
   if (!hasUsefulData && SCRAPER_KEY) {
@@ -73,7 +74,8 @@ async function fetchHtml(url: string): Promise<string> {
     // If still no useful data, try with render=true (slower but handles JS-only pages)
     const hasDataAfterStatic = html.length > 5000 && (
       html.includes("gdpClientCache") || html.includes("initialReduxState") ||
-      html.includes('"list_price"') || (html.includes('"price"') && html.includes('"bedrooms"'))
+      html.includes('"list_price"') || html.includes("RealEstateListing") ||
+      (html.includes('"price"') && html.includes('"bedrooms"'))
     );
     if (!hasDataAfterStatic) {
       console.log("Using ScraperAPI (render) for:", url.slice(0, 100));
@@ -215,29 +217,42 @@ function parseRealtorNextData(html: string, listingUrl: string): ListingDetails 
 
 function parseJsonLd(html: string, listingUrl: string): ListingDetails | null {
   try {
-    // Find ALL JSON-LD blocks
     const ldBlocks = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi) || [];
     for (const block of ldBlocks) {
       const content = block.replace(/<script[^>]*>/, "").replace(/<\/script>/, "");
       try {
         const ld = JSON.parse(content);
-        // Handle arrays (Realtor sometimes wraps in array)
         const items = Array.isArray(ld) ? ld : [ld];
         for (const item of items) {
-          if (item["@type"] === "SingleFamilyResidence" || item["@type"] === "Residence" ||
-              item["@type"] === "Product" || item["@type"] === "RealEstateListing") {
-            const addr = item.address || {};
-            return {
-              price: item.offers?.price ? Number(item.offers.price) : undefined,
-              beds: item.numberOfRooms ? Number(item.numberOfRooms) : undefined,
-              sqft: item.floorSize?.value ? Number(item.floorSize.value) : undefined,
-              address: addr.streetAddress ? [addr.streetAddress, addr.addressLocality, `${addr.addressRegion} ${addr.postalCode}`].filter(Boolean).join(", ") : undefined,
-              city: addr.addressLocality,
-              state: addr.addressRegion,
-              zip: addr.postalCode,
-              listing_url: listingUrl,
-            };
-          }
+          const types = Array.isArray(item["@type"]) ? item["@type"] : [item["@type"]];
+          const isListing = types.some((t: string) =>
+            ["SingleFamilyResidence","Residence","Product","RealEstateListing"].includes(t));
+          if (!isListing) continue;
+
+          // Redfin nests property in mainEntity; others put it at top level
+          const entity = item.mainEntity || item;
+          const addr = entity.address || item.address || {};
+          const price = item.offers?.price || entity.offers?.price;
+
+          const catMap: Record<string, string> = {
+            "single family residential": "SFR", "townhouse": "SFR",
+            "condo/co-op": "CONDO", "multi-family": "DUPLEX", "vacant land": "LOT",
+          };
+          const cat = entity.accommodationCategory || "";
+          const ptype = cat ? (catMap[cat.toLowerCase()] || "SFR") : undefined;
+
+          return {
+            price: price ? Number(price) : undefined,
+            beds: entity.numberOfBedrooms ? Number(entity.numberOfBedrooms) : (entity.numberOfRooms ? Number(entity.numberOfRooms) : undefined),
+            baths: entity.numberOfBathroomsTotal ? Number(entity.numberOfBathroomsTotal) : undefined,
+            sqft: entity.floorSize?.value ? Number(entity.floorSize.value) : undefined,
+            address: addr.streetAddress ? [addr.streetAddress, addr.addressLocality, `${addr.addressRegion} ${addr.postalCode}`].filter(Boolean).join(", ") : undefined,
+            city: addr.addressLocality,
+            state: addr.addressRegion,
+            zip: addr.postalCode,
+            listing_url: listingUrl,
+            property_type: ptype,
+          };
         }
       } catch {}
     }
@@ -391,8 +406,18 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "url is required" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
-    // Clean tracking params from URL
-    const cleanUrl = url.replace(/\?.*$/, "").replace(/\/$/, "");
+    // Resolve short links (redf.in → redfin.com)
+    let cleanUrl = url.replace(/\?.*$/, "").replace(/\/$/, "");
+    if (cleanUrl.includes("redf.in")) {
+      try {
+        const r = await fetch(cleanUrl, { redirect: "manual", headers: { "User-Agent": UA } });
+        const loc = r.headers.get("location");
+        if (loc && loc.includes("redfin.com")) {
+          cleanUrl = loc.replace(/\?.*$/, "").replace(/\/$/, "");
+          console.log(`Resolved redf.in → ${cleanUrl}`);
+        }
+      } catch (e) { console.error("redf.in resolve error:", e); }
+    }
 
     console.log(`fetch-listing: scraping ${cleanUrl}`);
     const details = await scrapeListing(cleanUrl);
