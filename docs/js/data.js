@@ -240,6 +240,15 @@ async function submitAddProp(){
     });
     if(!res.ok){
       const err=await res.json().catch(()=>({error:'Unknown error'}));
+      // Duplicate key — find existing property and open its modal
+      if(err.code==='23505'){
+        const needle=addr.toLowerCase().replace(/,/g,'').split(/\s+/).slice(0,3).join(' ');
+        const match=props.find(p=>(p.address||'').toLowerCase().replace(/,/g,'').startsWith(needle));
+        closeAddProp();
+        if(match){openM(match.id);}
+        else{_showAddErr('Property already exists');}
+        return;
+      }
       _showAddErr(err.error||`HTTP ${res.status}`);return;
     }
     const newProp=await res.json();
