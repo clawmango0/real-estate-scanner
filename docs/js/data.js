@@ -264,7 +264,7 @@ async function submitAddProp(){
   const body={
     address:fullAddr,
     city, state, zip,
-    source:g('ap-url')?'zillow':'manual',
+    source:g('ap-url')?(g('ap-url').includes('realtor.com')?'realtor':'zillow'):'manual',
     property_type:g('ap-type')||'SFR',
   };
   // Clean the listing URL — strip tracking params

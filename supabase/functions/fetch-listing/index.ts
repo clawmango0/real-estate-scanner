@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL  = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SCRAPER_KEY   = Deno.env.get("SCRAPER_API_KEY") ?? "";
+const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -27,24 +28,25 @@ interface ListingDetails {
   property_type?: string;
 }
 
-// ── Scraping ─────────────────────────────────────────────
+// ── Fetch HTML ───────────────────────────────────────────
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-async function scrapeListing(url: string): Promise<ListingDetails | null> {
+async function fetchHtml(url: string): Promise<string> {
   let html = "";
 
   // Try direct fetch first
   try {
     const r = await fetch(url, {
-      headers: { "User-Agent": UA, "Accept": "text/html", "Accept-Language": "en-US,en;q=0.5" },
+      headers: { "User-Agent": UA, "Accept": "text/html,application/xhtml+xml", "Accept-Language": "en-US,en;q=0.5" },
       redirect: "follow",
     });
     if (r.ok) html = await r.text();
     console.log(`Direct fetch: status=${r.status}, len=${html.length}`);
   } catch (e) { console.error("direct fetch error:", e); }
 
-  // Fall back to ScraperAPI
-  if ((!html || !html.includes("gdpClientCache")) && SCRAPER_KEY) {
+  // Fall back to ScraperAPI if we didn't get useful content
+  const hasUsefulData = html.includes("__NEXT_DATA__") || html.includes("application/ld+json") || html.includes("listPrice");
+  if (!hasUsefulData && SCRAPER_KEY) {
     console.log("Using ScraperAPI for:", url.slice(0, 100));
     try {
       const scraperUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_KEY}&url=${encodeURIComponent(url)}&render=true&country_code=us`;
@@ -58,17 +60,12 @@ async function scrapeListing(url: string): Promise<ListingDetails | null> {
     } catch (e) { console.error("scraperapi error:", e); }
   }
 
-  if (!html) return null;
-
-  // Try Zillow __NEXT_DATA__
-  const details = parseNextData(html, url);
-  if (details) return details;
-
-  // Try JSON-LD / regex fallback
-  return regexFallback(html, url);
+  return html;
 }
 
-function parseNextData(html: string, listingUrl: string): ListingDetails | null {
+// ── Site-specific parsers ────────────────────────────────
+
+function parseZillowNextData(html: string, listingUrl: string): ListingDetails | null {
   const ndMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([^<]+)<\/script>/);
   if (!ndMatch) return null;
 
@@ -121,37 +118,116 @@ function parseNextData(html: string, listingUrl: string): ListingDetails | null 
       property_type: homeType ? (typeMap[homeType] || "SFR") : undefined,
     };
   } catch (e) {
-    console.error("parseNextData error:", e);
+    console.error("parseZillowNextData error:", e);
     return null;
   }
 }
 
-function regexFallback(html: string, listingUrl: string): ListingDetails | null {
+function parseRealtorNextData(html: string, listingUrl: string): ListingDetails | null {
+  // Realtor.com also uses __NEXT_DATA__ with a different structure
+  const ndMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([^<]+)<\/script>/);
+  if (!ndMatch) return null;
+
   try {
-    // JSON-LD
-    const ldMatch = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([^<]+)<\/script>/);
-    if (ldMatch) {
+    const nd = JSON.parse(ndMatch[1]);
+    const pp = nd?.props?.pageProps;
+    if (!pp) return null;
+
+    // Realtor stores property in various locations depending on page version
+    const prop = pp.property || pp.initialReduxState?.propertyDetails?.property || pp.listing;
+    if (!prop) {
+      console.log("Realtor __NEXT_DATA__: no property found, keys:", Object.keys(pp).join(","));
+      return null;
+    }
+
+    const loc = prop.location?.address || prop.address || {};
+    const street = loc.line || loc.street_address || loc.streetAddress;
+    const city = loc.city;
+    const state = loc.state_code || loc.state;
+    const zip = loc.postal_code || loc.zipcode || loc.zip;
+
+    let address: string | undefined;
+    if (street) {
+      address = [street, city, state && zip ? `${state} ${zip}` : state || zip].filter(Boolean).join(", ");
+    }
+
+    const desc = prop.description || {};
+    const homeType = desc.type || prop.prop_type || prop.property_type;
+    const typeMap: Record<string, string> = {
+      single_family: "SFR", townhomes: "SFR", condos: "CONDO", condo: "CONDO",
+      multi_family: "DUPLEX", duplex_triplex: "DUPLEX", land: "LOT", mobile: "SFR",
+    };
+    const ptype = homeType ? (typeMap[String(homeType).toLowerCase()] || "SFR") : undefined;
+
+    const listPrice = prop.list_price || desc.list_price || prop.price;
+
+    return {
+      price: listPrice ? Number(listPrice) : undefined,
+      beds: (desc.beds ?? prop.beds) ? Number(desc.beds ?? prop.beds) : undefined,
+      baths: (desc.baths_consolidated ?? desc.baths ?? prop.baths) ? Number(desc.baths_consolidated ?? desc.baths ?? prop.baths) : undefined,
+      sqft: (desc.sqft ?? prop.sqft) ? Number(desc.sqft ?? prop.sqft) : undefined,
+      lot_size: desc.lot_sqft ? Number(desc.lot_sqft) : undefined,
+      listing_url: listingUrl,
+      address, city, state, zip,
+      property_type: ptype,
+    };
+  } catch (e) {
+    console.error("parseRealtorNextData error:", e);
+    return null;
+  }
+}
+
+function parseJsonLd(html: string, listingUrl: string): ListingDetails | null {
+  try {
+    // Find ALL JSON-LD blocks
+    const ldBlocks = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi) || [];
+    for (const block of ldBlocks) {
+      const content = block.replace(/<script[^>]*>/, "").replace(/<\/script>/, "");
       try {
-        const ld = JSON.parse(ldMatch[1]);
-        if (ld["@type"] === "SingleFamilyResidence" || ld["@type"] === "Product") {
-          return {
-            price: ld.offers?.price ? Number(ld.offers.price) : undefined,
-            beds: ld.numberOfRooms ? Number(ld.numberOfRooms) : undefined,
-            sqft: ld.floorSize?.value ? Number(ld.floorSize.value) : undefined,
-            listing_url: listingUrl,
-          };
+        const ld = JSON.parse(content);
+        // Handle arrays (Realtor sometimes wraps in array)
+        const items = Array.isArray(ld) ? ld : [ld];
+        for (const item of items) {
+          if (item["@type"] === "SingleFamilyResidence" || item["@type"] === "Residence" ||
+              item["@type"] === "Product" || item["@type"] === "RealEstateListing") {
+            const addr = item.address || {};
+            return {
+              price: item.offers?.price ? Number(item.offers.price) : undefined,
+              beds: item.numberOfRooms ? Number(item.numberOfRooms) : undefined,
+              sqft: item.floorSize?.value ? Number(item.floorSize.value) : undefined,
+              address: addr.streetAddress ? [addr.streetAddress, addr.addressLocality, `${addr.addressRegion} ${addr.postalCode}`].filter(Boolean).join(", ") : undefined,
+              city: addr.addressLocality,
+              state: addr.addressRegion,
+              zip: addr.postalCode,
+              listing_url: listingUrl,
+            };
+          }
         }
       } catch {}
     }
+    return null;
+  } catch { return null; }
+}
 
-    // HTML regex patterns
-    const priceMatch = html.match(/data-testid="price"[^>]*>\$?([\d,]+)/);
-    const bedsMatch  = html.match(/(\d+)\s*(?:bd|bed|Bed)/);
-    const bathsMatch = html.match(/([\d.]+)\s*(?:ba|bath|Bath)/);
-    const sqftMatch  = html.match(/([\d,]+)\s*(?:sqft|sq\s*ft)/i);
-    const rentMatch  = html.match(/Rent Zestimate[^$]*\$([\d,]+)/i);
+function regexFallback(html: string, listingUrl: string): ListingDetails | null {
+  try {
+    // Realtor.com specific patterns
+    const realtorPrice = html.match(/list_price["\s:]+(\d+)/i) || html.match(/\$\s*([\d,]+)\s*<\/span>/);
+    const realtorBeds = html.match(/(\d+)\s*(?:bd|bed|Bed)/);
+    const realtorBaths = html.match(/([\d.]+)\s*(?:ba|bath|Bath)/);
+    const realtorSqft = html.match(/([\d,]+)\s*(?:sqft|sq\s*ft)/i);
 
-    if (priceMatch || bedsMatch || bathsMatch) {
+    // Zillow specific patterns
+    const zillowPrice = html.match(/data-testid="price"[^>]*>\$?([\d,]+)/);
+    const zillowRent = html.match(/Rent Zestimate[^$]*\$([\d,]+)/i);
+
+    const priceMatch = zillowPrice || realtorPrice;
+    const bedsMatch = realtorBeds;
+    const bathsMatch = realtorBaths;
+    const sqftMatch = realtorSqft;
+    const rentMatch = zillowRent;
+
+    if (priceMatch || bedsMatch || bathsMatch || sqftMatch) {
       return {
         price: priceMatch ? Number(priceMatch[1].replace(/,/g, "")) : undefined,
         beds: bedsMatch ? Number(bedsMatch[1]) : undefined,
@@ -163,6 +239,100 @@ function regexFallback(html: string, listingUrl: string): ListingDetails | null 
     }
     return null;
   } catch { return null; }
+}
+
+// ── Claude AI fallback ───────────────────────────────────
+async function claudeFallback(html: string, listingUrl: string): Promise<ListingDetails | null> {
+  if (!ANTHROPIC_KEY) return null;
+
+  try {
+    // Trim HTML to first 30k chars to stay within limits
+    const trimmed = html.slice(0, 30000);
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 300,
+        messages: [{
+          role: "user",
+          content: `Extract property listing details from this HTML page. Return ONLY a JSON object with these fields (omit any you can't find): price (number), beds (number), baths (number), sqft (number), lot_size (number, in sqft), address (string, full street address), city (string), state (string, 2-letter), zip (string, 5-digit), property_type (one of: SFR, DUPLEX, TRIPLEX, QUAD, CONDO, LOT). No markdown, just JSON.\n\nURL: ${listingUrl}\n\nHTML:\n${trimmed}`
+        }],
+      }),
+    });
+
+    if (!resp.ok) {
+      console.error("Claude API error:", resp.status);
+      return null;
+    }
+
+    const result = await resp.json();
+    const text = result.content?.[0]?.text || "";
+    // Extract JSON from response (might have surrounding text)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    console.log("Claude parsed:", JSON.stringify(parsed));
+
+    return {
+      price: parsed.price ? Number(parsed.price) : undefined,
+      beds: parsed.beds ? Number(parsed.beds) : undefined,
+      baths: parsed.baths ? Number(parsed.baths) : undefined,
+      sqft: parsed.sqft ? Number(parsed.sqft) : undefined,
+      lot_size: parsed.lot_size ? Number(parsed.lot_size) : undefined,
+      address: parsed.address,
+      city: parsed.city,
+      state: parsed.state,
+      zip: parsed.zip,
+      property_type: parsed.property_type,
+      listing_url: listingUrl,
+    };
+  } catch (e) {
+    console.error("claudeFallback error:", e);
+    return null;
+  }
+}
+
+// ── Main scrape orchestrator ─────────────────────────────
+async function scrapeListing(url: string): Promise<ListingDetails | null> {
+  const html = await fetchHtml(url);
+  if (!html) { console.log("No HTML obtained"); return null; }
+
+  const isZillow = url.includes("zillow.com");
+  const isRealtor = url.includes("realtor.com");
+
+  console.log(`Scraping: isZillow=${isZillow}, isRealtor=${isRealtor}, htmlLen=${html.length}, has__NEXT_DATA__=${html.includes("__NEXT_DATA__")}, hasJsonLd=${html.includes("application/ld+json")}`);
+
+  // Try site-specific parsers first
+  if (isZillow) {
+    const d = parseZillowNextData(html, url);
+    if (d) { console.log("Zillow __NEXT_DATA__ success"); return d; }
+  }
+
+  if (isRealtor) {
+    const d = parseRealtorNextData(html, url);
+    if (d) { console.log("Realtor __NEXT_DATA__ success"); return d; }
+  }
+
+  // Try JSON-LD (works for many sites)
+  const ld = parseJsonLd(html, url);
+  if (ld) { console.log("JSON-LD success"); return ld; }
+
+  // Try regex patterns
+  const rx = regexFallback(html, url);
+  if (rx) { console.log("Regex fallback success"); return rx; }
+
+  // Last resort: Claude AI extraction
+  console.log("All parsers failed, trying Claude AI fallback");
+  const ai = await claudeFallback(html, url);
+  if (ai) { console.log("Claude AI fallback success"); return ai; }
+
+  return null;
 }
 
 // ── Handler ──────────────────────────────────────────────
