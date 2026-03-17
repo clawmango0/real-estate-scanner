@@ -44,16 +44,25 @@ async function fetchHtml(url: string): Promise<string> {
     console.log(`Direct fetch: status=${r.status}, len=${html.length}`);
   } catch (e) { console.error("direct fetch error:", e); }
 
-  // Fall back to ScraperAPI if we didn't get useful content
-  const hasUsefulData = html.includes("__NEXT_DATA__") || html.includes("application/ld+json") || html.includes("listPrice");
+  // Fall back to ScraperAPI if we didn't get useful property data
+  // Direct fetch often returns a captcha page or JS-only shell for Zillow/Realtor
+  const hasUsefulData = html.length > 5000 && (
+    html.includes("gdpClientCache") ||  // Zillow __NEXT_DATA__
+    html.includes("ldp-page-content") || // Realtor rendered content
+    html.includes('"list_price"') ||     // Realtor JSON data
+    html.includes('"price"') && html.includes('"bedrooms"') // Generic property data
+  );
   if (!hasUsefulData && SCRAPER_KEY) {
     console.log("Using ScraperAPI for:", url.slice(0, 100));
     try {
+      const ac = new AbortController();
+      const timer = setTimeout(() => ac.abort(), 20000); // 20s timeout
       const scraperUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_KEY}&url=${encodeURIComponent(url)}&render=true&country_code=us`;
-      const r = await fetch(scraperUrl);
+      const r = await fetch(scraperUrl, { signal: ac.signal });
+      clearTimeout(timer);
       if (r.ok) {
         html = await r.text();
-        console.log(`ScraperAPI: status=${r.status}, len=${html.length}`);
+        console.log(`ScraperAPI: status=${r.status}, len=${html.length}, has__NEXT_DATA__=${html.includes("__NEXT_DATA__")}`);
       } else {
         console.error(`ScraperAPI error: status=${r.status}`);
       }
