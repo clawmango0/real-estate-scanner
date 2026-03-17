@@ -47,10 +47,11 @@ async function fetchHtml(url: string): Promise<string> {
   // Fall back to ScraperAPI if we didn't get useful property data
   // Direct fetch often returns a captcha page or JS-only shell for Zillow/Realtor
   const hasUsefulData = html.length > 5000 && (
-    html.includes("gdpClientCache") ||  // Zillow __NEXT_DATA__
-    html.includes("ldp-page-content") || // Realtor rendered content
-    html.includes('"list_price"') ||     // Realtor JSON data
-    html.includes('"price"') && html.includes('"bedrooms"') // Generic property data
+    html.includes("gdpClientCache") ||         // Zillow __NEXT_DATA__
+    html.includes("initialReduxState") ||      // Realtor __NEXT_DATA__
+    html.includes("ldp-page-content") ||       // Realtor rendered content
+    html.includes('"list_price"') ||           // Realtor JSON data
+    (html.includes('"price"') && html.includes('"bedrooms"')) // Generic property data
   );
   if (!hasUsefulData && SCRAPER_KEY) {
     console.log("Using ScraperAPI for:", url.slice(0, 100));
@@ -142,14 +143,16 @@ function parseRealtorNextData(html: string, listingUrl: string): ListingDetails 
     const pp = nd?.props?.pageProps;
     if (!pp) return null;
 
-    // Realtor stores property in various locations depending on page version
-    const prop = pp.property || pp.initialReduxState?.propertyDetails?.property || pp.listing;
-    if (!prop) {
+    // Realtor stores data at initialReduxState.propertyDetails (the object IS the property)
+    // with list_price as a top-level key, description.beds/baths/sqft, location.address.*
+    const pd = pp.initialReduxState?.propertyDetails || pp.property || pp.listing;
+    if (!pd) {
       console.log("Realtor __NEXT_DATA__: no property found, keys:", Object.keys(pp).join(","));
+      if (pp.initialReduxState) console.log("  initialReduxState keys:", Object.keys(pp.initialReduxState).join(","));
       return null;
     }
 
-    const loc = prop.location?.address || prop.address || {};
+    const loc = pd.location?.address || pd.address || {};
     const street = loc.line || loc.street_address || loc.streetAddress;
     const city = loc.city;
     const state = loc.state_code || loc.state;
@@ -160,21 +163,22 @@ function parseRealtorNextData(html: string, listingUrl: string): ListingDetails 
       address = [street, city, state && zip ? `${state} ${zip}` : state || zip].filter(Boolean).join(", ");
     }
 
-    const desc = prop.description || {};
-    const homeType = desc.type || prop.prop_type || prop.property_type;
+    const desc = pd.description || {};
+    const homeType = desc.type || pd.prop_type || pd.property_type;
     const typeMap: Record<string, string> = {
       single_family: "SFR", townhomes: "SFR", condos: "CONDO", condo: "CONDO",
       multi_family: "DUPLEX", duplex_triplex: "DUPLEX", land: "LOT", mobile: "SFR",
     };
     const ptype = homeType ? (typeMap[String(homeType).toLowerCase()] || "SFR") : undefined;
 
-    const listPrice = prop.list_price || desc.list_price || prop.price;
+    // list_price is a TOP-LEVEL key on propertyDetails, NOT inside description
+    const listPrice = pd.list_price || desc.list_price || pd.price;
 
     return {
       price: listPrice ? Number(listPrice) : undefined,
-      beds: (desc.beds ?? prop.beds) ? Number(desc.beds ?? prop.beds) : undefined,
-      baths: (desc.baths_consolidated ?? desc.baths ?? prop.baths) ? Number(desc.baths_consolidated ?? desc.baths ?? prop.baths) : undefined,
-      sqft: (desc.sqft ?? prop.sqft) ? Number(desc.sqft ?? prop.sqft) : undefined,
+      beds: (desc.beds ?? pd.beds) ? Number(desc.beds ?? pd.beds) : undefined,
+      baths: (desc.baths_consolidated ?? desc.baths ?? pd.baths) ? Number(desc.baths_consolidated ?? desc.baths ?? pd.baths) : undefined,
+      sqft: (desc.sqft ?? pd.sqft) ? Number(desc.sqft ?? pd.sqft) : undefined,
       lot_size: desc.lot_sqft ? Number(desc.lot_sqft) : undefined,
       listing_url: listingUrl,
       address, city, state, zip,
