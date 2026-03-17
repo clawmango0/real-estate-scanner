@@ -39,7 +39,7 @@ serve(async (req) => {
       for (const k of allowed) if (k in body) insert[k] = body[k];
       if (!insert.address) return new Response(JSON.stringify({ error: "address is required" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
       const { data, error } = await supabase.from("properties").insert(insert).select("*, neighborhoods(area_name, schools, crime_safety, walk_score, rent_growth, appreci_1yr, appreci_3yr, appreci_5yr, zhvi_current)").single();
-      if (error) throw error;
+      if (error) return new Response(JSON.stringify({ error: error.message, code: error.code }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
       return new Response(JSON.stringify(shapeProperty(data)), { status: 201, headers: { ...cors, "Content-Type": "application/json" } });
     }
     if (req.method === "PATCH" && !isCollection) {
