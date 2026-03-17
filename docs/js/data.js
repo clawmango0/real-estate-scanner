@@ -137,12 +137,14 @@ function parseListingUrl(raw){
       return{street,city,state,zip,source:'zillow',listingUrl:clean,zpid:zm[2]};
     }
 
-    // Realtor: /realestateandhomes-detail/4621-Waterway-Dr_Fort-Worth_TX_76137
+    // Realtor: /realestateandhomes-detail/1912-Shadowood-Trl_Colleyville_TX_76034_M87442-23548
     const rm=path.match(/\/realestateandhomes-detail\/([^/]+)/);
     if(rm){
-      const parts=rm[1].split('_');
-      const zip=parts.pop();
-      const state=parts.pop();
+      // Strip MLS ID suffix (e.g. _M87442-23548)
+      const slug=rm[1].replace(/_M\d[\w-]*$/, '');
+      const parts=slug.split('_');
+      const zip=parts.pop()||'';
+      const state=parts.pop()||'';
       const city=(parts.pop()||'').replace(/-/g,' ');
       const street=(parts.join('_')).replace(/-/g,' ');
       return{street,city,state,zip,source:'realtor',listingUrl:clean};
@@ -186,18 +188,67 @@ function _buildAddPropHTML(){
   <button id="ap-save-btn" onclick="submitAddProp()" style="width:100%;padding:.55rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">➕ Add Property</button>`;
 }
 
+let _fetchAbort=null;
 function parseAddUrl(){
   const url=document.getElementById('ap-url').value;
   const info=document.getElementById('ap-parsed');
   if(!url.trim()){info.textContent='';return;}
   const p=parseListingUrl(url);
   if(!p){info.innerHTML='<span style="color:var(--red)">Could not parse URL — enter details manually</span>';return;}
-  info.innerHTML=`✅ Parsed: <strong>${p.street}</strong>, ${p.city}, ${p.state} ${p.zip} (${p.source})`;
-  // Auto-fill fields
+  // Immediately fill what we can from the URL pattern
   const full=p.street+(p.city?', '+p.city:'');
   document.getElementById('ap-addr').value=full;
   document.getElementById('ap-city').value=p.city||'';
   document.getElementById('ap-zip').value=p.zip||'';
+  info.innerHTML=`✅ Parsed: <strong>${p.street}</strong>, ${p.city}, ${p.state} ${p.zip} (${p.source}) — <em>fetching details…</em>`;
+  // Now fetch full details from the listing page via edge function
+  fetchListingDetails(url.trim(),info);
+}
+
+async function fetchListingDetails(url,infoEl){
+  if(_fetchAbort)_fetchAbort.abort();
+  _fetchAbort=new AbortController();
+  try{
+    const token=await getAccessToken();
+    if(!token){infoEl.innerHTML+=' <span style="color:var(--red)">(not signed in)</span>';return;}
+    const res=await fetch(`${EDGE_BASE}/fetch-listing`,{
+      method:'POST',signal:_fetchAbort.signal,
+      headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify({url})
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({}));
+      infoEl.innerHTML=infoEl.innerHTML.replace(/<em>.*<\/em>/,'<span style="color:var(--amber)">Could not auto-fetch — enter details manually</span>');
+      console.warn('fetch-listing:',err.error||res.status);
+      return;
+    }
+    const d=await res.json();
+    console.log('fetch-listing result:',d);
+    // Fill all available fields
+    const g=id=>document.getElementById(id);
+    if(d.address)g('ap-addr').value=d.address.replace(/,\s*(TX|tx)\s*\d{5}$/,'').trim();
+    if(d.city)g('ap-city').value=d.city;
+    if(d.zip)g('ap-zip').value=d.zip;
+    if(d.price)g('ap-price').value=d.price;
+    if(d.property_type)g('ap-type').value=d.property_type;
+    if(d.beds)g('ap-beds').value=d.beds;
+    if(d.baths)g('ap-baths').value=d.baths;
+    if(d.sqft)g('ap-sqft').value=d.sqft;
+    if(d.rent_estimate)g('ap-rent').value=d.rent_estimate;
+    // Update parsed info line
+    const parts=[];
+    if(d.price)parts.push('$'+Number(d.price).toLocaleString());
+    if(d.beds)parts.push(d.beds+'bd');
+    if(d.baths)parts.push(d.baths+'ba');
+    if(d.sqft)parts.push(d.sqft.toLocaleString()+' sqft');
+    if(d.rent_estimate)parts.push('rent $'+d.rent_estimate.toLocaleString()+'/mo');
+    const street=d.address?d.address.split(',')[0]:(g('ap-addr').value||'');
+    infoEl.innerHTML=`✅ <strong>${street}</strong>, ${d.city||''}, ${d.state||'TX'} ${d.zip||''} — ${parts.join(' · ')||'details fetched'}`;
+  }catch(e){
+    if(e.name==='AbortError')return;
+    console.error('fetchListingDetails error:',e);
+    infoEl.innerHTML=infoEl.innerHTML.replace(/<em>.*<\/em>/,'<span style="color:var(--amber)">Fetch failed — enter details manually</span>');
+  }finally{_fetchAbort=null;}
 }
 
 async function submitAddProp(){
