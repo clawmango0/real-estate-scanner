@@ -108,3 +108,161 @@ async function savePropertyEdit(id){
   renderApp();
 }
 
+/* ── Add Property from URL ─────────────────────────────── */
+
+// Parse a Zillow or Realtor URL into address components.
+// Strips tracking params (everything after _zpid/ or after the path slug).
+function parseListingUrl(raw){
+  try{
+    const u=new URL(raw.trim());
+    // Clean tracking params
+    const clean=u.origin+u.pathname.replace(/\/$/, '');
+    const path=u.pathname;
+
+    // Zillow: /homedetails/4621-Waterway-Dr-Fort-Worth-TX-76137/29214998_zpid
+    const zm=path.match(/\/homedetails\/([^/]+)\/(\d+)_zpid/);
+    if(zm){
+      const parts=zm[1].split('-');
+      // Last part is zip, before that is state, rest is address+city
+      const zip=parts.pop();
+      const state=parts.pop();
+      // Find where city starts — typically after the street type (Dr, St, Ln, Rd, Blvd, Ave, Ct, Pl, Way, Trl, Cir, Loop)
+      const streetTypes=/^(Dr|St|Ln|Rd|Blvd|Ave|Ct|Pl|Way|Trl|Cir|Loop|Pkwy|Ter|Pass|Cv|Run|Xing|Holw|Mdw|Brk)$/i;
+      let splitIdx=parts.length;
+      for(let i=parts.length-1;i>=2;i--){
+        if(streetTypes.test(parts[i])){splitIdx=i+1;break;}
+      }
+      const street=parts.slice(0,splitIdx).join(' ');
+      const city=parts.slice(splitIdx).join(' ');
+      return{street,city,state,zip,source:'zillow',listingUrl:clean,zpid:zm[2]};
+    }
+
+    // Realtor: /realestateandhomes-detail/4621-Waterway-Dr_Fort-Worth_TX_76137
+    const rm=path.match(/\/realestateandhomes-detail\/([^/]+)/);
+    if(rm){
+      const parts=rm[1].split('_');
+      const zip=parts.pop();
+      const state=parts.pop();
+      const city=(parts.pop()||'').replace(/-/g,' ');
+      const street=(parts.join('_')).replace(/-/g,' ');
+      return{street,city,state,zip,source:'realtor',listingUrl:clean};
+    }
+
+    return null;
+  }catch(_){return null;}
+}
+
+function openAddProp(){
+  const ov=document.getElementById('aov');
+  document.getElementById('ap-body').innerHTML=_buildAddPropHTML();
+  ov.classList.add('open');
+}
+function closeAddProp(e){
+  if(e&&e.target!==e.currentTarget)return;
+  document.getElementById('aov').classList.remove('open');
+}
+
+function _buildAddPropHTML(){
+  return`<div style="margin-bottom:1rem">
+    <label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:4px">Paste Zillow or Realtor.com URL</label>
+    <div style="display:flex;gap:.4rem">
+      <input id="ap-url" type="url" placeholder="https://www.zillow.com/homedetails/..." style="flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.45rem .6rem;font-size:.8rem" oninput="parseAddUrl()">
+    </div>
+    <div id="ap-parsed" style="margin-top:.5rem;font-size:.7rem;color:var(--text2)"></div>
+  </div>
+  <div class="sec" style="margin-top:0">Property Details</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem">
+    <div style="grid-column:span 2"><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Address</label><input id="ap-addr" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem"></div>
+    <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">City</label><input id="ap-city" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem"></div>
+    <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">ZIP</label><input id="ap-zip" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem"></div>
+    <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Listed Price ($)</label><input id="ap-price" type="text" inputmode="numeric" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+    <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Property Type</label><select id="ap-type" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem">${['SFR','DUPLEX','TRIPLEX','QUAD','CONDO','LOT'].map(t=>'<option value="'+t+'">'+t+'</option>').join('')}</select></div>
+    <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Beds</label><input id="ap-beds" type="text" inputmode="numeric" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+    <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Baths</label><input id="ap-baths" type="text" inputmode="decimal" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+    <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Sqft</label><input id="ap-sqft" type="text" inputmode="numeric" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+    <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Rent Estimate ($/mo)</label><input id="ap-rent" type="text" inputmode="numeric" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+  </div>
+  <div id="ap-err" style="color:var(--red);font-size:.75rem;margin-bottom:.5rem;display:none"></div>
+  <button id="ap-save-btn" onclick="submitAddProp()" style="width:100%;padding:.55rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">➕ Add Property</button>`;
+}
+
+function parseAddUrl(){
+  const url=document.getElementById('ap-url').value;
+  const info=document.getElementById('ap-parsed');
+  if(!url.trim()){info.textContent='';return;}
+  const p=parseListingUrl(url);
+  if(!p){info.innerHTML='<span style="color:var(--red)">Could not parse URL — enter details manually</span>';return;}
+  info.innerHTML=`✅ Parsed: <strong>${p.street}</strong>, ${p.city}, ${p.state} ${p.zip} (${p.source})`;
+  // Auto-fill fields
+  const full=p.street+(p.city?', '+p.city:'');
+  document.getElementById('ap-addr').value=full;
+  document.getElementById('ap-city').value=p.city||'';
+  document.getElementById('ap-zip').value=p.zip||'';
+}
+
+async function submitAddProp(){
+  const g=s=>(document.getElementById(s)?.value||'').trim();
+  const addr=g('ap-addr');
+  if(!addr){_showAddErr('Address is required');return;}
+
+  const city=g('ap-city');
+  const zip=g('ap-zip');
+  const state='TX';
+  const fullAddr=addr+(city&&!addr.includes(city)?', '+city:'')+', '+state+(zip?' '+zip:'');
+
+  const body={
+    address:fullAddr,
+    city, state, zip,
+    source:g('ap-url')?'zillow':'manual',
+    property_type:g('ap-type')||'SFR',
+  };
+  // Clean the listing URL — strip tracking params
+  const rawUrl=g('ap-url');
+  if(rawUrl){
+    const parsed=parseListingUrl(rawUrl);
+    body.listing_url=parsed?parsed.listingUrl:rawUrl.split('?')[0];
+  }
+  const price=Math.round(+g('ap-price').replace(/[^0-9]/g,'')||0);if(price)body.listed_price=price;
+  const beds=+g('ap-beds')||0;if(beds)body.beds=beds;
+  const baths=+g('ap-baths')||0;if(baths)body.baths=baths;
+  const sqft=Math.round(+g('ap-sqft').replace(/[^0-9]/g,'')||0);if(sqft)body.sqft=sqft;
+  const rent=Math.round(+g('ap-rent').replace(/[^0-9]/g,'')||0);if(rent)body.rent_estimate=rent;
+
+  const btn=document.getElementById('ap-save-btn');
+  btn.disabled=true;btn.textContent='Adding…';
+  try{
+    const token=await getAccessToken();
+    if(!token){_showAddErr('Not signed in');return;}
+    const res=await fetch(`${EDGE_BASE}/properties`,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({error:'Unknown error'}));
+      _showAddErr(err.error||`HTTP ${res.status}`);return;
+    }
+    const newProp=await res.json();
+    // Add to local state
+    const h=newProp.hood;
+    props.unshift({
+      ...newProp,
+      _tiers:null,_cocL:null,_cfL:null,
+      _hood:h||null,
+      _nbScore:h?nbScore({schools:h.schools,crime:h.crime,rentGrowth:h.rentGrowth}):null,
+    });
+    refreshAll();
+    closeAddProp();
+  }catch(e){
+    _showAddErr(e.message||String(e));
+  }finally{
+    btn.disabled=false;btn.textContent='➕ Add Property';
+  }
+}
+
+function _showAddErr(msg){
+  const el=document.getElementById('ap-err');
+  el.textContent=msg;el.style.display='block';
+  setTimeout(()=>{el.style.display='none';},5000);
+}
+

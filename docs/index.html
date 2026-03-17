@@ -82,6 +82,7 @@
       </div>
     </div>
     <div class="hdr-right">
+      <button class="add-btn" onclick="openAddProp()" title="Add property manually">＋</button>
       <button class="inbox-btn" onclick="showInbox()">📧 My Inbox Address</button>
       <button class="user-btn" onclick="openSettings()" id="user-email-btn">Sign Out</button>
     </div>
@@ -160,6 +161,17 @@
     </div>
   </div>
 
+  <!-- Add Property modal -->
+  <div class="ov" id="aov" onclick="closeAddProp(event)">
+    <div class="modal" style="max-width:540px">
+      <div class="mhd">
+        <div><div class="madr">Add Property</div><div style="font-size:.68rem;color:var(--text2)">Paste a Zillow or Realtor URL, or enter details manually</div></div>
+        <button class="xcl" onclick="closeAddProp()">✕</button>
+      </div>
+      <div class="mb" id="ap-body"></div>
+    </div>
+  </div>
+
   <!-- Settings modal -->
   <div class="ov" id="sov" onclick="closeSettings(event)">
     <div class="modal" style="max-width:580px">
@@ -173,15 +185,15 @@
 </div>
 
 
-<script src="js/config.js?v=3"></script>
-<script src="js/financial.js?v=3"></script>
-<script src="js/state.js?v=3"></script>
-<script src="js/projects.js?v=3"></script>
-<script src="js/auth.js?v=3"></script>
-<script src="js/session.js?v=3"></script>
-<script src="js/data.js?v=3"></script>
-<script src="js/render.js?v=3"></script>
-<script src="js/curation.js?v=3"></script>
-<script src="js/modal.js?v=3"></script>
+<script src="js/config.js?v=4"></script>
+<script src="js/financial.js?v=4"></script>
+<script src="js/state.js?v=4"></script>
+<script src="js/projects.js?v=4"></script>
+<script src="js/auth.js?v=4"></script>
+<script src="js/session.js?v=4"></script>
+<script src="js/data.js?v=4"></script>
+<script src="js/render.js?v=4"></script>
+<script src="js/curation.js?v=4"></script>
+<script src="js/modal.js?v=4"></script>
 </body>
 </html>

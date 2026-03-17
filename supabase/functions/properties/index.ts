@@ -6,7 +6,7 @@ const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, PATCH, DELETE, OPTIONS"
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS"
 };
 
 serve(async (req) => {
@@ -29,10 +29,24 @@ serve(async (req) => {
       if (error) throw error;
       return new Response(JSON.stringify((data || []).map(shapeProperty)), { headers: { ...cors, "Content-Type": "application/json" } });
     }
+    if (req.method === "POST" && isCollection) {
+      const body = await req.json();
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
+      const allowed = ["address", "city", "state", "zip", "listed_price", "beds", "baths", "sqft", "lot_size",
+                        "property_type", "listing_url", "source", "rent_estimate", "monthly_rent"];
+      const insert: Record<string, unknown> = { user_id: user.id };
+      for (const k of allowed) if (k in body) insert[k] = body[k];
+      if (!insert.address) return new Response(JSON.stringify({ error: "address is required" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+      const { data, error } = await supabase.from("properties").insert(insert).select("*, neighborhoods(area_name, schools, crime_safety, walk_score, rent_growth, appreci_1yr, appreci_3yr, appreci_5yr, zhvi_current)").single();
+      if (error) throw error;
+      return new Response(JSON.stringify(shapeProperty(data)), { status: 201, headers: { ...cors, "Content-Type": "application/json" } });
+    }
     if (req.method === "PATCH" && !isCollection) {
       const body = await req.json();
       const allowed = ["monthly_rent", "condition", "improvement", "status", "curated", "notes", "price_drop", "price_drop_amt",
-                       "rent_estimate", "beds", "baths", "sqft", "lot_size", "listed_price", "address", "latitude", "longitude"];
+                       "rent_estimate", "beds", "baths", "sqft", "lot_size", "listed_price", "address", "latitude", "longitude",
+                       "property_type", "is_new"];
       const updates: Record<string, unknown> = {};
       for (const k of allowed) if (k in body) updates[k] = body[k];
       const { data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single();

@@ -72,6 +72,8 @@ body{font-family:'Poppins',system-ui,-apple-system,sans-serif;background:var(--b
 .ttl h1{font-size:1rem;font-weight:800;letter-spacing:-.02em;font-family:Poppins,sans-serif}
 .ttl p{font-size:.67rem;color:var(--text2);margin-top:1px}
 .hdr-right{display:flex;align-items:center;gap:.75rem}
+.add-btn{background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:7px;width:32px;height:32px;font-size:1.1rem;line-height:1;cursor:pointer;font-family:Poppins,sans-serif;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
+.add-btn:hover{background:var(--amber);color:var(--bg)}
 .inbox-btn{background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:7px;padding:.35rem .75rem;font-size:.7rem;cursor:pointer;font-family:Poppins,sans-serif;transition:all .15s}
 .inbox-btn:hover{background:rgba(255,159,53,.22)}
 .user-btn{background:var(--card);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:.35rem .75rem;font-size:.7rem;cursor:pointer;font-family:Poppins,sans-serif}
