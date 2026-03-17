@@ -54,20 +54,43 @@ async function fetchHtml(url: string): Promise<string> {
     (html.includes('"price"') && html.includes('"bedrooms"')) // Generic property data
   );
   if (!hasUsefulData && SCRAPER_KEY) {
-    console.log("Using ScraperAPI for:", url.slice(0, 100));
+    // Try ScraperAPI without render first (faster, works when __NEXT_DATA__ is in static HTML)
+    console.log("Using ScraperAPI (no render) for:", url.slice(0, 100));
     try {
       const ac = new AbortController();
-      const timer = setTimeout(() => ac.abort(), 20000); // 20s timeout
-      const scraperUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_KEY}&url=${encodeURIComponent(url)}&render=true&country_code=us`;
+      const timer = setTimeout(() => ac.abort(), 25000);
+      const scraperUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_KEY}&url=${encodeURIComponent(url)}&country_code=us`;
       const r = await fetch(scraperUrl, { signal: ac.signal });
       clearTimeout(timer);
       if (r.ok) {
         html = await r.text();
-        console.log(`ScraperAPI: status=${r.status}, len=${html.length}, has__NEXT_DATA__=${html.includes("__NEXT_DATA__")}`);
+        console.log(`ScraperAPI (no render): status=${r.status}, len=${html.length}, has__NEXT_DATA__=${html.includes("__NEXT_DATA__")}`);
       } else {
-        console.error(`ScraperAPI error: status=${r.status}`);
+        console.error(`ScraperAPI (no render) error: status=${r.status}`);
       }
-    } catch (e) { console.error("scraperapi error:", e); }
+    } catch (e) { console.error("scraperapi (no render) error:", e); }
+
+    // If still no useful data, try with render=true (slower but handles JS-only pages)
+    const hasDataAfterStatic = html.length > 5000 && (
+      html.includes("gdpClientCache") || html.includes("initialReduxState") ||
+      html.includes('"list_price"') || (html.includes('"price"') && html.includes('"bedrooms"'))
+    );
+    if (!hasDataAfterStatic) {
+      console.log("Using ScraperAPI (render) for:", url.slice(0, 100));
+      try {
+        const ac2 = new AbortController();
+        const timer2 = setTimeout(() => ac2.abort(), 45000); // 45s for rendered pages
+        const scraperUrl2 = `https://api.scraperapi.com/?api_key=${SCRAPER_KEY}&url=${encodeURIComponent(url)}&render=true&country_code=us`;
+        const r2 = await fetch(scraperUrl2, { signal: ac2.signal });
+        clearTimeout(timer2);
+        if (r2.ok) {
+          html = await r2.text();
+          console.log(`ScraperAPI (render): status=${r2.status}, len=${html.length}, has__NEXT_DATA__=${html.includes("__NEXT_DATA__")}`);
+        } else {
+          console.error(`ScraperAPI (render) error: status=${r2.status}`);
+        }
+      } catch (e) { console.error("scraperapi (render) error:", e); }
+    }
   }
 
   return html;

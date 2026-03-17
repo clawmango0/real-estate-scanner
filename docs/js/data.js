@@ -200,7 +200,7 @@ function parseAddUrl(){
   document.getElementById('ap-addr').value=full;
   document.getElementById('ap-city').value=p.city||'';
   document.getElementById('ap-zip').value=p.zip||'';
-  info.innerHTML=`✅ Parsed: <strong>${p.street}</strong>, ${p.city}, ${p.state} ${p.zip} (${p.source}) — <em>fetching details…</em>`;
+  info.innerHTML=`✅ Parsed: <strong>${p.street}</strong>, ${p.city}, ${p.state} ${p.zip} (${p.source}) — <span class="ap-loading">⏳ Fetching property details<span class="ap-dots"></span></span>`;
   // Now fetch full details from the listing page via edge function
   fetchListingDetails(url.trim(),info);
 }
@@ -218,7 +218,7 @@ async function fetchListingDetails(url,infoEl){
     });
     if(!res.ok){
       const err=await res.json().catch(()=>({}));
-      infoEl.innerHTML=infoEl.innerHTML.replace(/<em>.*<\/em>/,'<span style="color:var(--amber)">Could not auto-fetch — enter details manually</span>');
+      infoEl.innerHTML=infoEl.innerHTML.replace(/<span class="ap-loading">.*?<\/span>/,'<span style="color:var(--amber)">Fetch failed — enter details manually</span>');
       console.warn('fetch-listing:',err.error||res.status);
       return;
     }
@@ -247,7 +247,7 @@ async function fetchListingDetails(url,infoEl){
   }catch(e){
     if(e.name==='AbortError')return;
     console.error('fetchListingDetails error:',e);
-    infoEl.innerHTML=infoEl.innerHTML.replace(/<em>.*<\/em>/,'<span style="color:var(--amber)">Fetch failed — enter details manually</span>');
+    infoEl.innerHTML=infoEl.innerHTML.replace(/<span class="ap-loading">.*?<\/span>/,'<span style="color:var(--amber)">Fetch failed — enter details manually</span>');
   }finally{_fetchAbort=null;}
 }
 

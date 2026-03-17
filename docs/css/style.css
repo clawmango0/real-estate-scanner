@@ -376,3 +376,8 @@ tbody tr{animation:fi .18s ease both}
   .g4{grid-template-columns:repeat(2,1fr)}
   .curbar{flex-direction:column}
 }
+
+/* Add Property — loading dots animation */
+.ap-loading{color:var(--amber);font-style:italic}
+.ap-dots::after{content:'';animation:ap-dots 1.4s steps(4,end) infinite}
+@keyframes ap-dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
