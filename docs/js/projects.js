@@ -180,13 +180,13 @@ function _buildProjModal(){
   if(window._projModalMap){try{window._projModalMap.remove()}catch(e){};window._projModalMap=null;}
   const p=_editProj;
   document.getElementById('pm-title').textContent=p.id?'Edit Project':'New Project';
-  const cityTags=(p.cities||[]).map(c=>`<span class="ptag">${c}<button onclick="_projRemoveCity('${c.replace(/'/g,"\\'")}')">✕</button></span>`).join('');
+  const cityTags=(p.cities||[]).map(c=>`<span class="ptag">${esc(c)}<button onclick="_projRemoveCity('${esc(c).replace(/'/g,"\\'")}')">✕</button></span>`).join('');
   const typeBoxes=_PTYPES.map(t=>`<button class="ptyp${(p.prop_types||[]).includes(t)?' on':''}" onclick="_projToggleType('${t}')">${t}</button>`).join('');
   document.getElementById('pm-body').innerHTML=`
     <div class="pm-map-wrap" id="pm-map"></div>
     <div class="txs">
       <div class="pf-row"><span class="pf-lbl">Project Name</span>
-        <input type="text" id="pf-name" value="${(p.name||'').replace(/"/g,'&quot;')}" placeholder="e.g. SFR Duplex FW" style="flex:1">
+        <input type="text" id="pf-name" value="${esc(p.name||'')}" placeholder="e.g. SFR Duplex FW" style="flex:1">
       </div>
     </div>
     <div class="sec" style="margin:.6rem 0 .3rem;font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Filters</div>
@@ -301,7 +301,7 @@ function _projAddCity(){
     if(tags){
       const span=document.createElement('span');
       span.className='ptag';
-      span.innerHTML=`${val}<button onclick="_projRemoveCity('${val.replace(/'/g,"\\'")}')">✕</button>`;
+      span.innerHTML=`${esc(val)}<button onclick="_projRemoveCity('${esc(val).replace(/'/g,"\\'")}')">✕</button>`;
       tags.insertBefore(span,document.getElementById('pf-city-in'));
     }
   }

@@ -406,6 +406,22 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "url is required" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
+    // SSRF protection: only allow known real estate hostnames
+    const ALLOWED_HOSTS = ["zillow.com", "realtor.com", "redfin.com", "redf.in"];
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+      if (!ALLOWED_HOSTS.some(h => host === h || host.endsWith("." + h))) {
+        console.warn(`Blocked URL with disallowed host: ${host}`);
+        return new Response(JSON.stringify({ error: "Only Zillow, Realtor.com, and Redfin URLs are supported" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        return new Response(JSON.stringify({ error: "Invalid URL protocol" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid URL" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+    }
+
     // Resolve short links (redf.in → redfin.com)
     let cleanUrl = url.replace(/\?.*$/, "").replace(/\/$/, "");
     if (cleanUrl.includes("redf.in")) {

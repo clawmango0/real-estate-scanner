@@ -8,7 +8,7 @@ const ANTHROPIC_KEY=Deno.env.get("ANTHROPIC_API_KEY")??"";
 const MAILGUN_KEY=Deno.env.get("MAILGUN_WEBHOOK_SIGNING_KEY")??"";
 const SCRAPER_KEY=Deno.env.get("SCRAPER_API_KEY")??"";
 
-async function verify(ts:string,tok:string,sig:string):Promise<boolean>{if(!MAILGUN_KEY)return true;try{const v=ts+tok;const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(MAILGUN_KEY),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(v));const c=Array.from(new Uint8Array(s)).map(b=>b.toString(16).padStart(2,"0")).join("");return c===sig;}catch{return true;}}
+async function verify(ts:string,tok:string,sig:string):Promise<boolean>{if(!MAILGUN_KEY){console.error("MAILGUN_WEBHOOK_SIGNING_KEY not set — rejecting request");return false;}try{const v=ts+tok;const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(MAILGUN_KEY),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(v));const c=Array.from(new Uint8Array(s)).map(b=>b.toString(16).padStart(2,"0")).join("");return c===sig;}catch(e){console.error("HMAC verification error:",e);return false;}}
 
 // Find the REAL verification/confirm link from an email.
 // Old version matched ANY URL containing "confirm" — which grabbed static image
@@ -84,8 +84,162 @@ function parseSubjectLine(subject:string):any[]|null {
       }];
     }
 
+    // Redfin: "New in Crowley at $265K" / "Coming Soon in Watauga at $275K" / "Price Drop in Fort Worth"
+    // Also handles forwarded: "Fwd: New in Crowley at $265K"
+    m = subject.match(/(?:Fwd:\s*)?(New|Coming Soon|Price Drop|Back on Market)\s+in\s+(.+?)\s+at\s+\$([\d,.]+)(K|M)?/i);
+    if (m) {
+      const status = m[1].toLowerCase();
+      const city = m[2].trim();
+      const priceStr = m[3].replace(/,/g, "");
+      const suffix = (m[4] || "").toUpperCase();
+      const price = Math.round(parseFloat(priceStr) * (suffix === "K" ? 1000 : suffix === "M" ? 1000000 : 1));
+      const isPriceDrop = status.includes("price") || status.includes("drop");
+      return [{
+        address: "", city, state: "TX", zip: null,
+        listed_price: price, beds: null, baths: null, sqft: null,
+        property_type: "SFR", listing_url: "", source: "redfin",
+        price_drop: isPriceDrop, price_drop_amt: 0,
+        _from_subject: true, _needs_enrichment: true
+      }];
+    }
+
+    // Redfin: "Price decrease to $275K on 6009 Maple Springs Dr" / "Price increase to $300K on ..."
+    m = subject.match(/(?:Fwd:\s*)?Price (?:decrease|increase|drop|change)\s+to\s+\$([\d,.]+)(K|M)?\s+on\s+(.+)/i);
+    if (m) {
+      const priceStr = m[1].replace(/,/g, "");
+      const suffix = (m[2] || "").toUpperCase();
+      const price = Math.round(parseFloat(priceStr) * (suffix === "K" ? 1000 : suffix === "M" ? 1000000 : 1));
+      const addrPart = m[3].trim();
+      const isPriceDrop = /decrease|drop/i.test(subject);
+      return [{
+        address: addrPart, city: "", state: "TX", zip: null,
+        listed_price: price, beds: null, baths: null, sqft: null,
+        property_type: "SFR", listing_url: "", source: "redfin",
+        price_drop: isPriceDrop, price_drop_amt: 0,
+        _from_subject: true, _needs_enrichment: true
+      }];
+    }
+
     return null;
   } catch { return null; }
+}
+
+// ══════════════════════════════════════════════════════════
+//  REDFIN URL EXTRACTION
+// ══════════════════════════════════════════════════════════
+interface RedfinUrlScan {
+  propertyUrls: string[];   // Direct redfin.com property URLs
+  trackingUrls: string[];   // redmail*.redfin.com tracking URLs
+}
+
+function scanRedfinUrls(html: string, plain: string): RedfinUrlScan {
+  const result: RedfinUrlScan = { propertyUrls: [], trackingUrls: [] };
+  try {
+    const allSrc = html + " " + plain;
+
+    // 1. Direct property URLs: redfin.com/STATE/City/Address/home/ID
+    const directMatches = allSrc.match(/https?:\/\/(?:www\.)?redfin\.com\/[A-Z]{2}\/[^\s"'<>&)]+\/home\/\d+/gi) || [];
+    for (const m of directMatches) {
+      const clean = m.replace(/&amp;/g, "&");
+      if (!result.propertyUrls.includes(clean)) result.propertyUrls.push(clean);
+    }
+
+    // 2. Redfin tracking URLs: redmail*.redfin.com/u/click?...
+    const trackingMatches = allSrc.match(/https?:\/\/redmail\d*\.redfin\.com\/u\/click[^\s"'<>]*/gi) || [];
+    for (const link of trackingMatches) {
+      const clean = link.replace(/&amp;/g, "&");
+      if (!result.trackingUrls.includes(clean)) result.trackingUrls.push(clean);
+    }
+  } catch {}
+  return result;
+}
+
+// Follow Redfin tracking redirect to get the property URL
+async function followRedfinRedirect(trackingUrl: string): Promise<string | null> {
+  try {
+    let url = trackingUrl;
+    for (let hop = 0; hop < 6; hop++) {
+      const r = await fetch(url, {
+        redirect: "manual",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html",
+        },
+      });
+      const loc = r.headers.get("location");
+      if (!loc) break;
+      if (loc.includes("redfin.com") && loc.includes("/home/")) {
+        console.log(`Redfin redirect hop ${hop + 1} → property: ${loc.slice(0, 150)}`);
+        return loc;
+      }
+      url = loc.startsWith("http") ? loc : new URL(loc, url).href;
+    }
+    return null;
+  } catch (e) {
+    console.error("followRedfinRedirect error:", e);
+    return null;
+  }
+}
+
+// Scrape a Redfin property page using JSON-LD (RealEstateListing)
+async function scrapeRedfin(listingUrl: string): Promise<ZillowDetails | null> {
+  const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+  try {
+    const r = await fetch(listingUrl, {
+      headers: { "User-Agent": ua, "Accept": "text/html", "Accept-Language": "en-US,en;q=0.5" },
+      redirect: "follow"
+    });
+    if (!r.ok) { console.log(`Redfin fetch: status=${r.status}`); return null; }
+    const html = await r.text();
+    console.log(`Redfin fetch: len=${html.length}`);
+
+    // Parse JSON-LD RealEstateListing
+    const ldBlocks = html.match(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi) || [];
+    for (const block of ldBlocks) {
+      try {
+        const jsonStr = block.replace(/<script[^>]*>/, "").replace(/<\/script>/, "");
+        const ld = JSON.parse(jsonStr);
+        const types = Array.isArray(ld["@type"]) ? ld["@type"].join(",") : String(ld["@type"] || "");
+        if (!types.includes("RealEstateListing") && !types.includes("SingleFamilyResidence")) continue;
+
+        const me = ld.mainEntity || ld;
+        const addr = me.address || {};
+        const offers = ld.offers || {};
+
+        const typeMap: Record<string, string> = {
+          "SingleFamilyResidence": "SFR", "Townhouse": "Townhouse", "Condominium": "Condo",
+          "ApartmentComplex": "Multi-Family", "House": "SFR",
+        };
+        const accomCat = me.accommodationCategory || "";
+        let propType = typeMap[me["@type"]] || "SFR";
+        if (accomCat.toLowerCase().includes("town")) propType = "Townhouse";
+        if (accomCat.toLowerCase().includes("condo")) propType = "Condo";
+        if (accomCat.toLowerCase().includes("multi")) propType = "Multi-Family";
+
+        const details: ZillowDetails = {
+          price: offers.price ? Number(offers.price) : undefined,
+          beds: me.numberOfBedrooms ? Number(me.numberOfBedrooms) : undefined,
+          baths: me.numberOfBathroomsTotal ? Number(me.numberOfBathroomsTotal) : undefined,
+          sqft: me.floorSize?.value ? Number(me.floorSize.value) : undefined,
+          listing_url: listingUrl,
+          address: [addr.streetAddress, addr.addressLocality, addr.addressRegion && addr.postalCode ? `${addr.addressRegion} ${addr.postalCode}` : addr.addressRegion].filter(Boolean).join(", "),
+          city: addr.addressLocality || undefined,
+          state: addr.addressRegion || undefined,
+          zip: addr.postalCode || undefined,
+          property_type: propType,
+          latitude: me.geo?.latitude ? Number(me.geo.latitude) : undefined,
+          longitude: me.geo?.longitude ? Number(me.geo.longitude) : undefined,
+        };
+        console.log("Redfin JSON-LD parsed:", JSON.stringify(details));
+        return details;
+      } catch {}
+    }
+    console.log("No Redfin JSON-LD RealEstateListing found");
+    return null;
+  } catch (e) {
+    console.error("scrapeRedfin error:", e);
+    return null;
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -101,18 +255,24 @@ function cleanContent(s: string): string {
 }
 
 async function parseWithClaude(subject:string, html:string, plain:string) {
-  // Only prefer plain text when it actually contains property data
-  // (prices, bed/bath counts, sqft). Zillow digest emails have plain text
-  // that exceeds 200 chars due to long tracking URLs but contains no listings.
+  // Detect email source to choose content strategy
+  const isRedfin = /redfin/i.test(plain.slice(0, 500)) || /redfin/i.test(subject);
+  const isRealtor = /realtor\.com/i.test(plain.slice(0, 500));
+
   const cleanPlain = cleanContent(plain || "");
-  const plainHasData = cleanPlain.length > 100 &&
-    /\$[\d,.]+K?M?|\d+\s*(?:bd|bed|ba|bath)|\d,\d{3}\s*sq/i.test(cleanPlain.slice(0, 3000));
+
+  // For Redfin emails, ALWAYS use HTML (stripped) — their plain text is marketing copy
+  // without structured addresses. The HTML has tracking URLs and property data.
+  // For Zillow/Realtor, prefer plain text when it has structured data.
+  const plainHasStructuredData = !isRedfin && cleanPlain.length > 100 &&
+    /\d+\s*(?:bd|bed|ba|bath)|\d,\d{3}\s*sq/i.test(cleanPlain.slice(0, 3000));
 
   let content: string;
-  if (plainHasData) {
+  if (plainHasStructuredData) {
     content = cleanPlain.slice(0, 30000);
   } else {
-    // Use HTML (strip tags) — catches digest emails whose plain text is just junk
+    // Use HTML (strip tags) — catches Redfin, digest emails, and emails where
+    // plain text is just marketing copy without structured property data
     content = cleanContent(html ? html.replace(/<[^>]+>/g, " ") : plain || "").slice(0, 30000);
   }
   if (!content || content.length < 50) return null;
@@ -130,10 +290,12 @@ Rules:
 - zip may be null if not present; default state to "TX" for unspecified Texas cities
 - Include ALL properties found even when some fields are missing
 - Extract listing URLs when present; otherwise leave listing_url empty
-- price_drop is true for "Price Cut" / "Price Reduced" emails
+- price_drop is true for "Price Cut" / "Price Reduced" / "Price Drop" emails
 - source should be "zillow", "realtor", "redfin", etc. based on the email sender/content
+- REDFIN EMAILS: Subject format is "New in {City} at $NNK" or "Coming Soon in {City}". The email body describes a single property. Look for: street address (e.g. "123 Main St"), city name, price (from subject or body), bed/bath/sqft counts ("3 bedroom, 2 bathroom", "3 bed", "2 bath", "1,200 sq ft"). The address may appear after "See this home" or "View Listing" or in a property header. Even if you can only find the city and price from the subject, include that as a listing.
+- FORWARDED EMAILS: Content may start with "---------- Forwarded message ---------". Parse the forwarded content, not the forwarding headers.
 
-Return JSON array only (no markdown). Each object: {address, city, state, zip, listed_price, beds, baths, sqft, property_type, listing_url, source, price_drop, price_drop_amt}. Return [] only if truly no property listings exist.`;
+Return JSON array only (no markdown). Each object: {address, city, state, zip, listed_price, beds, baths, sqft, property_type, listing_url, source, price_drop, price_drop_amt}. Return [] only if truly no property listings exist (marketing emails, account notifications, etc).`;
 
   const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4096,messages:[{role:"user",content:prompt}]})});
   const data=await res.json();
@@ -545,9 +707,14 @@ serve(async(req)=>{
     return new Response(JSON.stringify({ok:true,type:"verification",auto_verified:ok}),{status:200,headers:{"Content-Type":"application/json"}});
   }
 
-  // ── Scan ALL Zillow URLs from email content ──
+  // ── Detect email source ──
+  const isRedfinEmail = /redfin/i.test(sender) || /redfin/i.test(plain.slice(0, 500)) || /redfin/i.test(subject);
+
+  // ── Scan ALL property URLs from email content ──
   const urlScan = scanZillowUrls(html, plain);
-  console.log(`URL scan: ${urlScan.homedetails.length} homedetails, ${urlScan.trackingTargets.length} tracking, ${urlScan.zpids.length} zpids`);
+  const redfinScan = scanRedfinUrls(html, plain);
+  console.log(`URL scan: ${urlScan.homedetails.length} zillow homedetails, ${urlScan.trackingTargets.length} zillow tracking, ${urlScan.zpids.length} zpids`);
+  console.log(`Redfin scan: ${redfinScan.propertyUrls.length} property URLs, ${redfinScan.trackingUrls.length} tracking URLs`);
 
   // ── Insert email log with URL diagnostics ──
   const{data:log}=await supabase.from("email_log").insert({
@@ -563,7 +730,13 @@ serve(async(req)=>{
         tracking_samples: urlScan.trackingTargets.slice(0, 5).map(u => u.slice(0, 200)),
         zpids: urlScan.zpids,
       },
+      redfin_urls: {
+        property: redfinScan.propertyUrls.map(u => u.slice(0, 200)),
+        tracking_count: redfinScan.trackingUrls.length,
+        tracking_samples: redfinScan.trackingUrls.slice(0, 3).map(u => u.slice(0, 200)),
+      },
       scraper_key_set: !!SCRAPER_KEY,
+      is_redfin: isRedfinEmail,
     }
   }).select("id").single();
   const logId=log?.id;
@@ -586,6 +759,63 @@ serve(async(req)=>{
     console.error("parse error:",e);
     if(logId)await supabase.from("email_log").update({parse_status:"failed",error_message:String(e)}).eq("id",logId);
     return new Response("error",{status:500});
+  }
+
+  // ── Redfin Fallback: if Claude found nothing (or only subject-parsed) but we have Redfin URLs ──
+  if (isRedfinEmail && (redfinScan.propertyUrls.length > 0 || redfinScan.trackingUrls.length > 0)) {
+    // Try to resolve Redfin property URLs
+    let resolvedUrls: string[] = [...redfinScan.propertyUrls];
+
+    // Follow tracking links if no direct URLs
+    if (!resolvedUrls.length) {
+      for (const trackUrl of redfinScan.trackingUrls.slice(0, 5)) {
+        const resolved = await followRedfinRedirect(trackUrl);
+        if (resolved && resolved.includes("/home/")) {
+          resolvedUrls.push(resolved);
+          break; // Single-listing emails — one URL is enough
+        }
+      }
+    }
+
+    for (const rfUrl of resolvedUrls.slice(0, 3)) {
+      console.log(`Redfin fallback: scraping ${rfUrl}`);
+      try {
+        const details = await scrapeRedfin(rfUrl);
+        if (details?.address) {
+          // Check if we already have a subject-parsed entry to update
+          const existingIdx = props.findIndex(p => p._from_subject && p.source === "redfin");
+          const enriched = {
+            address: details.address,
+            city: details.city || "",
+            state: details.state || "TX",
+            zip: details.zip || null,
+            listed_price: details.price || null,
+            beds: details.beds || null,
+            baths: details.baths || null,
+            sqft: details.sqft || null,
+            property_type: details.property_type || "SFR",
+            listing_url: details.listing_url || rfUrl,
+            source: "redfin",
+            price_drop: false,
+            price_drop_amt: 0,
+            latitude: details.latitude || null,
+            longitude: details.longitude || null,
+            _from_redfin_scrape: true,
+          };
+          if (existingIdx >= 0) {
+            // Merge scraped data into subject-parsed entry
+            props[existingIdx] = { ...props[existingIdx], ...enriched };
+            console.log(`Redfin enriched subject entry: ${details.address} ($${details.price || "?"})`);
+          } else {
+            props.push(enriched);
+            console.log(`Redfin scraped: ${details.address} ($${details.price || "?"})`);
+          }
+        }
+      } catch (e) {
+        console.error(`Redfin scrape error:`, e);
+      }
+    }
+    console.log(`Redfin fallback: ${props.length} properties after enrichment`);
   }
 
   // ── ZPID Fallback: if Claude found nothing but we have ZPIDs, scrape each directly ──
@@ -717,8 +947,10 @@ serve(async(req)=>{
 
     for (const p of props) {
       if (!p.address) continue;
-      // ZPID fallback properties were already scraped during fallback — skip re-scraping
-      if (p._from_zpid_fallback) { console.log(`Skipping re-scrape for ZPID fallback: ${p.address}`); continue; }
+      // ZPID/Redfin fallback properties were already scraped during fallback — skip re-scraping
+      if (p._from_zpid_fallback || p._from_redfin_scrape) { console.log(`Skipping re-scrape for fallback: ${p.address}`); continue; }
+      // Redfin-sourced properties don't have Zillow URLs — skip Zillow scraping
+      if (p.source === "redfin") { console.log(`Skipping Zillow scrape for Redfin property: ${p.address}`); continue; }
 
       console.log(`── Resolving URL for: ${p.address}`);
       const scrapeUrl = await resolveZillowUrl(
@@ -780,7 +1012,12 @@ serve(async(req)=>{
             tracking_samples: urlScan.trackingTargets.slice(0, 5).map(u => u.slice(0, 200)),
             zpids: urlScan.zpids,
           },
+          redfin_urls: {
+            property: redfinScan.propertyUrls.map(u => u.slice(0, 200)),
+            tracking_count: redfinScan.trackingUrls.length,
+          },
           scraper_key_set: !!SCRAPER_KEY,
+          is_redfin: isRedfinEmail,
           scrape_results: { scraped, errors: scrapeErrors },
         }
       }).eq("id", logId);

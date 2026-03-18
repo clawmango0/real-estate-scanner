@@ -78,10 +78,10 @@ function renderApp(){
     const statusDot=p.status==='pass'?'p':p.status==='fail'?'f':'n';
     const statusLabel=p.status==='pass'?'Pass':p.status==='fail'?'Fail':'New';
     tr.innerHTML=`
-      <td onclick="openM('${p.id}')"><div style="margin-bottom:2px">${badges}</div><div class="am">${p.address}</div><div class="as">${p.city}</div></td>
+      <td onclick="openM('${p.id}')"><div style="margin-bottom:2px">${badges}</div><div class="am">${esc(p.address)}</div><div class="as">${esc(p.city)}</div></td>
       <td class="hs" onclick="openM('${p.id}')"><span class="mn">${M(p.listed)}</span></td>
       <td onclick="openM('${p.id}')">${offerHtml}</td>
-      <td class="hs" onclick="openM('${p.id}')"><span style="font-size:.7rem;color:${isDuplex?'#A78BFA':'var(--text2)'}">${p.type}</span></td>
+      <td class="hs" onclick="openM('${p.id}')"><span style="font-size:.7rem;color:${isDuplex?'#A78BFA':'var(--text2)'}">${esc(p.type)}</span></td>
       <td onclick="openM('${p.id}')">${(()=>{
         if(p.monthlyRent) return `<span class="mn a">${M(p.monthlyRent)}/mo</span>`;
         const er=effectiveRent(p);
@@ -94,7 +94,7 @@ function renderApp(){
         ${p._cfL!==null?`<div style="font-size:.6rem;color:${p._cfL>=0?'var(--green)':'var(--red)'}">${MS(p._cfL)}/mo</div>`:''}
       </td>
       <td class="hs" onclick="openM('${p.id}')">
-        ${p._nbScore!==null?`<span class="nbhd ${nbl.cls}">${p._nbScore}</span><div style="font-size:.6rem;color:var(--text2);margin-top:2px">${p._hood?.area||''}</div>`:'—'}
+        ${p._nbScore!==null?`<span class="nbhd ${nbl.cls}">${p._nbScore}</span><div style="font-size:.6rem;color:var(--text2);margin-top:2px">${esc(p._hood?.area||'')}</div>`:'—'}
       </td>
       <td onclick="openM('${p.id}')"><span class="dot ${statusDot}"></span>${statusLabel}</td>
       <td>

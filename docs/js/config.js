@@ -4,3 +4,6 @@ const EDGE_BASE     = `${SUPABASE_URL}/functions/v1`;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+// HTML escape — use for ALL user data interpolated into innerHTML
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
