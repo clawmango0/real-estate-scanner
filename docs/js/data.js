@@ -58,17 +58,32 @@ function _showPropsError(msg){
 
 async function saveProperty(id, updates){
   const token = await getAccessToken();
-  if(!token) return;
-  await fetch(`${EDGE_BASE}/properties/${id}`,{
-    method:'PATCH',
-    headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
-    body:JSON.stringify(updates)
-  });
-  // Update local state
+  if(!token) return false;
   const idx=props.findIndex(p=>p.id===id);
+  // Snapshot for rollback
+  const snapshot=idx>=0?{...props[idx]}:null;
+  // Optimistic local update
   if(idx>=0){
     Object.assign(props[idx],updates);
     if('monthly_rent' in updates) props[idx].monthlyRent=updates.monthly_rent;
+  }
+  try{
+    const res=await fetch(`${EDGE_BASE}/properties/${id}`,{
+      method:'PATCH',
+      headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify(updates)
+    });
+    if(!res.ok){
+      console.error(`saveProperty failed: ${res.status}`);
+      // Rollback local state
+      if(idx>=0&&snapshot) Object.assign(props[idx],snapshot);
+      return false;
+    }
+    return true;
+  }catch(e){
+    console.error('saveProperty error:',e);
+    if(idx>=0&&snapshot) Object.assign(props[idx],snapshot);
+    return false;
   }
 }
 
