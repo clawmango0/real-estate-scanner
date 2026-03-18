@@ -20,12 +20,7 @@ function buildMod(id){
   const exits=EXIT_YRS.map(yr=>rent?exitAt(ofPrc,rent,cond,impr,yr,taxP,apprUsed):null);
   const y1=rent?schedE(ofPrc,rent,cond,impr,1,taxP,0):null;
 
-  let badges='';
-  if(p.source==='auction')badges=`<span class="bdg ba">Auction</span>`;
-  else if(p.source==='har')badges=`<span class="bdg bz">HAR</span>`;
-  else if(p.source==='realtor')badges=`<span class="bdg br">Realtor</span>`;
-  else if(p.source==='redfin')badges=`<span class="bdg bf">Redfin</span>`;
-  else badges=`<span class="bdg bz">Zillow</span>`;
+  let badges=sourceBadge(p.source);
   if(p.isNew)badges+=`<span class="bdg bn">🆕 New</span>`;
   if(p.priceDrop)badges+=`<span class="bdg bd">📉 −${M(p.dropAmt||0)}</span>`;
 

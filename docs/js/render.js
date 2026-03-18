@@ -60,13 +60,7 @@ function renderApp(){
     if(p.curated==='fav')tr.classList.add('fav');
     if(p.curated==='ni')tr.classList.add('ni');
     const isDuplex=['DUPLEX','TRIPLEX','QUAD'].includes(p.type);
-    let badges='';
-    if(p.source==='auction')badges+=`<span class="bdg ba">Auction</span>`;
-    else if(p.source==='tax')badges+=`<span class="bdg bt">Tax Sale</span>`;
-    else if(p.source==='har')badges+=`<span class="bdg bz">HAR</span>`;
-    else if(p.source==='realtor')badges+=`<span class="bdg br">Realtor</span>`;
-    else if(p.source==='redfin')badges+=`<span class="bdg bf">Redfin</span>`;
-    else badges+=`<span class="bdg bz">Zillow</span>`;
+    let badges=sourceBadge(p.source);
     if(p.isNew)badges+=`<span class="bdg bn">🆕</span>`;
     if(p.priceDrop)badges+=`<span class="bdg bd">📉</span>`;
     const nbl=nbLabel(p._nbScore);

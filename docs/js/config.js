@@ -7,3 +7,13 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 // HTML escape — use for ALL user data interpolated into innerHTML
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
+// Source badge HTML — single source of truth for source→badge mapping
+function sourceBadge(src){
+  if(src==='auction')return'<span class="bdg ba">Auction</span>';
+  if(src==='tax')return'<span class="bdg bt">Tax Sale</span>';
+  if(src==='har')return'<span class="bdg bz">HAR</span>';
+  if(src==='realtor')return'<span class="bdg br">Realtor</span>';
+  if(src==='redfin')return'<span class="bdg bf">Redfin</span>';
+  return'<span class="bdg bz">Zillow</span>';
+}
+

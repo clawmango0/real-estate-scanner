@@ -353,14 +353,14 @@ async function saveProject(){
   let saved;
   if(_editProj.id){
     const{data,error}=await sb.from('projects').update(record).eq('id',_editProj.id).select().single();
-    if(error){console.error('saveProject:',error);return;}
+    if(error){console.error('saveProject:',error);alert('Failed to save project: '+error.message);return;}
     saved=data;
     const idx=projects.findIndex(x=>x.id===_editProj.id);
     if(idx>=0) projects[idx]=saved;
     if(activeProject&&activeProject.id===saved.id) setProject(saved);
   } else {
     const{data,error}=await sb.from('projects').insert(record).select().single();
-    if(error){console.error('saveProject:',error);return;}
+    if(error){console.error('saveProject:',error);alert('Failed to create project: '+error.message);return;}
     saved=data;
     projects.push(saved);
   }

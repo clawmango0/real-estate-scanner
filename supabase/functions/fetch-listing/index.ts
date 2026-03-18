@@ -391,6 +391,17 @@ async function scrapeListing(url: string): Promise<ListingDetails | null> {
   return null;
 }
 
+// ── Rate limiter (in-memory, per user, 10 requests per minute) ──
+const rateLimits = new Map<string, number[]>();
+function checkRateLimit(userId: string, maxReqs = 10, windowMs = 60000): boolean {
+  const now = Date.now();
+  const timestamps = (rateLimits.get(userId) || []).filter(t => now - t < windowMs);
+  if (timestamps.length >= maxReqs) return false;
+  timestamps.push(now);
+  rateLimits.set(userId, timestamps);
+  return true;
+}
+
 // ── Handler ──────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -402,6 +413,11 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, { global: { headers: { Authorization: authHeader } } });
   const { data: { user }, error: userErr } = await supabase.auth.getUser();
   if (userErr || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
+
+  // Rate limit: 10 requests per minute per user
+  if (!checkRateLimit(user.id)) {
+    return new Response(JSON.stringify({ error: "Rate limit exceeded. Please wait before trying again." }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+  }
 
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...cors, "Content-Type": "application/json" } });
 

@@ -7,6 +7,7 @@ const SUPABASE_SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")??"";
 const ANTHROPIC_KEY=Deno.env.get("ANTHROPIC_API_KEY")??"";
 const MAILGUN_KEY=Deno.env.get("MAILGUN_WEBHOOK_SIGNING_KEY")??"";
 const SCRAPER_KEY=Deno.env.get("SCRAPER_API_KEY")??"";
+const UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 async function verify(ts:string,tok:string,sig:string):Promise<boolean>{if(!MAILGUN_KEY){console.error("MAILGUN_WEBHOOK_SIGNING_KEY not set — rejecting request");return false;}try{const v=ts+tok;const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(MAILGUN_KEY),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(v));const c=Array.from(new Uint8Array(s)).map(b=>b.toString(16).padStart(2,"0")).join("");return c===sig;}catch(e){console.error("HMAC verification error:",e);return false;}}
 
@@ -162,7 +163,7 @@ async function followRedfinRedirect(trackingUrl: string): Promise<string | null>
       const r = await fetch(url, {
         redirect: "manual",
         headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "User-Agent": UA,
           "Accept": "text/html",
         },
       });
@@ -183,10 +184,10 @@ async function followRedfinRedirect(trackingUrl: string): Promise<string | null>
 
 // Scrape a Redfin property page using JSON-LD (RealEstateListing)
 async function scrapeRedfin(listingUrl: string): Promise<ZillowDetails | null> {
-  const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+  const ua = UA;
   try {
     const r = await fetch(listingUrl, {
-      headers: { "User-Agent": ua, "Accept": "text/html", "Accept-Language": "en-US,en;q=0.5" },
+      headers: { "User-Agent": UA, "Accept": "text/html", "Accept-Language": "en-US,en;q=0.5" },
       redirect: "follow"
     });
     if (!r.ok) { console.log(`Redfin fetch: status=${r.status}`); return null; }
@@ -375,7 +376,7 @@ async function followTrackingRedirect(trackingUrl: string): Promise<string | nul
       const r = await fetch(url, {
         redirect: "manual",
         headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "User-Agent": UA,
           "Accept": "text/html",
         },
       });
@@ -408,7 +409,7 @@ async function findZillowUrl(address: string): Promise<string | null> {
     const q = encodeURIComponent(address);
     const r = await fetch(
       `https://www.zillowstatic.com/autocomplete/v3/suggestions?q=${q}&abKey=6pmtfwMkHe-ZvWGZJ6EtoQ`,
-      { headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" } }
+      { headers: { "User-Agent": UA } }
     );
     if (!r.ok) { console.log("autocomplete status:", r.status); return null; }
     const data = await r.json();
@@ -501,7 +502,6 @@ interface ZillowDetails {
 }
 
 async function scrapeZillow(listingUrl: string): Promise<ZillowDetails | null> {
-  const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
   let html = "";
 
@@ -509,7 +509,7 @@ async function scrapeZillow(listingUrl: string): Promise<ZillowDetails | null> {
   try {
     const ac1=new AbortController();const t1=setTimeout(()=>ac1.abort(),15000);
     const r = await fetch(listingUrl, {
-      headers: { "User-Agent": ua, "Accept": "text/html", "Accept-Language": "en-US,en;q=0.5" },
+      headers: { "User-Agent": UA, "Accept": "text/html", "Accept-Language": "en-US,en;q=0.5" },
       redirect: "follow", signal: ac1.signal
     });
     clearTimeout(t1);
@@ -694,7 +694,7 @@ serve(async(req)=>{
       const r=await fetch(vUrl,{
         method:"GET",
         headers:{
-          "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "User-Agent":UA,
           "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
         redirect:"follow"
