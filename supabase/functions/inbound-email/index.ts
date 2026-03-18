@@ -297,11 +297,17 @@ Rules:
 
 Return JSON array only (no markdown). Each object: {address, city, state, zip, listed_price, beds, baths, sqft, property_type, listing_url, source, price_drop, price_drop_amt}. Return [] only if truly no property listings exist (marketing emails, account notifications, etc).`;
 
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4096,messages:[{role:"user",content:prompt}]})});
-  const data=await res.json();
-  const text=(data.content?.[0]?.text||"[]").replace(/```json|```/g,"").trim();
-  console.log(`Claude response: ${text.slice(0, 300)}`);
-  try{return JSON.parse(text);}catch{ console.error("JSON parse failed:", text.slice(0, 200)); return[];}
+  const ac=new AbortController();
+  const timeout=setTimeout(()=>ac.abort(),30000);
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4096,messages:[{role:"user",content:prompt}]}),signal:ac.signal});
+    clearTimeout(timeout);
+    if(!res.ok){console.error(`Claude API error: ${res.status} ${res.statusText}`);return[];}
+    const data=await res.json();
+    const text=(data.content?.[0]?.text||"[]").replace(/```json|```/g,"").trim();
+    console.log(`Claude response: ${text.slice(0, 300)}`);
+    try{return JSON.parse(text);}catch{ console.error("JSON parse failed:", text.slice(0, 200)); return[];}
+  }catch(e){clearTimeout(timeout);console.error("Claude fetch error:",e);return[];}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -499,22 +505,26 @@ async function scrapeZillow(listingUrl: string): Promise<ZillowDetails | null> {
 
   let html = "";
 
-  // Try direct fetch first (sometimes works for non-US IPs or crawl-friendly pages)
+  // Try direct fetch first (15s timeout)
   try {
+    const ac1=new AbortController();const t1=setTimeout(()=>ac1.abort(),15000);
     const r = await fetch(listingUrl, {
       headers: { "User-Agent": ua, "Accept": "text/html", "Accept-Language": "en-US,en;q=0.5" },
-      redirect: "follow"
+      redirect: "follow", signal: ac1.signal
     });
+    clearTimeout(t1);
     if (r.ok) html = await r.text();
     console.log(`Direct fetch: status=${r.status}, len=${html.length}, has_NEXT_DATA=${html.includes("__NEXT_DATA__")}`);
   } catch (e) { console.error("direct fetch error:", e); }
 
-  // Fall back to ScraperAPI with JS rendering
+  // Fall back to ScraperAPI with JS rendering (45s timeout)
   if ((!html || !html.includes("gdpClientCache")) && SCRAPER_KEY) {
     console.log("Using ScraperAPI for:", listingUrl.slice(0, 100));
     try {
+      const ac2=new AbortController();const t2=setTimeout(()=>ac2.abort(),45000);
       const scraperUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_KEY}&url=${encodeURIComponent(listingUrl)}&render=true&country_code=us`;
-      const r = await fetch(scraperUrl);
+      const r = await fetch(scraperUrl, { signal: ac2.signal });
+      clearTimeout(t2);
       if (r.ok) {
         html = await r.text();
         console.log(`ScraperAPI: status=${r.status}, len=${html.length}, has_NEXT_DATA=${html.includes("__NEXT_DATA__")}`);

@@ -34,12 +34,14 @@ const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (
 async function fetchHtml(url: string): Promise<string> {
   let html = "";
 
-  // Try direct fetch first
+  // Try direct fetch first (15s timeout)
   try {
+    const ac=new AbortController();const t=setTimeout(()=>ac.abort(),15000);
     const r = await fetch(url, {
       headers: { "User-Agent": UA, "Accept": "text/html,application/xhtml+xml", "Accept-Language": "en-US,en;q=0.5" },
-      redirect: "follow",
+      redirect: "follow", signal: ac.signal,
     });
+    clearTimeout(t);
     if (r.ok) html = await r.text();
     console.log(`Direct fetch: status=${r.status}, len=${html.length}`);
   } catch (e) { console.error("direct fetch error:", e); }
@@ -299,6 +301,7 @@ async function claudeFallback(html: string, listingUrl: string): Promise<Listing
   try {
     // Trim HTML to first 30k chars to stay within limits
     const trimmed = html.slice(0, 30000);
+    const ac=new AbortController();const t=setTimeout(()=>ac.abort(),30000);
     const resp = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -314,7 +317,9 @@ async function claudeFallback(html: string, listingUrl: string): Promise<Listing
           content: `Extract property listing details from this HTML page. Return ONLY a JSON object with these fields (omit any you can't find): price (number), beds (number), baths (number), sqft (number), lot_size (number, in sqft), address (string, full street address), city (string), state (string, 2-letter), zip (string, 5-digit), property_type (one of: SFR, DUPLEX, TRIPLEX, QUAD, CONDO, LOT). No markdown, just JSON.\n\nURL: ${listingUrl}\n\nHTML:\n${trimmed}`
         }],
       }),
+      signal: ac.signal,
     });
+    clearTimeout(t);
 
     if (!resp.ok) {
       console.error("Claude API error:", resp.status);
