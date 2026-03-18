@@ -1,0 +1,17 @@
+name: Anti-Slop
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  anti-slop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Anti-Slop Check
+        uses: peakoss/anti-slop@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
