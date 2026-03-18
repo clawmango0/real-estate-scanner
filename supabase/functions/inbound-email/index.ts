@@ -7,6 +7,7 @@ const SUPABASE_SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")??"";
 const ANTHROPIC_KEY=Deno.env.get("ANTHROPIC_API_KEY")??"";
 const MAILGUN_KEY=Deno.env.get("MAILGUN_WEBHOOK_SIGNING_KEY")??"";
 const SCRAPER_KEY=Deno.env.get("SCRAPER_API_KEY")??"";
+const GITHUB_PAT=Deno.env.get("GITHUB_PAT")??"";
 const UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 async function verify(ts:string,tok:string,sig:string):Promise<boolean>{if(!MAILGUN_KEY){console.error("MAILGUN_WEBHOOK_SIGNING_KEY not set — rejecting request");return false;}try{const v=ts+tok;const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(MAILGUN_KEY),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(v));const c=Array.from(new Uint8Array(s)).map(b=>b.toString(16).padStart(2,"0")).join("");return c===sig;}catch(e){console.error("HMAC verification error:",e);return false;}}
@@ -183,14 +184,15 @@ async function followRedfinRedirect(trackingUrl: string): Promise<string | null>
 }
 
 // Scrape a Redfin property page using JSON-LD (RealEstateListing)
-async function scrapeRedfin(listingUrl: string): Promise<ZillowDetails | null> {
-  const ua = UA;
+interface ScrapeResult { details: ZillowDetails | null; html: string; }
+
+async function scrapeRedfin(listingUrl: string): Promise<ScrapeResult> {
   try {
     const r = await fetch(listingUrl, {
       headers: { "User-Agent": UA, "Accept": "text/html", "Accept-Language": "en-US,en;q=0.5" },
       redirect: "follow"
     });
-    if (!r.ok) { console.log(`Redfin fetch: status=${r.status}`); return null; }
+    if (!r.ok) { console.log(`Redfin fetch: status=${r.status}`); return { details: null, html: "" }; }
     const html = await r.text();
     console.log(`Redfin fetch: len=${html.length}`);
 
@@ -232,14 +234,14 @@ async function scrapeRedfin(listingUrl: string): Promise<ZillowDetails | null> {
           longitude: me.geo?.longitude ? Number(me.geo.longitude) : undefined,
         };
         console.log("Redfin JSON-LD parsed:", JSON.stringify(details));
-        return details;
+        return { details, html };
       } catch {}
     }
     console.log("No Redfin JSON-LD RealEstateListing found");
-    return null;
+    return { details: null, html };
   } catch (e) {
     console.error("scrapeRedfin error:", e);
-    return null;
+    return { details: null, html: "" };
   }
 }
 
@@ -501,7 +503,7 @@ interface ZillowDetails {
   longitude?: number;
 }
 
-async function scrapeZillow(listingUrl: string): Promise<ZillowDetails | null> {
+async function scrapeZillow(listingUrl: string): Promise<ScrapeResult> {
 
   let html = "";
 
@@ -534,15 +536,16 @@ async function scrapeZillow(listingUrl: string): Promise<ZillowDetails | null> {
     } catch (e) { console.error("scraperapi error:", e); }
   }
 
-  if (!html) { console.log("No HTML obtained for scraping"); return null; }
+  if (!html) { console.log("No HTML obtained for scraping"); return { details: null, html: "" }; }
 
   // Try __NEXT_DATA__ extraction (primary method)
   const details = parseNextData(html, listingUrl);
-  if (details) return details;
+  if (details) return { details, html };
 
   // Fallback: regex extraction from raw HTML for price/beds/baths
   console.log("__NEXT_DATA__ failed, trying regex fallback");
-  return regexFallback(html, listingUrl);
+  const rx = regexFallback(html, listingUrl);
+  return { details: rx, html };
 }
 
 function parseNextData(html: string, listingUrl: string): ZillowDetails | null {
@@ -659,6 +662,185 @@ function regexFallback(html: string, listingUrl: string): ZillowDetails | null {
 }
 
 // ══════════════════════════════════════════════════════════
+//  AGENT/REALTOR EXTRACTION & GITHUB REPO UPDATE
+// ══════════════════════════════════════════════════════════
+interface AgentInfo {
+  name: string;
+  phone?: string;
+  email?: string;
+  license_number?: string;
+  dba?: string;
+  source_zip?: string;
+}
+
+function extractAgentFromZillow(html: string, propertyZip?: string): AgentInfo[] {
+  const agents: AgentInfo[] = [];
+  try {
+    const ndMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([^<]+)<\/script>/);
+    if (!ndMatch) return agents;
+    const nd = JSON.parse(ndMatch[1]);
+    const gdp = nd?.props?.pageProps?.gdpClientCache ?? nd?.props?.pageProps?.componentProps?.gdpClientCache;
+    if (!gdp) return agents;
+    const cache = typeof gdp === "string" ? JSON.parse(gdp) : gdp;
+    for (const key of Object.keys(cache)) {
+      const entry = cache[key] as Record<string, unknown>;
+      if (entry?.property) {
+        const prop = entry.property as Record<string, unknown>;
+        const attr = prop.attributionInfo as Record<string, unknown> | undefined;
+        if (attr?.agentName) {
+          agents.push({
+            name: String(attr.agentName),
+            phone: attr.agentPhoneNumber ? String(attr.agentPhoneNumber) : undefined,
+            dba: attr.brokerageName ? String(attr.brokerageName) : undefined,
+            source_zip: propertyZip,
+          });
+        }
+        break;
+      }
+    }
+  } catch {}
+  return agents;
+}
+
+function extractAgentFromRedfin(html: string, propertyZip?: string): AgentInfo[] {
+  const agents: AgentInfo[] = [];
+  try {
+    const section = html.match(/agent-info-section[\s\S]*?(?:listingContactSection|listingInfoSection|listingRemarks)/);
+    if (section) {
+      const pairs = section[0].matchAll(/agent-basic-details--heading">Listed by[\s\S]*?<[^>]*>([^<]+)<[\s\S]*?(?:agent-basic-details--broker">|<[^>]*>)\s*([^<]*)/gi);
+      for (const m of pairs) {
+        const name = m[1].trim();
+        const brokerage = m[2].trim();
+        if (name && name.length > 2) agents.push({ name, dba: brokerage || undefined, source_zip: propertyZip });
+      }
+    }
+  } catch {}
+  return agents;
+}
+
+const REPO = "clawmango0/real-estate-data";
+const REPO_BRANCH = "master";
+
+interface RealtorRecord {
+  license_number: string; name: string; license_type: string; status: string;
+  expiration_date: string; phone: string; email: string; address: string;
+  dba: string; company: string; city: string; state: string; zip: string;
+  source_zip: string; source_letter: string;
+}
+
+const CSV_HEADERS: (keyof RealtorRecord)[] = [
+  "license_number","name","license_type","status","expiration_date",
+  "phone","email","address","dba","company","city","state","zip",
+  "source_zip","source_letter"
+];
+
+function csvEscape(val: string): string {
+  if (!val) return "";
+  if (val.includes(",") || val.includes('"') || val.includes("\n")) return `"${val.replace(/"/g, '""')}"`;
+  return val;
+}
+
+function realtorsToCsv(records: RealtorRecord[]): string {
+  const header = CSV_HEADERS.join(",");
+  const rows = records.map(r => CSV_HEADERS.map(h => csvEscape(r[h] || "")).join(","));
+  return header + "\n" + rows.join("\n") + "\n";
+}
+
+async function updateRealtorRepo(agents: AgentInfo[]): Promise<void> {
+  if (!GITHUB_PAT || !agents.length) return;
+  try {
+    const ghHeaders = { "Authorization": `token ${GITHUB_PAT}`, "Accept": "application/vnd.github.v3+json", "User-Agent": "LockboxIQ-Scraper" };
+
+    const [metaResp, rawResp] = await Promise.all([
+      fetch(`https://api.github.com/repos/${REPO}/contents/realtors.json?ref=${REPO_BRANCH}`, { headers: ghHeaders }),
+      fetch(`https://raw.githubusercontent.com/${REPO}/${REPO_BRANCH}/realtors.json`, { headers: { "Authorization": `token ${GITHUB_PAT}` } }),
+    ]);
+    if (!metaResp.ok || !rawResp.ok) { console.error("GitHub GET:", metaResp.status, rawResp.status); return; }
+    const jsonContent = await rawResp.text();
+    const realtors: RealtorRecord[] = JSON.parse(jsonContent);
+    // Consume metaResp body to free connection
+    await metaResp.json();
+
+    const byLicense = new Map<string, number>();
+    const byName = new Map<string, number>();
+    for (let i = 0; i < realtors.length; i++) {
+      if (realtors[i].license_number) byLicense.set(realtors[i].license_number, i);
+      byName.set(realtors[i].name.toLowerCase().trim(), i);
+    }
+
+    let changed = false;
+    for (const agent of agents) {
+      if (!agent.name || agent.name.length < 3) continue;
+      let idx = agent.license_number ? byLicense.get(agent.license_number) : undefined;
+      if (idx === undefined) idx = byName.get(agent.name.toLowerCase().trim());
+
+      if (idx !== undefined) {
+        const e = realtors[idx];
+        let m = false;
+        if (!e.phone && agent.phone) { e.phone = agent.phone; m = true; }
+        if (!e.email && agent.email) { e.email = agent.email; m = true; }
+        if (!e.license_number && agent.license_number) { e.license_number = agent.license_number; m = true; }
+        if (!e.dba && agent.dba) { e.dba = agent.dba; m = true; }
+        if (!e.source_zip && agent.source_zip) { e.source_zip = agent.source_zip; m = true; }
+        if (m) { changed = true; console.log(`Merged agent: ${agent.name}`); }
+      } else {
+        realtors.push({
+          license_number: agent.license_number || "", name: agent.name,
+          license_type: "", status: "", expiration_date: "",
+          phone: agent.phone || "", email: agent.email || "", address: "",
+          dba: agent.dba || "", company: agent.dba || "",
+          city: "", state: "TX", zip: "",
+          source_zip: agent.source_zip || "", source_letter: "",
+        });
+        byName.set(agent.name.toLowerCase().trim(), realtors.length - 1);
+        if (agent.license_number) byLicense.set(agent.license_number, realtors.length - 1);
+        changed = true;
+        console.log(`Added new agent: ${agent.name}`);
+      }
+    }
+
+    if (!changed) { console.log("No agent changes — skipping repo update"); return; }
+
+    // Commit both files atomically via Git Data API
+    const newJson = JSON.stringify(realtors, null, 2);
+    const newCsv = realtorsToCsv(realtors);
+
+    const [jsonBlobR, csvBlobR] = await Promise.all([
+      fetch(`https://api.github.com/repos/${REPO}/git/blobs`, { method: "POST", headers: { ...ghHeaders, "Content-Type": "application/json" }, body: JSON.stringify({ content: newJson, encoding: "utf-8" }) }),
+      fetch(`https://api.github.com/repos/${REPO}/git/blobs`, { method: "POST", headers: { ...ghHeaders, "Content-Type": "application/json" }, body: JSON.stringify({ content: newCsv, encoding: "utf-8" }) }),
+    ]);
+    if (!jsonBlobR.ok || !csvBlobR.ok) { console.error("Blob create failed"); return; }
+    const [jsonBlob, csvBlob] = await Promise.all([jsonBlobR.json(), csvBlobR.json()]);
+
+    const refResp = await fetch(`https://api.github.com/repos/${REPO}/git/ref/heads/${REPO_BRANCH}`, { headers: ghHeaders });
+    const ref = await refResp.json();
+    const commitResp = await fetch(`https://api.github.com/repos/${REPO}/git/commits/${ref.object.sha}`, { headers: ghHeaders });
+    const parentCommit = await commitResp.json();
+
+    const treeResp = await fetch(`https://api.github.com/repos/${REPO}/git/trees`, {
+      method: "POST", headers: { ...ghHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({ base_tree: parentCommit.tree.sha, tree: [
+        { path: "realtors.json", mode: "100644", type: "blob", sha: jsonBlob.sha },
+        { path: "realtors.csv", mode: "100644", type: "blob", sha: csvBlob.sha },
+      ]}),
+    });
+    const newTree = await treeResp.json();
+
+    const newCommitResp = await fetch(`https://api.github.com/repos/${REPO}/git/commits`, {
+      method: "POST", headers: { ...ghHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `Add/update agents: ${agents.map(a=>a.name).join(", ").slice(0,60)}`, tree: newTree.sha, parents: [ref.object.sha] }),
+    });
+    const newCommit = await newCommitResp.json();
+
+    await fetch(`https://api.github.com/repos/${REPO}/git/refs/heads/${REPO_BRANCH}`, {
+      method: "PATCH", headers: { ...ghHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({ sha: newCommit.sha }),
+    });
+    console.log(`Updated repo: ${realtors.length} realtors, commit ${newCommit.sha?.slice(0,7)}`);
+  } catch (e) { console.error("updateRealtorRepo error:", e); }
+}
+
+// ══════════════════════════════════════════════════════════
 //  MAIN WEBHOOK HANDLER
 // ══════════════════════════════════════════════════════════
 
@@ -771,6 +953,9 @@ serve(async(req)=>{
     return new Response("error",{status:500});
   }
 
+  // Agent collection for repo update
+  let allRedfinAgents: AgentInfo[] = [];
+
   // ── Redfin Fallback: if Claude found nothing (or only subject-parsed) but we have Redfin URLs ──
   if (isRedfinEmail && (redfinScan.propertyUrls.length > 0 || redfinScan.trackingUrls.length > 0)) {
     // Try to resolve Redfin property URLs
@@ -790,7 +975,14 @@ serve(async(req)=>{
     for (const rfUrl of resolvedUrls.slice(0, 3)) {
       console.log(`Redfin fallback: scraping ${rfUrl}`);
       try {
-        const details = await scrapeRedfin(rfUrl);
+        const { details, html: rfHtml } = await scrapeRedfin(rfUrl);
+        // Extract Redfin agents
+        if (rfHtml) {
+          const rfAgents = extractAgentFromRedfin(rfHtml, details?.zip);
+          // Store for batch update at end of enrichment
+          if (!allRedfinAgents) allRedfinAgents = [];
+          allRedfinAgents.push(...rfAgents);
+        }
         if (details?.address) {
           // Check if we already have a subject-parsed entry to update
           const existingIdx = props.findIndex(p => p._from_subject && p.source === "redfin");
@@ -835,7 +1027,7 @@ serve(async(req)=>{
       const hdUrl = `https://www.zillow.com/homedetails/${zpid}_zpid/`;
       console.log(`ZPID fallback: scraping ${hdUrl}`);
       try {
-        const details = await scrapeZillow(hdUrl);
+        const { details } = await scrapeZillow(hdUrl);
         if (details?.address) {
           props.push({
             address: details.address,
@@ -949,6 +1141,7 @@ serve(async(req)=>{
 
   if (n > 0) {
     let scraped = 0;
+    const allScrapedAgents: AgentInfo[] = [];
     let scrapeErrors = 0;
 
     for (const p of props) {
@@ -971,7 +1164,12 @@ serve(async(req)=>{
 
       console.log(`Scraping: ${scrapeUrl.slice(0, 120)}`);
       try {
-        const details = await scrapeZillow(scrapeUrl);
+        const { details, html: scrapeHtml } = await scrapeZillow(scrapeUrl);
+        // Extract agent info from scraped HTML
+        if (scrapeHtml) {
+          const zAgents = extractAgentFromZillow(scrapeHtml, p.zip || details?.zip);
+          allScrapedAgents.push(...zAgents);
+        }
         if (details) {
           const updates: Record<string, unknown> = {};
           if (details.price && !p.listed_price) updates.listed_price = details.price;
@@ -1003,6 +1201,13 @@ serve(async(req)=>{
     }
 
     console.log(`Scraping complete: ${scraped} updated, ${scrapeErrors} errors`);
+
+    // Batch update GitHub repo with all extracted agents (Zillow + Redfin)
+    const allAgents = [...allScrapedAgents, ...allRedfinAgents];
+    if (allAgents.length > 0) {
+      console.log(`Updating realtor repo with ${allAgents.length} agents`);
+      updateRealtorRepo(allAgents).catch(e => console.error("Agent repo update failed:", e));
+    }
 
     // Update email log with scrape results
     if (logId) {
