@@ -87,6 +87,33 @@ async function saveProperty(id, updates){
   }
 }
 
+async function estimateRent(id){
+  const p=props.find(x=>x.id===id);
+  if(!p) return null;
+  const token=await getAccessToken();
+  if(!token) throw new Error('Not signed in');
+  const res=await fetch(`${EDGE_BASE}/estimate-rent`,{
+    method:'POST',
+    headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+    body:JSON.stringify({
+      address:p.address, city:p.rawCity||p.city, zip:p.zip||'',
+      beds:p.beds, baths:p.baths, sqft:p.sqft,
+      listed_price:p.listed, property_type:p.type,
+      neighborhood:p._hood
+    })
+  });
+  if(!res.ok){
+    const err=await res.json().catch(()=>({error:'Unknown error'}));
+    throw new Error(err.error||`HTTP ${res.status}`);
+  }
+  const data=await res.json();
+  // Save estimate to DB
+  await saveProperty(id,{rent_estimate:data.estimate});
+  // Update local state with Claude's range
+  p.rentRange={low:data.low,high:data.high,source:'claude'};
+  return data;
+}
+
 function toggleEdit(){if(openId){mEdit[openId]=!mEdit[openId];buildMod(openId);}}
 
 async function savePropertyEdit(id){

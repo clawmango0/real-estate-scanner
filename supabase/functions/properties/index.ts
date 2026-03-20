@@ -96,7 +96,7 @@ function shapeProperty(row: Record<string, unknown>) {
 
   const rentEst = row.rent_estimate as number | null;
   const rentRange = rentEst
-    ? { low: Math.round(rentEst * 0.88 / 25) * 25, high: Math.round(rentEst * 1.12 / 25) * 25, source: "zillow" }
+    ? { low: Math.round(rentEst * 0.88 / 25) * 25, high: Math.round(rentEst * 1.12 / 25) * 25, source: "estimate" }
     : null;
   return {
     id: row.id, address: streetAddr,
