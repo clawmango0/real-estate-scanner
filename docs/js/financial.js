@@ -41,6 +41,140 @@ function nbLabel(score){if(score===null)return{cls:'',txt:'—'};if(score>=68)re
 function schedE(price,rent,condKey,imprKey,yr,tp,carryIn){const imprObj=IMPR[imprKey]||IMPR.asis;const improvCapCost=price*imprObj.improvPct;const buildBasis=price*(1-GP.landPct),closingBasis=price*GP.closingPct*(1-GP.landPct);const deprBasis=buildBasis+closingBasis+improvCapCost,annDepr=deprBasis/GP.deprecYrs;const loan=price*(1-GP.downPct),annPoints=(loan*GP.pointsPct)/GP.termYrs;const mortInt=intInYr(loan,GP.rate,GP.termYrs,yr);const gr=(rent||0)*12,pt=price*GP.propTaxRate,ins=price*GP.insurRate;const mgmt=gr*GP.mgmtRate,rep=price*GP.repairRate,oth=gr*GP.vacancyRate;const proratedTax=(yr===1)?pt*(3/12):0,proratedIns=(yr===1)?ins*(2/12):0;const totalDeduct=mortInt+annPoints+pt+proratedTax+ins+proratedIns+mgmt+rep+oth+annDepr;const netInc=gr-totalDeduct,allow=passAllow(tp.agi);let taxSav=0,usedAllow=0,newCarry=0;if(netInc<0){const loss=-netInc+carryIn;usedAllow=Math.min(loss,allow);newCarry=loss-usedAllow;taxSav=usedAllow*tp.marginal;}else{const netAC=Math.max(0,netInc-carryIn);newCarry=Math.max(0,carryIn-netInc);taxSav=-(netAC*tp.marginal);}return{gr,mortInt,annPoints,pt,proratedTax,ins,proratedIns,mgmt,rep,oth,annDepr,totalDeduct,netInc,taxSav,usedAllow,passCarry:Math.max(0,newCarry),deprBasis,improvCapCost};}
 function exitAt(price,rent,condKey,imprKey,holdYrs,tp,appreciRate){const cond=COND[condKey]||COND.good,imprObj=IMPR[imprKey]||IMPR.asis;const totalImprovCost=price*imprObj.costPct,improvUplift=price*imprObj.upliftPct;const arv=price*(1+cond.adj)+improvUplift;const appr=appreciRate??GP.appreci;const exitVal=arv*Math.pow(1+appr,holdYrs);const loan=price*(1-GP.downPct),loanBal=balAt(loan,GP.rate,GP.termYrs,holdYrs*12);const cashIn=price*(GP.downPct+GP.closingPct)+totalImprovCost;let cumCF=0,cumTaxSav=0,cumDepr=0,carry=0;const annMort=pmt(loan,GP.rate,GP.termYrs)*12;for(let yr=1;yr<=holdYrs;yr++){const se=schedE(price,rent,condKey,imprKey,yr,tp,carry);carry=se.passCarry;cumDepr+=se.annDepr;cumTaxSav+=se.taxSav;const cashExp=se.pt+se.ins+se.mgmt+se.rep+se.oth;cumCF+=(se.gr-cashExp-annMort);}const sellCosts=exitVal*GP.sellCostPct,netProc=exitVal-loanBal-sellCosts;const closingBasis=price*GP.closingPct,improvCapTotal=price*(IMPR[imprKey]?.improvPct||0);const adjBasis=price+closingBasis+improvCapTotal-cumDepr;const capGain=Math.max(0,exitVal-sellCosts-adjBasis);const recapAmt=Math.min(cumDepr,capGain),ltcgAmt=Math.max(0,capGain-recapAmt);const exitTax=recapAmt*tp.recap+ltcgAmt*tp.ltcg;const totalProfit=netProc-cashIn+cumCF+cumTaxSav-exitTax;const totalROI=cashIn>0?totalProfit/cashIn:0;const annROI=cashIn>0?Math.pow(Math.max(1+totalROI,0.001),1/holdYrs)-1:0;return{exitVal,arv,totalImprovCost,loanBal,cashIn,sellCosts,netProc,cumCF,cumTaxSav,cumDepr,adjBasis,capGain,recapAmt,ltcgAmt,exitTax,totalProfit,totalROI,annROI};}
 
+// ── Flipper ───────────────────────────────────────────────────────────────────
+function flipCalc(price,condKey,imprKey){
+  if(!price)return null;
+  const cond=COND[condKey]||COND.good,imprObj=IMPR[imprKey]||IMPR.asis;
+  const rehabCost=price*imprObj.costPct;
+  const arv=price*(1+cond.adj)+price*imprObj.upliftPct;
+  const mao=arv*0.70-rehabCost; // 70% rule
+  const holdMo=6; // assume 6 month project
+  const hmRate=0.12; // hard money ~12% annual
+  const loan=price*(1-GP.downPct);
+  const holdInt=loan*hmRate*(holdMo/12);
+  const holdTax=price*GP.propTaxRate*(holdMo/12);
+  const holdIns=price*GP.insurRate*(holdMo/12);
+  const holdCosts=holdInt+holdTax+holdIns;
+  const sellCosts=arv*GP.sellCostPct;
+  const closingCosts=price*GP.closingPct;
+  const totalCost=price+rehabCost+holdCosts+sellCosts+closingCosts;
+  const netProfit=arv-totalCost;
+  const cashIn=price*GP.downPct+closingCosts+rehabCost;
+  const roi=cashIn>0?netProfit/cashIn:0;
+  return{arv,rehabCost,mao,holdCosts,holdMo,sellCosts,closingCosts,totalCost,netProfit,cashIn,roi};
+}
+
+// ── BRRRR ─────────────────────────────────────────────────────────────────────
+function brrrrCalc(price,rent,condKey,imprKey,refiLTV,seasonMo){
+  if(!price)return null;
+  refiLTV=refiLTV||0.75; seasonMo=seasonMo||6;
+  const cond=COND[condKey]||COND.good,imprObj=IMPR[imprKey]||IMPR.asis;
+  const rehabCost=price*imprObj.costPct;
+  const arv=price*(1+cond.adj)+price*imprObj.upliftPct;
+  const bh=rent?cocCalc(price,rent):null;
+  const origLoan=price*(1-GP.downPct);
+  const closingCosts=price*GP.closingPct;
+  const cashIn=price*GP.downPct+closingCosts+rehabCost;
+  // Refi at ARV * LTV after seasoning
+  const refiAmount=arv*refiLTV;
+  const origBal=balAt(origLoan,GP.rate,GP.termYrs,seasonMo);
+  const refiProceeds=refiAmount-origBal;
+  const capitalRecycled=Math.min(refiProceeds,cashIn);
+  const cashLeftIn=Math.max(0,cashIn-capitalRecycled);
+  const infinite=cashLeftIn<=0;
+  // New loan payment after refi
+  const newPmt=pmt(refiAmount,GP.rate,GP.termYrs)*12;
+  const noi=bh?bh.noi:0;
+  const adjCF=noi-newPmt;
+  const adjCoC=cashLeftIn>0?adjCF/cashLeftIn:Infinity;
+  return{arv,rehabCost,refiAmount,origBal,refiProceeds,capitalRecycled,cashIn,cashLeftIn,infinite,newPmt,adjCF,adjCoC,bh};
+}
+
+// ── STR (Airbnb) ──────────────────────────────────────────────────────────────
+function strCalc(price,adr,occupancy,cleaningFee,platformFeePct){
+  if(!price||!adr)return null;
+  occupancy=occupancy||0.70; cleaningFee=cleaningFee||0; platformFeePct=platformFeePct||0.03;
+  const nights=365*occupancy;
+  const grossRev=adr*nights+cleaningFee*nights;
+  const platformFees=grossRev*platformFeePct;
+  const netRev=grossRev-platformFees;
+  // Expenses (STR uses 20% mgmt, no vacancy since occupancy is explicit)
+  const pt=price*GP.propTaxRate,ins=price*GP.insurRate;
+  const mgmt=netRev*0.20,rep=price*GP.repairRate;
+  const noi=netRev-pt-ins-mgmt-rep;
+  const loan=price*(1-GP.downPct),annMort=pmt(loan,GP.rate,GP.termYrs)*12;
+  const cf=noi-annMort;
+  const cashIn=price*(GP.downPct+GP.closingPct);
+  const coc=cashIn>0?cf/cashIn:0;
+  const revPAR=adr*occupancy;
+  return{grossRev,platformFees,netRev,pt,ins,mgmt,rep,noi,annMort,cf,cashIn,coc,revPAR,nights,adr,occupancy};
+}
+
+// ── Wholesaler ────────────────────────────────────────────────────────────────
+function wholesaleCalc(price,arv,assignFeePct,estRehabPct){
+  if(!price)return null;
+  assignFeePct=assignFeePct||0.07; estRehabPct=estRehabPct||0.10;
+  const estRehab=arv?arv*estRehabPct:price*estRehabPct;
+  const useARV=arv||price;
+  const mao=useARV*0.70-estRehab;
+  const assignFee=useARV*assignFeePct;
+  const offerPrice=mao-assignFee;
+  const spread=mao-price; // how much room if buying at list
+  return{arv:useARV,estRehab,mao,assignFee,offerPrice,spread};
+}
+
+// ── Commercial / Multi-family ────────────────────────────────────────────────
+function commercialCalc(price,units,rentPerUnit,vacRate){
+  if(!price||!units)return null;
+  rentPerUnit=rentPerUnit||0; vacRate=vacRate||0.05;
+  const gri=units*rentPerUnit*12;
+  const egi=gri*(1-vacRate);
+  const pt=price*GP.propTaxRate,ins=price*GP.insurRate;
+  const mgmt=egi*GP.mgmtRate,rep=price*GP.repairRate;
+  const noi=egi-pt-ins-mgmt-rep;
+  const capRate=price>0?noi/price:0;
+  const loan=price*(1-GP.downPct),annMort=pmt(loan,GP.rate,GP.termYrs)*12;
+  const dscr=annMort>0?noi/annMort:0;
+  const grm=gri>0?price/gri:0;
+  const debtYield=loan>0?noi/loan:0;
+  const pricePerUnit=units>0?price/units:0;
+  const cf=noi-annMort;
+  const cashIn=price*(GP.downPct+GP.closingPct);
+  const coc=cashIn>0?cf/cashIn:0;
+  return{gri,egi,pt,ins,mgmt,rep,noi,capRate,annMort,dscr,grm,debtYield,pricePerUnit,cf,cashIn,coc,units};
+}
+
+// ── Passive / Syndication ─────────────────────────────────────────────────────
+function passiveCalc(investAmt,prefReturn,holdYrs,equityMultiple){
+  if(!investAmt)return null;
+  prefReturn=prefReturn||0.08; holdYrs=holdYrs||5; equityMultiple=equityMultiple||2.0;
+  const annDist=investAmt*prefReturn;
+  const totalReturn=investAmt*equityMultiple;
+  const totalDistributions=annDist*holdYrs;
+  const exitProceeds=totalReturn-totalDistributions;
+  const profit=totalReturn-investAmt;
+  // IRR via Newton's method
+  let irr=0.10;
+  for(let i=0;i<50;i++){
+    let npv=-investAmt,dnpv=0;
+    for(let y=1;y<=holdYrs;y++){
+      const cf=y<holdYrs?annDist:annDist+exitProceeds;
+      const disc=Math.pow(1+irr,y);
+      npv+=cf/disc; dnpv-=y*cf/Math.pow(1+irr,y+1);
+    }
+    if(Math.abs(npv)<1) break;
+    if(dnpv!==0) irr-=npv/dnpv;
+  }
+  // NPV at 8% discount
+  const discRate=0.08;
+  let npv=-investAmt;
+  for(let y=1;y<=holdYrs;y++){
+    const cf=y<holdYrs?annDist:annDist+exitProceeds;
+    npv+=cf/Math.pow(1+discRate,y);
+  }
+  return{annDist,totalReturn,totalDistributions,exitProceeds,profit,irr,npv,equityMultiple,prefReturn,holdYrs};
+}
+
 const M=n=>'$'+Math.abs(Math.round(n)).toLocaleString();
 const MS=n=>(n>=0?'+':'')+M(n);
 const PCT=n=>(n*100).toFixed(1)+'%';

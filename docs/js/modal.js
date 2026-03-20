@@ -1,3 +1,5 @@
+function _invType(){return activeProject?.investment_type||'buyhold';}
+
 function buildMod(id){
   const p=props.find(x=>x.id===id); if(!p) return;
   const cond=mCond[id]||p.condition||'good';
@@ -51,6 +53,12 @@ function buildMod(id){
       <button onclick="savePropertyEdit('${id}')" style="flex:1;padding:.55rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">💾 Save Changes</button>
       <button onclick="mEdit['${id}']=false;buildMod('${id}')" style="padding:.55rem 1rem;background:var(--adim);border:1px solid var(--border2);color:var(--text2);border-radius:6px;cursor:pointer;font-size:.85rem">Cancel</button>
     </div>`;
+    return;
+  }
+
+  const _it=_invType();
+  if(_it!=='buyhold'){
+    _buildTypedModal(id,p,cond,impr,_it);
     return;
   }
 
@@ -196,6 +204,255 @@ function buildMod(id){
     </div>
     ${p.listingUrl?`<a class="el" href="${p.listingUrl}" target="_blank">↗ View Listing</a>`:''}
   `;
+}
+
+// ── Property details snippet shared across typed modals ───────────────────────
+function _propDetailsHtml(p){
+  return `<div class="sec">🏠 Property Details</div>
+  <div class="k3" style="grid-template-columns:repeat(auto-fit,minmax(90px,1fr));margin-bottom:.75rem">
+    ${p.beds?`<div class="kpi"><div class="kl">Beds</div><div class="kv" style="font-size:1.1rem">${p.beds}</div></div>`:''}
+    ${p.baths?`<div class="kpi"><div class="kl">Baths</div><div class="kv" style="font-size:1.1rem">${p.baths}</div></div>`:''}
+    ${p.sqft?`<div class="kpi"><div class="kl">Living Area</div><div class="kv" style="font-size:1.1rem">${p.sqft.toLocaleString()}<span style="font-size:.6rem;color:var(--text2)"> sqft</span></div></div>`:''}
+    ${p.listed?`<div class="kpi"><div class="kl">Listed</div><div class="kv" style="font-size:1.1rem">${M(p.listed)}</div></div>`:''}
+    ${p.listed&&p.sqft?`<div class="kpi"><div class="kl">Price/sqft</div><div class="kv" style="font-size:1.1rem">${M(Math.round(p.listed/p.sqft))}</div></div>`:''}
+  </div>
+  ${p.listingUrl?`<div style="margin-bottom:.75rem"><a href="${p.listingUrl}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--amber);text-decoration:none">🔗 View Property ↗</a></div>`:''}`;
+}
+
+// ── Condition/Improvement buttons shared across typed modals ──────────────────
+function _condImprHtml(id,cond,impr){
+  const condBtns=Object.entries(COND).map(([k,v])=>`<button class="${cond===k?'sel':''}" onclick="setMC('${id}','${k}')">${v.label}</button>`).join('');
+  const imprBtns=Object.entries(IMPR).map(([k,v])=>`<button class="${impr===k?'sel':''}" onclick="setMI('${id}','${k}')">${v.label}</button>`).join('');
+  return `<div class="sec">🏚️ Condition</div><div class="g4">${condBtns}</div>
+  <div class="sec">🔨 Improvement Plan</div><div class="g4 g4i">${imprBtns}</div>`;
+}
+
+// ── Curation buttons shared across typed modals ──────────────────────────────
+function _curateHtml(id,p){
+  return `<div class="sec">Curate</div>
+  <div class="curbar">
+    <button class="${p.curated==='fav'?'af':''}" onclick="curate('${id}','fav')">⭐ ${p.curated==='fav'?'Favorited':'Favorite'}</button>
+    <button class="${p.curated==='ni'?'ani':''}" onclick="curate('${id}','ni')">👎 ${p.curated==='ni'?'Marked':'Not Interested'}</button>
+    <button class="${p.curated==='blk'?'abl':''}" onclick="curate('${id}','blk')">🚫 Block Forever</button>
+  </div>
+  ${p.listingUrl?`<a class="el" href="${p.listingUrl}" target="_blank">↗ View Listing</a>`:''}`;
+}
+
+// ── Typed modal dispatcher ───────────────────────────────────────────────────
+function _buildTypedModal(id,p,cond,impr,type){
+  let badges=sourceBadge(p.source);
+  if(p.isNew)badges+=`<span class="bdg bn">🆕 New</span>`;
+  if(p.priceDrop)badges+=`<span class="bdg bd">📉 −${M(p.dropAmt||0)}</span>`;
+  document.getElementById('m-adr').textContent=`${p.address}, ${p.city}`;
+  document.getElementById('m-bdg').innerHTML=badges;
+  const editBtn=document.getElementById('m-edit-btn');
+  if(editBtn)editBtn.style.background=mEdit[id]?'var(--amber)':'var(--adim)';
+
+  const builders={flipper:_modFlip,brrrr:_modBrrrr,str:_modSTR,wholesaler:_modWholesale,commercial:_modCommercial,passive:_modPassive};
+  const fn=builders[type];
+  if(fn) document.getElementById('m-body').innerHTML=fn(id,p,cond,impr);
+  else document.getElementById('m-body').innerHTML='<div class="infobox">Unknown investment type.</div>';
+}
+
+// ── Flipper Modal ────────────────────────────────────────────────────────────
+function _modFlip(id,p,cond,impr){
+  const f=flipCalc(p.listed,cond,impr);
+  return _propDetailsHtml(p)+_condImprHtml(id,cond,impr)+
+  (f?`
+  <div class="sec">🏗️ Flip Analysis</div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">ARV</div><div class="kv" style="color:var(--green)">${M(f.arv)}</div></div>
+    <div class="kpi"><div class="kl">Rehab Cost</div><div class="kv" style="color:var(--red)">${M(f.rehabCost)}</div></div>
+    <div class="kpi"><div class="kl">MAO (70%)</div><div class="kv" style="color:var(--amber)">${M(f.mao)}</div></div>
+  </div>
+  <div class="sec">💰 Flip P&L</div>
+  <div class="tacc"><button class="ttog" onclick="togAcc('flip-${id}')"><span>Net Profit: <strong style="color:${f.netProfit>=0?'var(--green)':'var(--red)'}">${MS(f.netProfit)}</strong> · ROI: <strong style="color:${f.roi>=0.15?'var(--green)':f.roi>=0?'var(--amber)':'var(--red)'}">${PCT(f.roi)}</strong></span><span style="font-size:.62rem">▼</span></button>
+  <div class="tbody2" id="flip-${id}">
+    <div class="tl2"><span class="tl2-l">Purchase Price</span><span class="tl2-v">${M(p.listed)}</span></div>
+    <div class="tl2"><span class="tl2-l">+ Rehab Cost</span><span class="tl2-v" style="color:var(--red)">${M(f.rehabCost)}</span></div>
+    <div class="tl2"><span class="tl2-l">+ Closing Costs</span><span class="tl2-v" style="color:var(--red)">${M(f.closingCosts)}</span></div>
+    <div class="tl2"><span class="tl2-l">+ Holding (${f.holdMo}mo)</span><span class="tl2-v" style="color:var(--red)">${M(f.holdCosts)}</span></div>
+    <div class="tl2"><span class="tl2-l">+ Selling Costs (6%)</span><span class="tl2-v" style="color:var(--red)">${M(f.sellCosts)}</span></div>
+    <div class="tl2" style="border-top:2px solid var(--border2);margin-top:.3rem;padding-top:.4rem"><span class="tl2-l" style="font-weight:600">Total Cost</span><span class="tl2-v" style="font-weight:600">${M(f.totalCost)}</span></div>
+    <div class="tl2"><span class="tl2-l" style="font-weight:600">ARV (Sale Price)</span><span class="tl2-v" style="color:var(--green);font-weight:600">${M(f.arv)}</span></div>
+    <div class="tl2" style="border-top:2px solid var(--border2);margin-top:.3rem;padding-top:.4rem"><span class="tl2-l" style="font-weight:700">Net Profit</span><span class="tl2-v" style="color:${f.netProfit>=0?'var(--green)':'var(--red)'};font-size:.92rem;font-weight:700">${MS(f.netProfit)}</span></div>
+  </div></div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr);margin-top:.5rem">
+    <div class="kpi"><div class="kl">Cash Required</div><div class="kv">${M(f.cashIn)}</div></div>
+    <div class="kpi"><div class="kl">ROI</div><div class="kv" style="color:${f.roi>=0.15?'var(--green)':'var(--red)'}">${PCT(f.roi)}</div></div>
+    <div class="kpi"><div class="kl">Listed vs MAO</div><div class="kv" style="color:${p.listed<=f.mao?'var(--green)':'var(--red)'}">${p.listed<=f.mao?'✅ Below MAO':'⚠️ Above MAO'}</div><div class="ks">${M(p.listed)} vs ${M(f.mao)}</div></div>
+  </div>`:'<div class="infobox" style="color:var(--text2)">Set condition & improvement plan above to calculate flip metrics.</div>')+
+  _curateHtml(id,p);
+}
+
+// ── BRRRR Modal ──────────────────────────────────────────────────────────────
+function _modBrrrr(id,p,cond,impr){
+  const rent=mRent[id]??p.monthlyRent;
+  const b=brrrrCalc(p.listed,rent,cond,impr);
+  const bh=rent?cocCalc(p.listed,rent):null;
+  return _propDetailsHtml(p)+
+  `<div class="sec">💰 Est. Monthly Rent</div>
+  <div class="rent-input-row">
+    <label>Set estimated rent for BRRRR analysis</label>
+    <input type="text" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" inputmode="numeric" pattern="[0-9]*" class="no-spin" oninput="mRent['${id}']=Math.round(+this.value.replace(/[^0-9]/g,''))||0" onblur="if(mRent['${id}'])buildMod('${id}')">
+    <button class="save-btn" onclick="saveRent('${id}')">Save</button>
+  </div>`+
+  _condImprHtml(id,cond,impr)+
+  (b?`
+  <div class="sec">🔁 BRRRR Analysis</div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">ARV</div><div class="kv" style="color:var(--green)">${M(b.arv)}</div></div>
+    <div class="kpi"><div class="kl">Rehab Cost</div><div class="kv" style="color:var(--red)">${M(b.rehabCost)}</div></div>
+    <div class="kpi"><div class="kl">Cash In</div><div class="kv">${M(b.cashIn)}</div></div>
+  </div>
+  <div class="sec">🏦 Refinance @ 75% LTV</div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">Refi Amount</div><div class="kv">${M(b.refiAmount)}</div></div>
+    <div class="kpi"><div class="kl">Capital Recycled</div><div class="kv" style="color:var(--green)">${M(b.capitalRecycled)}</div></div>
+    <div class="kpi"><div class="kl">Cash Left In</div><div class="kv" style="color:${b.infinite?'var(--green)':'var(--amber)'}">${b.infinite?'$0 — ∞ Return!':M(b.cashLeftIn)}</div></div>
+  </div>
+  ${rent?`<div class="sec">💵 Post-Refi Cash Flow</div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">Monthly CF</div><div class="kv" style="color:${b.adjCF>=0?'var(--green)':'var(--red)'}">${MS(b.adjCF/12)}/mo</div></div>
+    <div class="kpi"><div class="kl">Post-Refi CoC</div><div class="kv" style="color:${(b.infinite||b.adjCoC>=GP.cocMin)?'var(--green)':'var(--red)'}">${b.infinite?'∞':PCT(b.adjCoC)}</div></div>
+    <div class="kpi"><div class="kl">Pre-Refi CoC</div><div class="kv" style="color:${bh&&bh.coc>=GP.cocMin?'var(--green)':'var(--red)'}">${bh?PCT(bh.coc):'—'}</div></div>
+  </div>`:''}`
+  :'<div class="infobox" style="color:var(--text2)">Enter rent and set condition/improvement above to calculate BRRRR metrics.</div>')+
+  _curateHtml(id,p);
+}
+
+// ── STR Modal ────────────────────────────────────────────────────────────────
+function _modSTR(id,p,cond,impr){
+  const projParams=activeProject||{};
+  const adr=projParams._str_adr||150;
+  const occ=projParams._str_occ||0.70;
+  const clean=projParams._str_clean||75;
+  const plat=projParams._str_plat||0.03;
+  const s=strCalc(p.listed,adr,occ,clean,plat);
+  return _propDetailsHtml(p)+
+  `<div class="sec">🏖️ STR Revenue Inputs</div>
+  <div class="txs">
+    <div class="tr2"><label>Avg Daily Rate</label><input type="text" value="${adr}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_adr=+this.value||150;buildMod('${id}')"></div>
+    <div class="tr2"><label>Occupancy %</label><input type="text" value="${Math.round(occ*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_occ=(+this.value||70)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Cleaning Fee</label><input type="text" value="${clean}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_clean=+this.value||0;buildMod('${id}')"></div>
+    <div class="tr2"><label>Platform Fee</label><input type="text" value="${Math.round(plat*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_plat=(+this.value||3)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+  </div>`+
+  (s?`
+  <div class="sec">💰 STR Analysis</div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">RevPAR</div><div class="kv" style="color:var(--green)">${M(s.revPAR)}</div><div class="ks">ADR × Occ</div></div>
+    <div class="kpi"><div class="kl">Gross Revenue</div><div class="kv">${M(s.grossRev)}/yr</div></div>
+    <div class="kpi"><div class="kl">Net Revenue</div><div class="kv">${M(s.netRev)}/yr</div></div>
+  </div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">Monthly CF</div><div class="kv" style="color:${s.cf>=0?'var(--green)':'var(--red)'}">${MS(s.cf/12)}/mo</div></div>
+    <div class="kpi"><div class="kl">CoC Return</div><div class="kv" style="color:${s.coc>=GP.cocMin?'var(--green)':'var(--red)'}">${PCT(s.coc)}</div></div>
+    <div class="kpi"><div class="kl">Cash Required</div><div class="kv">${M(s.cashIn)}</div></div>
+  </div>
+  <div class="tacc"><button class="ttog" onclick="togAcc('str-${id}')"><span>NOI: <strong style="color:var(--green)">${M(s.noi)}</strong>/yr</span><span style="font-size:.62rem">▼</span></button>
+  <div class="tbody2" id="str-${id}">
+    <div class="tl2"><span class="tl2-l">Gross Revenue</span><span class="tl2-v" style="color:var(--green)">${M(s.grossRev)}</span></div>
+    <div class="tl2"><span class="tl2-l">Platform Fees</span><span class="tl2-v" style="color:var(--red)">−${M(s.platformFees)}</span></div>
+    <div class="tl2"><span class="tl2-l">Property Tax</span><span class="tl2-v" style="color:var(--red)">−${M(s.pt)}</span></div>
+    <div class="tl2"><span class="tl2-l">Insurance</span><span class="tl2-v" style="color:var(--red)">−${M(s.ins)}</span></div>
+    <div class="tl2"><span class="tl2-l">Management (20%)</span><span class="tl2-v" style="color:var(--red)">−${M(s.mgmt)}</span></div>
+    <div class="tl2"><span class="tl2-l">Repairs</span><span class="tl2-v" style="color:var(--red)">−${M(s.rep)}</span></div>
+    <div class="tl2" style="border-top:2px solid var(--border2);margin-top:.3rem;padding-top:.4rem"><span class="tl2-l" style="font-weight:600">NOI</span><span class="tl2-v" style="color:var(--green);font-weight:600">${M(s.noi)}</span></div>
+    <div class="tl2"><span class="tl2-l">Annual Mortgage</span><span class="tl2-v" style="color:var(--red)">−${M(s.annMort)}</span></div>
+    <div class="tl2" style="border-top:2px solid var(--border2);margin-top:.3rem;padding-top:.4rem"><span class="tl2-l" style="font-weight:700">Cash Flow</span><span class="tl2-v" style="color:${s.cf>=0?'var(--green)':'var(--red)'};font-weight:700">${MS(s.cf)}/yr</span></div>
+  </div></div>`:'<div class="infobox" style="color:var(--text2)">Set STR revenue inputs above to calculate.</div>')+
+  _curateHtml(id,p);
+}
+
+// ── Wholesaler Modal ─────────────────────────────────────────────────────────
+function _modWholesale(id,p,cond,impr){
+  const projParams=activeProject||{};
+  const assignPct=projParams._ws_assign||0.07;
+  const rehabPct=projParams._ws_rehab||0.10;
+  const w=wholesaleCalc(p.listed,p.listed*(1+(COND[cond]?.adj||0))+(p.listed*(IMPR[impr]?.upliftPct||0)),assignPct,rehabPct);
+  return _propDetailsHtml(p)+_condImprHtml(id,cond,impr)+
+  (w?`
+  <div class="sec">📋 Wholesale Analysis</div>
+  <div class="txs" style="margin-bottom:.5rem">
+    <div class="tr2"><label>Assignment Fee %</label><input type="text" value="${Math.round(assignPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_assign=(+this.value||7)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Est. Rehab %</label><input type="text" value="${Math.round(rehabPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_rehab=(+this.value||10)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+  </div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">ARV</div><div class="kv" style="color:var(--green)">${M(w.arv)}</div></div>
+    <div class="kpi"><div class="kl">MAO (70%)</div><div class="kv" style="color:var(--amber)">${M(w.mao)}</div></div>
+    <div class="kpi"><div class="kl">Est. Rehab</div><div class="kv" style="color:var(--red)">${M(w.estRehab)}</div></div>
+  </div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">Your Offer</div><div class="kv" style="font-size:1.1rem">${M(w.offerPrice)}</div><div class="ks">MAO − fee</div></div>
+    <div class="kpi"><div class="kl">Assignment Fee</div><div class="kv" style="color:var(--green);font-size:1.1rem">${M(w.assignFee)}</div><div class="ks">${Math.round(assignPct*100)}% of ARV</div></div>
+    <div class="kpi"><div class="kl">Spread at List</div><div class="kv" style="color:${w.spread>=0?'var(--green)':'var(--red)'}; font-size:1.1rem">${MS(w.spread)}</div><div class="ks">${w.spread>=0?'Room to deal':'No margin'}</div></div>
+  </div>`:'<div class="infobox" style="color:var(--text2)">No price data available.</div>')+
+  _curateHtml(id,p);
+}
+
+// ── Commercial Modal ─────────────────────────────────────────────────────────
+function _modCommercial(id,p,cond,impr){
+  const projParams=activeProject||{};
+  const units=projParams._comm_units||p.beds||2;
+  const rpu=projParams._comm_rpu||800;
+  const vac=projParams._comm_vac||0.05;
+  const c=commercialCalc(p.listed,units,rpu,vac);
+  return _propDetailsHtml(p)+
+  `<div class="sec">🏢 Commercial Inputs</div>
+  <div class="txs">
+    <div class="tr2"><label>Units</label><input type="text" value="${units}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_units=+this.value||2;buildMod('${id}')"></div>
+    <div class="tr2"><label>Rent/Unit/mo</label><input type="text" value="${rpu}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._comm_rpu=+this.value||800;buildMod('${id}')"></div>
+    <div class="tr2"><label>Vacancy %</label><input type="text" value="${Math.round(vac*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_vac=(+this.value||5)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+  </div>`+
+  (c?`
+  <div class="sec">📊 Commercial Analysis</div>
+  <div class="k3" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kl">Cap Rate</div><div class="kv" style="color:${c.capRate>=0.06?'var(--green)':c.capRate>=0.04?'var(--amber)':'var(--red)'}">${PCT(c.capRate)}</div></div>
+    <div class="kpi"><div class="kl">DSCR</div><div class="kv" style="color:${c.dscr>=1.25?'var(--green)':c.dscr>=1?'var(--amber)':'var(--red)'}">${c.dscr.toFixed(2)}x</div></div>
+    <div class="kpi"><div class="kl">GRM</div><div class="kv">${c.grm.toFixed(1)}</div></div>
+    <div class="kpi"><div class="kl">Price/Unit</div><div class="kv">${M(c.pricePerUnit)}</div></div>
+  </div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">NOI</div><div class="kv" style="color:var(--green)">${M(c.noi)}/yr</div></div>
+    <div class="kpi"><div class="kl">Cash Flow</div><div class="kv" style="color:${c.cf>=0?'var(--green)':'var(--red)'}">${MS(c.cf/12)}/mo</div></div>
+    <div class="kpi"><div class="kl">CoC Return</div><div class="kv" style="color:${c.coc>=GP.cocMin?'var(--green)':'var(--red)'}">${PCT(c.coc)}</div></div>
+  </div>
+  <div class="k3" style="grid-template-columns:repeat(2,1fr)">
+    <div class="kpi"><div class="kl">Debt Yield</div><div class="kv">${PCT(c.debtYield)}</div></div>
+    <div class="kpi"><div class="kl">Cash Required</div><div class="kv">${M(c.cashIn)}</div></div>
+  </div>`:'<div class="infobox" style="color:var(--text2)">Set unit count and rent above.</div>')+
+  _curateHtml(id,p);
+}
+
+// ── Passive/Syndication Modal ────────────────────────────────────────────────
+function _modPassive(id,p,cond,impr){
+  const projParams=activeProject||{};
+  const invest=projParams._pass_invest||p.listed*GP.downPct||50000;
+  const pref=projParams._pass_pref||0.08;
+  const hold=projParams._pass_hold||5;
+  const eqm=projParams._pass_eqm||2.0;
+  const ps=passiveCalc(invest,pref,hold,eqm);
+  return _propDetailsHtml(p)+
+  `<div class="sec">💼 Syndication Inputs</div>
+  <div class="txs">
+    <div class="tr2"><label>Investment Amount</label><input type="text" value="${invest}" inputmode="numeric" class="no-spin" style="width:100px" onblur="if(activeProject)activeProject._pass_invest=+this.value||50000;buildMod('${id}')"></div>
+    <div class="tr2"><label>Pref Return %</label><input type="text" value="${Math.round(pref*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_pref=(+this.value||8)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Hold Years</label><input type="text" value="${hold}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_hold=+this.value||5;buildMod('${id}')"></div>
+    <div class="tr2"><label>Equity Multiple</label><input type="text" value="${eqm}" inputmode="decimal" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_eqm=+this.value||2.0;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">×</span></div>
+  </div>`+
+  (ps?`
+  <div class="sec">📈 Syndication Returns</div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">Annual Distribution</div><div class="kv" style="color:var(--green)">${M(ps.annDist)}/yr</div></div>
+    <div class="kpi"><div class="kl">Total Return</div><div class="kv" style="color:var(--green)">${M(ps.totalReturn)}</div></div>
+    <div class="kpi"><div class="kl">Profit</div><div class="kv" style="color:${ps.profit>=0?'var(--green)':'var(--red)'}">${MS(ps.profit)}</div></div>
+  </div>
+  <div class="k3" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kl">Equity Multiple</div><div class="kv">${ps.equityMultiple.toFixed(1)}×</div></div>
+    <div class="kpi"><div class="kl">IRR</div><div class="kv" style="color:${ps.irr>=0.12?'var(--green)':ps.irr>=0.08?'var(--amber)':'var(--red)'}">${PCT(ps.irr)}</div></div>
+    <div class="kpi"><div class="kl">NPV (8% disc)</div><div class="kv" style="color:${ps.npv>=0?'var(--green)':'var(--red)'}">${MS(ps.npv)}</div></div>
+  </div>`:'<div class="infobox" style="color:var(--text2)">Set syndication inputs above.</div>')+
+  _curateHtml(id,p);
 }
 
 async function saveRent(id){

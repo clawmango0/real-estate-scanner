@@ -85,6 +85,18 @@ function renderProjectCards(){
     const isActive=activeProject&&activeProject.id===proj.id;
     const cfSign=st.avgCf>=0?'+':'';
     const cfStr=st.avgCf?cfSign+'$'+Math.abs(st.avgCf).toLocaleString():'—';
+    const it=proj.investment_type||'buyhold';
+    // 4th stat varies by investment type
+    let stat4Label='AvgCF',stat4Val=cfStr,stat4Color=st.avgCf>=0?'var(--green)':'#f87171';
+    if(it==='flipper'){
+      const rois=filtered.filter(p=>p.curated!=='blk').map(p=>{const f=flipCalc(p.listed,mCond[p.id]||p.condition||'good',mImpr[p.id]||p.improvement||'asis');return f?f.roi:null;}).filter(r=>r!==null);
+      const avgR=rois.length?rois.reduce((a,b)=>a+b,0)/rois.length:0;
+      stat4Label='AvgROI';stat4Val=avgR?PCT(avgR):'—';stat4Color=avgR>=0.15?'var(--green)':'var(--amber)';
+    } else if(it==='wholesaler'){
+      const fees=filtered.filter(p=>p.curated!=='blk').map(p=>{const cond=mCond[p.id]||p.condition||'good',im=mImpr[p.id]||p.improvement||'asis';const arv=p.listed*(1+(COND[cond]?.adj||0))+(p.listed*(IMPR[im]?.upliftPct||0));const w=wholesaleCalc(p.listed,arv);return w?w.assignFee:0;});
+      const tot=fees.reduce((a,b)=>a+b,0);
+      stat4Label='TotFees';stat4Val=tot?'$'+Math.round(tot).toLocaleString():'—';stat4Color='var(--green)';
+    }
     const parts=[];
     if(proj.cities&&proj.cities.length) parts.push(proj.cities.slice(0,2).join(', ')+(proj.cities.length>2?'…':''));
     if(proj.prop_types&&proj.prop_types.length) parts.push(proj.prop_types.join('/'));
@@ -95,14 +107,14 @@ function renderProjectCards(){
         <button onclick="event.stopPropagation();openProjMod('${proj.id}')">✏ Edit</button>
         <button class="del-btn" onclick="event.stopPropagation();deleteProject('${proj.id}')">🗑 Delete</button>
       </div>
-      <div class="pc-name">${proj.name}</div>
+      <div class="pc-name"><span class="inv-badge" style="background:${(INV_TYPES[proj.investment_type]||INV_TYPES.buyhold).color}22;color:${(INV_TYPES[proj.investment_type]||INV_TYPES.buyhold).color}">${(INV_TYPES[proj.investment_type]||INV_TYPES.buyhold).short}</span>${esc(proj.name)}</div>
       <div class="pc-meta">${meta}</div>
       <div class="pc-map" data-proj-id="${proj.id}"></div>
       <div class="pc-grid">
         <div><div class="pcl">Props</div><div class="pcv">${st.count}</div></div>
         <div><div class="pcl">Pass</div><div class="pcv" style="color:var(--green)">${st.pass}</div></div>
         <div><div class="pcl">Favs</div><div class="pcv" style="color:var(--amber)">${st.favs}</div></div>
-        <div><div class="pcl">AvgCF</div><div class="pcv" style="color:${st.avgCf>=0?'var(--green)':'#f87171'}">${cfStr}</div></div>
+        <div><div class="pcl">${stat4Label}</div><div class="pcv" style="color:${stat4Color}">${stat4Val}</div></div>
       </div>
     </div>`;
   });
@@ -156,11 +168,20 @@ async function loadProjects(){
 
 // ── Project modal ─────────────────────────────────────────
 const _PTYPES=['SFR','DUPLEX','TRIPLEX','QUAD','CONDO','LOT'];
+const INV_TYPES={
+  buyhold:{label:'Buy & Hold',short:'B&H',color:'#1CCEBB'},
+  flipper:{label:'House Flipper',short:'FLIP',color:'#F59E0B'},
+  brrrr:{label:'BRRRR',short:'BRRRR',color:'#A78BFA'},
+  str:{label:'STR (Airbnb)',short:'STR',color:'#F472B6'},
+  wholesaler:{label:'Wholesaler',short:'W/S',color:'#34D399'},
+  commercial:{label:'Commercial/Multi',short:'COMM',color:'#60A5FA'},
+  passive:{label:'Passive/Syndication',short:'PASS',color:'#9CA3AF'}
+};
 
 function openProjMod(id){
   _editProj=id
     ?{...projects.find(p=>p.id===id)}
-    :{id:null,name:'',cities:[],prop_types:[],min_beds:null,max_beds:null,
+    :{id:null,name:'',investment_type:'buyhold',cities:[],prop_types:[],min_beds:null,max_beds:null,
       min_baths:null,max_baths:null,max_price:null,down_pct:null,rate:null,hold_yrs:null};
   _buildProjModal();
   document.getElementById('pov').classList.add('open');
@@ -187,6 +208,10 @@ function _buildProjModal(){
     <div class="txs">
       <div class="pf-row"><span class="pf-lbl">Project Name</span>
         <input type="text" id="pf-name" value="${esc(p.name||'')}" placeholder="e.g. SFR Duplex FW" style="flex:1">
+      </div>
+      <div class="pf-row" style="flex-direction:column;align-items:flex-start">
+        <span class="pf-lbl" style="margin-bottom:.3rem">Investment Type</span>
+        <div class="inv-types">${Object.entries(INV_TYPES).map(([k,v])=>`<button class="ityp${(p.investment_type||'buyhold')===k?' on':''}" style="--itc:${v.color}" onclick="_projSetType('${k}')">${v.label}</button>`).join('')}</div>
       </div>
     </div>
     <div class="sec" style="margin:.6rem 0 .3rem;font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Filters</div>
@@ -317,6 +342,14 @@ function _projRemoveCity(city){
   setTimeout(()=>{const i=document.getElementById('pf-city-in');if(i)i.focus();},0);
 }
 
+function _projSetType(t){
+  if(!_editProj) return;
+  _editProj.investment_type=t;
+  document.querySelectorAll('#pm-body .ityp').forEach(b=>{
+    b.classList.toggle('on',b.textContent===INV_TYPES[t]?.label);
+  });
+}
+
 function _projToggleType(t){
   if(!_editProj) return;
   if(!_editProj.prop_types) _editProj.prop_types=[];
@@ -339,6 +372,7 @@ async function saveProject(){
   const n=v=>v!==''&&v!=null?+v:null;
   const record={
     user_id:currentUser.id, name,
+    investment_type:_editProj.investment_type||'buyhold',
     cities:_editProj.cities||[],
     prop_types:_editProj.prop_types||[],
     min_beds: n(document.getElementById('pf-minbeds')?.value),
