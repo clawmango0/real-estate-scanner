@@ -77,10 +77,12 @@ async function fetchHtml(url: string): Promise<string> {
     } catch (e) { console.error("scraperapi (no render) error:", e); }
 
     // If still no useful data, try with render=true (slower but handles JS-only pages)
-    const hasDataAfterStatic = html.length > 5000 && (
+    const hasDataAfterStatic = html.length > 1000 && (
       html.includes("gdpClientCache") || html.includes("initialReduxState") ||
       html.includes('"list_price"') || html.includes("RealEstateListing") ||
-      (html.includes('"price"') && html.includes('"bedrooms"'))
+      (html.includes('"price"') && html.includes('"bedrooms"')) ||
+      (/listed\s+(?:at|for)\s+.\d/i.test(html)) ||
+      (/<meta\s+name="description"[^>]*(?:bed|bath|sqft)/i.test(html))
     );
     if (!hasDataAfterStatic) {
       console.log("Using ScraperAPI (render) for:", url.slice(0, 100));
@@ -273,16 +275,19 @@ function parseMetaTags(html: string, listingUrl: string): ListingDetails | null 
                    || html.match(/<meta\s+content="([^"]+)"\s+name="description"/i);
     const ogDescMatch = html.match(/<meta\s+property="og:description"\s+content="([^"]+)"/i)
                      || html.match(/<meta\s+content="([^"]+)"\s+property="og:description"/i);
+    const twDescMatch = html.match(/<meta\s+name="twitter:description"\s+content="([^"]+)"/i)
+                     || html.match(/<meta\s+content="([^"]+)"\s+name="twitter:description"/i);
     const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+    console.log(`parseMetaTags: desc=${!!descMatch}, ogDesc=${!!ogDescMatch}, twDesc=${!!twDescMatch}, title=${!!titleMatch}`);
 
     // Combine all text sources
-    const texts = [descMatch?.[1], ogDescMatch?.[1], titleMatch?.[1]].filter(Boolean).join(" | ");
+    const texts = [descMatch?.[1], ogDescMatch?.[1], twDescMatch?.[1], titleMatch?.[1]].filter(Boolean).join(" | ");
     if (!texts) return null;
 
-    console.log(`Meta tag text: ${texts.slice(0, 200)}`);
+    console.log(`Meta tag text: ${texts.slice(0, 300)}`);
 
     // Extract price: "listed at $299,987" or "$299,987" or "price: $299,987"
-    const priceM = texts.match(/(?:listed\s+(?:at|for)|price[:\s]+|asking)\s*\$?([\d,]+)/i)
+    const priceM = texts.match(/(?:listed\s+(?:at|for)|price[:\s]+|asking)\s*[^\d]?([\d,]{4,})/i)
                 || texts.match(/\$([\d,]{4,})/);
     // Extract beds: "3 bed" or "3 br" or "3-bed"
     const bedsM = texts.match(/(\d+)\s*[-\s]?(?:bed|br|bedroom)/i);
