@@ -92,6 +92,9 @@ body{font-family:'Poppins',system-ui,-apple-system,sans-serif;background:var(--b
 .tds{display:flex;gap:1.5rem;flex-wrap:wrap}
 .tdsl{font-size:.6rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em}
 .tdsv{font-size:1.05rem;font-weight:700;color:var(--green)}
+.tprofile{margin:.75rem 1.5rem 0;background:linear-gradient(135deg,rgba(20,184,166,.08),rgba(13,148,136,.05));border:1px solid var(--teal);border-radius:10px;padding:.875rem 1.25rem}
+.tp-head{margin-bottom:.6rem}
+.tp-sub{font-size:.72rem;color:var(--text2);line-height:1.5;margin-top:.3rem}
 
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;text-align:center;gap:1rem}
 .empty-state .e-icon{font-size:3rem;opacity:.3}
@@ -382,6 +385,8 @@ tbody tr{animation:fi .18s ease both}
   .sc:nth-child(2){border-right:none}
   .sc:nth-child(5){grid-column:span 2;border-right:none}
   .tdeal{padding:.75rem 1rem}
+  .tprofile{margin:.5rem 1rem 0;padding:.75rem 1rem}
+  .tprofile .tds{gap:.75rem}
   .tbar{flex-direction:column;align-items:stretch;padding:.75rem 1rem}
   .tw{margin:.875rem 1rem 1.5rem}
   th.hs,td.hs{display:none}

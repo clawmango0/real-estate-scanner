@@ -215,5 +215,31 @@ function updateStats(){
     // No qualifying deal in this project scope — clear the panel
     ['td-name','td-list','td-s','td-rent','td-nbhd'].forEach(id=>document.getElementById(id).textContent='—');
   }
+
+  // Target Property Profile
+  const tpEl=document.getElementById('target-profile');
+  if(tpEl){
+    const tp=buildTargetProfile(visible);
+    if(tp){
+      tpEl.style.display='';
+      document.getElementById('tp-price').textContent='≤ '+M(tp.maxPrice);
+      document.getElementById('tp-strong').textContent='≤ '+M(tp.strongPrice);
+      document.getElementById('tp-rent').textContent=M(tp.targetRent)+'/mo';
+      document.getElementById('tp-bb').textContent=tp.beds+' / '+tp.baths;
+      document.getElementById('tp-sqft').textContent='~'+tp.sqft.toLocaleString();
+      const cfEl=document.getElementById('tp-cf');
+      cfEl.textContent=MS(tp.cfMo)+'/mo';
+      cfEl.style.color=tp.cfMo>=0?'var(--green)':'var(--red)';
+      const taxEl=document.getElementById('tp-tax');
+      taxEl.textContent=tp.yr1TaxSav>0?'+'+M(tp.yr1TaxSav):'$0';
+      taxEl.style.color=tp.yr1TaxSav>0?'var(--green)':'var(--text3)';
+      const roiEl=document.getElementById('tp-roi');
+      roiEl.textContent=tp.yr5AnnROI?PCT(tp.yr5AnnROI)+'/yr':'—';
+      roiEl.style.color=tp.yr5AnnROI>0?'var(--green)':'var(--red)';
+      document.getElementById('tp-desc').textContent=tp.desc;
+    } else {
+      tpEl.style.display='none';
+    }
+  }
 }
 

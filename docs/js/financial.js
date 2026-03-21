@@ -228,6 +228,69 @@ function passiveCalc(investAmt,prefReturn,holdYrs,equityMultiple){
   return{annDist,totalReturn,totalDistributions,exitProceeds,profit,irr,npv,equityMultiple,prefReturn,holdYrs};
 }
 
+// ── Target Property Profile — reverse-solve ideal deal from financials ───────
+function buildTargetProfile(visible){
+  if(!visible||!visible.length) return null;
+  const med=arr=>{const s=[...arr].sort((a,b)=>a-b);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+  const mode=arr=>{const f={};arr.forEach(v=>{f[v]=(f[v]||0)+1});return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||'SFR';};
+
+  // Step 1 — median specs from visible properties
+  const withBeds=visible.filter(p=>p.beds>0), withBaths=visible.filter(p=>p.baths>0);
+  const withSqft=visible.filter(p=>p.sqft>0), withPrice=visible.filter(p=>p.listed>0);
+  if(withBeds.length<2||withSqft.length<2||withPrice.length<2) return null;
+
+  const beds=Math.round(med(withBeds.map(p=>p.beds)));
+  const baths=Math.round(med(withBaths.map(p=>p.baths))*2)/2; // round to nearest .5
+  const sqft=Math.round(med(withSqft.map(p=>p.sqft))/50)*50;  // round to 50
+  const ptype=mode(visible.map(p=>p.type||'SFR'));
+
+  // Average appreciation from neighborhood data
+  const apprVals=visible.filter(p=>p._hood&&p._hood.appreci5!=null).map(p=>Number(p._hood.appreci5));
+  const avgAppr=apprVals.length?apprVals.reduce((a,b)=>a+b,0)/apprVals.length:GP.appreci;
+
+  // Step 2 — estimate rent for median property
+  const synthProp={listed:med(withPrice.map(p=>p.listed)),beds,baths,sqft,type:ptype,condition:'good',improvement:'asis',_hood:visible.find(p=>p._hood)?._hood||{}};
+  const rentEst=localRentEstimate(synthProp);
+  if(rentEst.error) return null;
+  const targetRent=Math.round(rentEst.estimate*1.05/25)*25; // mid+5%, round to $25
+
+  // Step 3 — max price for CoC targets
+  const maxPriceConsider=maxPrice(targetRent,GP.cocMin);     // 8% CoC ceiling
+  const maxPriceStrong=maxPrice(targetRent,GP.cocStrong);     // 12% CoC ceiling
+  if(!maxPriceConsider) return null;
+
+  // Step 4 — full financial profile at consider price
+  const cc=cocCalc(maxPriceConsider,targetRent);
+  if(!cc) return null;
+
+  // Tax calc
+  const ap=activeProject;
+  const fs=GP.filingStatus||'single';
+  const r=agiToRates(GP.agi,fs);
+  const taxP={filing:fs,marginal:r.marg,ltcg:r.ltcg,recap:GP.recapRate,agi:GP.agi,
+    participation:ap?.participation||GP.participation||'active'};
+  GP.costSegPct=ap?.cost_seg_pct??GP.costSegPct??0.20;
+  GP.sec179=ap?.sec179||GP.sec179||0;
+  GP.participation=taxP.participation;
+
+  const se1=schedE(maxPriceConsider,targetRent,'good','asis',1,taxP,0);
+  const exit5=exitAt(maxPriceConsider,targetRent,'good','asis',5,taxP,avgAppr);
+
+  // Step 5 — build profile
+  const downPct=Math.round(GP.downPct*100);
+  const desc=`Look for ${beds}bd/${baths}ba ${ptype} around ${sqft.toLocaleString()} sqft, listed ≤${M(maxPriceConsider)}, renting ${M(targetRent)}+/mo. At ${downPct}% down → ${PCT(cc.coc)} CoC, ${MS(cc.cfMo)}/mo CF, ${se1?MS(se1.taxSav):'$0'} Yr 1 tax savings.`;
+
+  return{
+    maxPrice:maxPriceConsider, strongPrice:maxPriceStrong, targetRent,
+    beds, baths, sqft, ptype,
+    coc:cc.coc, cfMo:cc.cfMo, cfAnn:cc.cfAnn, cashIn:cc.cashIn,
+    yr1TaxSav:se1?se1.taxSav:0,
+    yr5Return:exit5?exit5.totalROI:0, yr5AnnROI:exit5?exit5.annROI:0,
+    yr5Profit:exit5?exit5.totalProfit:0,
+    avgAppr, desc
+  };
+}
+
 // ── Local Rent Estimator (DFW-calibrated, no API) ────────────────────────────
 function localRentEstimate(p){
   // Validation

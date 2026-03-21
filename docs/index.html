@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.99.2/dist/umd/supabase.min.js" integrity="sha384-zETTH+6IXxKQ6zbGcT6H6EDdnGaae9uhI8uO7doTJoNEmPGeTKVOe5S6/XybS9JH" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<link rel="stylesheet" href="css/style.css?v=22">
+<link rel="stylesheet" href="css/style.css?v=23">
 </head>
 <body>
 
@@ -109,6 +109,23 @@
     </div>
   </div>
 
+  <div class="tprofile" id="target-profile" style="display:none">
+    <div class="tp-head">
+      <div class="tdl">🎯 Target Property Profile</div>
+      <div class="tp-sub" id="tp-desc">Analyzing portfolio...</div>
+    </div>
+    <div class="tds">
+      <div><div class="tdsl">Max Price</div><div class="tdsv" id="tp-price">—</div></div>
+      <div><div class="tdsl">Strong Buy ≤</div><div class="tdsv" id="tp-strong">—</div></div>
+      <div><div class="tdsl">Target Rent</div><div class="tdsv" id="tp-rent">—</div></div>
+      <div><div class="tdsl">Beds / Baths</div><div class="tdsv" id="tp-bb">—</div></div>
+      <div><div class="tdsl">Min Sqft</div><div class="tdsv" id="tp-sqft">—</div></div>
+      <div><div class="tdsl">Monthly CF</div><div class="tdsv" id="tp-cf">—</div></div>
+      <div><div class="tdsl">Yr 1 Tax Savings</div><div class="tdsv" id="tp-tax">—</div></div>
+      <div><div class="tdsl">5-Yr Return</div><div class="tdsv" id="tp-roi">—</div></div>
+    </div>
+  </div>
+
   <div class="tbar">
     <div class="tabs">
       <button class="tab on" onclick="setView('all',this)">All <span class="n" id="tc-a">0</span></button>
@@ -185,15 +202,15 @@
 </div>
 
 
-<script src="js/config.js?v=22"></script>
-<script src="js/financial.js?v=22"></script>
-<script src="js/state.js?v=22"></script>
-<script src="js/projects.js?v=22"></script>
-<script src="js/auth.js?v=22"></script>
-<script src="js/session.js?v=22"></script>
-<script src="js/data.js?v=22"></script>
-<script src="js/render.js?v=22"></script>
-<script src="js/curation.js?v=22"></script>
-<script src="js/modal.js?v=22"></script>
+<script src="js/config.js?v=23"></script>
+<script src="js/financial.js?v=23"></script>
+<script src="js/state.js?v=23"></script>
+<script src="js/projects.js?v=23"></script>
+<script src="js/auth.js?v=23"></script>
+<script src="js/session.js?v=23"></script>
+<script src="js/data.js?v=23"></script>
+<script src="js/render.js?v=23"></script>
+<script src="js/curation.js?v=23"></script>
+<script src="js/modal.js?v=23"></script>
 </body>
 </html>
