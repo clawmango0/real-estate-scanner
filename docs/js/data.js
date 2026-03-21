@@ -38,6 +38,8 @@ async function loadProperties(){
         _nbScore:h?nbScore({schools:h.schools,crime:h.crime,rentGrowth:h.rentGrowth}):null,
       };
     });
+    // Auto-estimate rent for properties that have no monthly_rent set
+    autoEstimateAll();
     refreshAll();
   } catch(e) {
     console.error('loadProperties exception:', e);
@@ -97,6 +99,24 @@ function estimateRent(id){
   // Update local state
   p.rentRange={low:result.low,high:result.high,source:'local'};
   return result;
+}
+
+// Auto-run rent estimation on all properties missing monthlyRent, set to mid+10%
+function autoEstimateAll(){
+  let updated=0;
+  for(const p of props){
+    if(p.monthlyRent) continue; // already has confirmed rent
+    const result=localRentEstimate(p);
+    if(!result||result.error) continue;
+    p.rentRange={low:result.low,high:result.high,source:'local'};
+    const mid10=Math.round(result.estimate*1.10/25)*25; // midpoint + 10%
+    p.monthlyRent=mid10;
+    mRent[p.id]=mid10;
+    // Fire-and-forget DB save
+    saveProperty(p.id,{rent_estimate:result.estimate,monthly_rent:mid10});
+    updated++;
+  }
+  if(updated) console.log(`Auto-estimated rent for ${updated} properties (mid+10%)`);
 }
 
 function maybeReEstimate(id){
