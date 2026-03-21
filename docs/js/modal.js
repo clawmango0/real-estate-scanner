@@ -5,7 +5,7 @@ function buildMod(id){
   const cond=mCond[id]||p.condition||'good';
   const impr=mImpr[id]||p.improvement||'asis';
   // Seed tax state from AGI on first open
-  if(!mTax[id]){const fs=GP.filingStatus||'single';const r=agiToRates(GP.agi,fs);mTax[id]={agi:GP.agi,filing:fs,marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate,participation:GP.participation||'active',costSegPct:GP.costSegPct||0,sec179:GP.sec179||0};}
+  if(!mTax[id]){const fs=GP.filingStatus||'single';const r=agiToRates(GP.agi,fs);mTax[id]={agi:GP.agi,filing:fs,marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate,participation:GP.participation||'active',costSegPct:GP.costSegPct??0.20,sec179:GP.sec179||0};}
   const taxP={filing:(mTax[id].filing||GP.filingStatus||'single'),marginal:mTax[id].marg,ltcg:mTax[id].ltcg,recap:mTax[id].recap,agi:mTax[id].agi,participation:mTax[id].participation||'active'};
   const _autoRates=agiToRates(taxP.agi,taxP.filing);
   const rent=mRent[id]??p.monthlyRent;
