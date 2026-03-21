@@ -1039,26 +1039,13 @@ function checkRateLimit(userId: string, maxReqs = 10, windowMs = 60000): boolean
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
 
-  // Auth check
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, { global: { headers: { Authorization: authHeader } } });
-  const { data: { user }, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
-
-  // Rate limit: 10 requests per minute per user
-  if (!checkRateLimit(user.id)) {
-    return new Response(JSON.stringify({ error: "Rate limit exceeded. Please wait before trying again." }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
-  }
-
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...cors, "Content-Type": "application/json" } });
 
   try {
     const body = await req.json();
     const { url, address, city, state, zip } = body;
 
-    // Mode 0: Parse raw HTML from bookmarklet (no fetch needed)
+    // Mode 0: Parse raw HTML from bookmarklet (parse-only, no DB access, no auth required)
     if (body.html && body.source_url) {
       console.log(`fetch-listing: parse-html mode, source=${body.source_url.slice(0, 80)}, len=${body.html.length}`);
       const source = body.source_url.includes("zillow.com") ? "zillow" : body.source_url.includes("realtor.com") ? "realtor" : "redfin";
@@ -1079,6 +1066,16 @@ serve(async (req) => {
       }
       if (!details) return new Response(JSON.stringify({ error: "Could not parse HTML" }), { status: 422, headers: { ...cors, "Content-Type": "application/json" } });
       return new Response(JSON.stringify(details), { headers: { ...cors, "Content-Type": "application/json" } });
+    }
+
+    // Auth required for URL/address scraping modes (makes outbound requests)
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, { global: { headers: { Authorization: authHeader } } });
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
+    if (!checkRateLimit(user.id)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded. Please wait before trying again." }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
     // Mode 1: Address-based search (no URL required)
