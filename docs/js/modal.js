@@ -24,8 +24,10 @@ function buildMod(id){
   GP.sec179=mTax[id].sec179||0;
   GP.participation=mTax[id].participation||'active';
   const exits=EXIT_YRS.map(yr=>rent?exitAt(ofPrc,rent,cond,impr,yr,taxP,apprUsed):null);
-  const y1=rent?schedE(ofPrc,rent,cond,impr,1,taxP,0):null;
-  const y2=rent?schedE(ofPrc,rent,cond,impr,2,taxP,y1?y1.passCarry:0):null;
+  // 5-year Schedule E calculations
+  const yrs=[];
+  if(rent){let carry=0;for(let yr=1;yr<=5;yr++){const se=schedE(ofPrc,rent,cond,impr,yr,taxP,carry);carry=se.passCarry;yrs.push(se);}}
+  const y1=yrs[0]||null,y2=yrs[1]||null;
 
   let badges=sourceBadge(p.source);
   if(p.isNew)badges+=`<span class="bdg bn">🆕 New</span>`;
@@ -195,37 +197,7 @@ function buildMod(id){
       <div style="font-size:.6rem;color:var(--text3);margin-top:.25rem;padding-left:.1rem">2025 brackets · 100% bonus dep (OBBBA) · std deduction applied</div>
     </div>
 
-    ${y1?`<div class="sec">📋 Schedule E — Year 1</div>
-    <div class="tacc"><button class="ttog" onclick="togAcc('ta-${id}')"><span>Net Income: <strong style="color:${y1.netInc>=0?'var(--red)':'var(--green)'}">${MS(y1.netInc)}</strong> → Tax ${y1.taxSav>=0?'Savings':'Liability'}: <strong style="color:${y1.taxSav>=0?'var(--green)':'var(--red)'}">${MS(y1.taxSav)}</strong></span><span style="font-size:.62rem">▼</span></button>
-    <div class="tbody2" id="ta-${id}">
-      <div class="tl2"><span class="tl2-l">Gross Rental Income</span><span class="tl2-v" style="color:var(--green)">${M(y1.gr)}</span></div>
-      <div class="tl2"><span class="tl2-l">Mortgage Interest</span><span class="tl2-v" style="color:var(--red)">-${M(y1.mortInt)}</span></div>
-      <div class="tl2"><span class="tl2-l">Property Taxes (1.9%)</span><span class="tl2-v" style="color:var(--red)">-${M(y1.pt)}</span></div>
-      <div class="tl2"><span class="tl2-l">Insurance (0.6%)</span><span class="tl2-v" style="color:var(--red)">-${M(y1.ins)}</span></div>
-      <div class="tl2"><span class="tl2-l">Management (8%)</span><span class="tl2-v" style="color:var(--red)">-${M(y1.mgmt)}</span></div>
-      <div class="tl2"><span class="tl2-l">Repairs (1%)</span><span class="tl2-v" style="color:var(--red)">-${M(y1.rep)}</span></div>
-      ${y1.bonusDep>0?`<div class="tl2"><span class="tl2-l" style="color:var(--purple)">Bonus Dep (cost seg ${Math.round(GP.costSegPct*100)}%)</span><span class="tl2-v" style="color:var(--purple)">-${M(y1.bonusDep)}</span></div>`:''}
-      ${y1.sec179>0?`<div class="tl2"><span class="tl2-l" style="color:var(--purple)">§179 Expensing</span><span class="tl2-v" style="color:var(--purple)">-${M(y1.sec179)}</span></div>`:''}
-      <div class="tl2"><span class="tl2-l">Std Depreciation (27.5yr)</span><span class="tl2-v" style="color:var(--purple)">-${M(y1.stdDepr)}</span></div>
-      ${y1.bonusDep>0||y1.sec179>0?`<div class="tl2"><span class="tl2-l" style="font-size:.65rem;color:var(--text3)">Total Depreciation</span><span class="tl2-v" style="font-size:.65rem;color:var(--purple)">-${M(y1.annDepr)}</span></div>`:''}
-      <div class="tl2" style="border-top:2px solid var(--border2);margin-top:.3rem;padding-top:.4rem"><span class="tl2-l" style="font-weight:600">Net Taxable Income</span><span class="tl2-v" style="color:${y1.netInc>=0?'var(--red)':'var(--green)'};font-size:.92rem">${MS(y1.netInc)}</span></div>
-      <div class="tl2"><span class="tl2-l" style="font-size:.65rem">Passive loss used: ${M(y1.usedAllow)}${y1.participation==='active'?' of '+M(passAllow(taxP.agi,'active'))+' allowed':' (non-passive — unlimited)'}</span></div>
-      ${y1.passCarry>0?`<div class="tl2"><span class="tl2-l" style="font-size:.65rem;color:var(--amber)">Suspended loss carried forward: ${M(y1.passCarry)}</span></div>`:''}
-      <div class="tl2"><span class="tl2-l" style="font-weight:600">Year 1 Tax ${y1.taxSav>=0?'Savings':'Liability'}</span><span class="tl2-v" style="color:${y1.taxSav>=0?'var(--green)':'var(--red)'};font-size:.92rem;font-weight:700">${MS(y1.taxSav)}</span></div>
-    </div></div>
-
-    ${y1&&y1.taxSav>0?`<div class="infobox" style="background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(5,150,105,.05));border:1px solid rgba(16,185,129,.25);margin-top:.5rem">
-      <div style="font-weight:600;color:var(--green);font-size:.82rem;margin-bottom:.3rem">💰 Federal Tax Impact on W-2 Income</div>
-      <div style="font-size:.78rem;color:var(--text);margin-bottom:.2rem">Year 1: <strong style="color:var(--green)">Save ${M(y1.taxSav)}</strong> on your W-2 taxes at ${Math.round(taxP.marginal*100)}% rate</div>
-      <div style="font-size:.66rem;color:var(--text2);line-height:1.5">
-        ${y1.bonusDep>0?`Bonus depreciation (cost seg): -${M(y1.bonusDep)}<br>`:''}
-        ${y1.sec179>0?`§179 expensing: -${M(y1.sec179)}<br>`:''}
-        Standard depreciation: -${M(y1.stdDepr)}<br>
-        Other deductions: -${M(y1.mortInt+y1.pt+y1.ins+y1.mgmt+y1.rep+y1.oth)}<br>
-        <span style="color:var(--amber)">${y1.participation==='active'?'Active participation: $25k passive loss limit (AGI-based)':'Non-passive: full loss offsets W-2 income'}</span>
-      </div>
-      ${y2?`<div style="font-size:.72rem;color:var(--text2);margin-top:.3rem;border-top:1px solid var(--border);padding-top:.3rem">Years 2+: ~<strong>${M(y2.taxSav)}</strong>/yr tax savings (std depreciation only)</div>`:''}
-    </div>`:''}`:''}
+    ${_taxYearsHtml(id,ofPrc,rent,cond,impr,taxP)}`:''}
 
     ${exits.some(Boolean)?`<div class="sec">📈 Exit Analysis — 5 / 10 / 15 Year</div>
     <table class="ext">
@@ -252,6 +224,37 @@ function buildMod(id){
     </div>
     ${p.listingUrl?`<a class="el" href="${p.listingUrl}" target="_blank">↗ View Listing</a>`:''}
   `;
+}
+
+// ── 5-Year Tax Savings Table (shared across modals) ──────────────────────────
+function _taxYearsHtml(id,price,rent,cond,impr,taxP){
+  if(!rent||!price)return '';
+  const yrs=[];let carry=0;let cumSav=0;
+  for(let yr=1;yr<=5;yr++){const se=schedE(price,rent,cond,impr,yr,taxP,carry);carry=se.passCarry;cumSav+=se.taxSav;yrs.push({...se,cumSav});}
+  const anyBenefit=yrs.some(y=>y.taxSav>0);
+  return `
+  <div class="sec">📋 5-Year Federal Tax Impact</div>
+  <table class="ext" style="font-size:.72rem">
+    <thead><tr><th class="rh" style="width:auto"></th>${yrs.map((_,i)=>`<th class="yrh" style="min-width:70px">Yr ${i+1}</th>`).join('')}</tr></thead>
+    <tbody>
+      <tr><td>Rental Income</td>${yrs.map(y=>`<td class="c" style="color:var(--green)">${M(y.gr)}</td>`).join('')}</tr>
+      <tr><td>− Expenses</td>${yrs.map(y=>`<td class="c" style="color:var(--red)">−${M(y.mortInt+y.pt+y.ins+y.mgmt+y.rep+y.oth)}</td>`).join('')}</tr>
+      <tr><td>− Depreciation</td>${yrs.map(y=>`<td class="c" style="color:var(--purple)">−${M(y.annDepr)}</td>`).join('')}</tr>
+      ${yrs[0].bonusDep>0?`<tr><td style="font-size:.62rem;color:var(--text3);padding-left:.5rem">↳ Bonus Dep (${Math.round((mTax[id]?.costSegPct||GP.costSegPct)*100)}%)</td>${yrs.map(y=>`<td class="c" style="font-size:.62rem;color:var(--purple)">${y.bonusDep>0?'−'+M(y.bonusDep):'—'}</td>`).join('')}</tr>`:''}
+      <tr style="border-top:2px solid var(--border2)"><td style="font-weight:600">Net Taxable</td>${yrs.map(y=>`<td class="c" style="color:${y.netInc>=0?'var(--red)':'var(--green)'}"><strong>${MS(y.netInc)}</strong></td>`).join('')}</tr>
+      ${yrs.some(y=>y.passCarry>0)?`<tr><td style="font-size:.62rem;color:var(--amber)">Suspended Loss</td>${yrs.map(y=>`<td class="c" style="font-size:.62rem;color:var(--amber)">${y.passCarry>0?M(y.passCarry):'—'}</td>`).join('')}</tr>`:''}
+      <tr class="${anyBenefit?'totg':'totr'}"><td style="font-weight:700">Tax Savings</td>${yrs.map(y=>`<td class="c" style="color:${y.taxSav>=0?'var(--green)':'var(--red)'};font-weight:700">${MS(y.taxSav)}</td>`).join('')}</tr>
+      <tr><td style="font-weight:600;color:var(--teal)">Cumulative</td>${yrs.map(y=>`<td class="c" style="color:var(--teal);font-weight:600">${MS(y.cumSav)}</td>`).join('')}</tr>
+    </tbody>
+  </table>
+  ${anyBenefit?`<div class="infobox" style="background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(5,150,105,.05));border:1px solid rgba(16,185,129,.25);margin-top:.5rem">
+    <div style="font-weight:600;color:var(--green);font-size:.82rem;margin-bottom:.3rem">💰 5-Year W-2 Tax Savings: ${MS(yrs[4].cumSav)}</div>
+    <div style="font-size:.72rem;color:var(--text2);line-height:1.5">
+      Year 1: <strong style="color:var(--green)">${MS(yrs[0].taxSav)}</strong> (bonus dep + std depr)<br>
+      Years 2–5: <strong style="color:var(--green)">${MS(yrs[4].cumSav-yrs[0].taxSav)}</strong> (std depreciation @ ${Math.round(taxP.marginal*100)}% rate)<br>
+      <span style="color:var(--amber)">${(taxP.participation||GP.participation)==='active'?'Active participation: $25k passive loss limit (AGI phaseout $100k–$150k)':((taxP.participation||GP.participation)==='material'?'Material participation: full loss offsets W-2 income':'RE Professional: full loss offsets W-2 income')}</span>
+    </div>
+  </div>`:''}`;
 }
 
 // ── Property details snippet shared across typed modals ───────────────────────
@@ -298,7 +301,7 @@ function _buildTypedModal(id,p,cond,impr,type){
 
   const builders={flipper:_modFlip,brrrr:_modBrrrr,str:_modSTR,wholesaler:_modWholesale,commercial:_modCommercial,passive:_modPassive};
   const fn=builders[type];
-  if(fn) document.getElementById('m-body').innerHTML=fn(id,p,cond,impr);
+  if(fn) document.getElementById('m-body').innerHTML=fn(id,p,cond,impr,taxP);
   else document.getElementById('m-body').innerHTML='<div class="infobox">Unknown investment type.</div>';
 }
 
@@ -334,7 +337,7 @@ function _modFlip(id,p,cond,impr){
 }
 
 // ── BRRRR Modal ──────────────────────────────────────────────────────────────
-function _modBrrrr(id,p,cond,impr){
+function _modBrrrr(id,p,cond,impr,taxP){
   const rent=mRent[id]??p.monthlyRent;
   const b=brrrrCalc(p.listed,rent,cond,impr);
   const bh=rent?cocCalc(p.listed,rent):null;
@@ -373,11 +376,12 @@ function _modBrrrr(id,p,cond,impr){
     <div class="kpi"><div class="kl">Pre-Refi CoC</div><div class="kv" style="color:${bh&&bh.coc>=GP.cocMin?'var(--green)':'var(--red)'}">${bh?PCT(bh.coc):'—'}</div></div>
   </div>`:''}`
   :'<div class="infobox" style="color:var(--text2)">Enter rent and set condition/improvement above to calculate BRRRR metrics.</div>')+
+  (taxP?_taxYearsHtml(id,p.listed,rent,cond,impr,taxP):'')+
   _curateHtml(id,p);
 }
 
 // ── STR Modal ────────────────────────────────────────────────────────────────
-function _modSTR(id,p,cond,impr){
+function _modSTR(id,p,cond,impr,taxP){
   const projParams=activeProject||{};
   const adr=projParams._str_adr||150;
   const occ=projParams._str_occ||0.70;
@@ -416,6 +420,7 @@ function _modSTR(id,p,cond,impr){
     <div class="tl2"><span class="tl2-l">Annual Mortgage</span><span class="tl2-v" style="color:var(--red)">−${M(s.annMort)}</span></div>
     <div class="tl2" style="border-top:2px solid var(--border2);margin-top:.3rem;padding-top:.4rem"><span class="tl2-l" style="font-weight:700">Cash Flow</span><span class="tl2-v" style="color:${s.cf>=0?'var(--green)':'var(--red)'};font-weight:700">${MS(s.cf)}/yr</span></div>
   </div></div>`:'<div class="infobox" style="color:var(--text2)">Set STR revenue inputs above to calculate.</div>')+
+  (taxP&&s?_taxYearsHtml(id,p.listed,Math.round(s.netRev/12),cond,impr,taxP):'')+
   _curateHtml(id,p);
 }
 
@@ -446,7 +451,7 @@ function _modWholesale(id,p,cond,impr){
 }
 
 // ── Commercial Modal ─────────────────────────────────────────────────────────
-function _modCommercial(id,p,cond,impr){
+function _modCommercial(id,p,cond,impr,taxP){
   const projParams=activeProject||{};
   const units=projParams._comm_units||p.beds||2;
   const rpu=projParams._comm_rpu||800;
@@ -476,6 +481,7 @@ function _modCommercial(id,p,cond,impr){
     <div class="kpi"><div class="kl">Debt Yield</div><div class="kv">${PCT(c.debtYield)}</div></div>
     <div class="kpi"><div class="kl">Cash Required</div><div class="kv">${M(c.cashIn)}</div></div>
   </div>`:'<div class="infobox" style="color:var(--text2)">Set unit count and rent above.</div>')+
+  (taxP&&c?_taxYearsHtml(id,p.listed,Math.round(units*rpu*(1-vac)),cond,impr,taxP):'')+
   _curateHtml(id,p);
 }
 
