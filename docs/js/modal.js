@@ -36,18 +36,30 @@ function buildMod(id){
   if(editBtn)editBtn.style.background=mEdit[id]?'var(--amber)':'var(--adim)';
 
   if(mEdit[id]){
+    const _is=`style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem"`;
+    const _ls=`style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px"`;
     document.getElementById('m-body').innerHTML=`
     <div class="sec">✏️ Edit Property Data</div>
+    <div style="margin-bottom:.8rem">
+      <label ${_ls}>Listing URL — paste to re-scrape property details</label>
+      <div style="display:flex;gap:.4rem">
+        <input id="ep-url" value="${esc(p.listingUrl||'')}" placeholder="https://www.zillow.com/homedetails/..." ${_is} style="flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem">
+        <button onclick="rescrapeEdit('${id}')" id="ep-scrape-btn" style="padding:.35rem .7rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.75rem;white-space:nowrap">🔄 Scrape</button>
+      </div>
+      <div id="ep-scrape-status" style="font-size:.68rem;color:var(--text2);margin-top:.3rem;display:none"></div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem">
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Address</label><input id="ep-addr" value="${esc(p.address||'')}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Listed Price ($)</label><input id="ep-price" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.listed||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Beds</label><input id="ep-beds" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.beds||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Baths</label><input id="ep-baths" type="text" inputmode="decimal" pattern="[0-9.]*" value="${p.baths||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Sqft</label><input id="ep-sqft" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.sqft||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Lot Size (sqft)</label><input id="ep-lot" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.lotSize||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Property Type</label><select id="ep-type" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem">${['SFR','DUPLEX','TRIPLEX','QUAD','CONDO','LOT'].map(t=>`<option value="${t}"${p.type===t?' selected':''}>${t}</option>`).join('')}</select></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Rent Estimate ($/mo)</label><input id="ep-rent-est" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.rentRange?.mid||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
-      <div><label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:2px">Monthly Rent (confirmed)</label><input id="ep-rent" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.monthlyRent||''}" style="width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem" class="no-spin"></div>
+      <div><label ${_ls}>Address</label><input id="ep-addr" value="${esc(p.address||'')}" ${_is}></div>
+      <div><label ${_ls}>City</label><input id="ep-city" value="${esc(p.rawCity||'')}" ${_is}></div>
+      <div><label ${_ls}>ZIP</label><input id="ep-zip" value="${esc(p.zip||'')}" ${_is} inputmode="numeric" pattern="[0-9]*" maxlength="5"></div>
+      <div><label ${_ls}>Listed Price ($)</label><input id="ep-price" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.listed||''}" ${_is} class="no-spin"></div>
+      <div><label ${_ls}>Beds</label><input id="ep-beds" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.beds||''}" ${_is} class="no-spin"></div>
+      <div><label ${_ls}>Baths</label><input id="ep-baths" type="text" inputmode="decimal" pattern="[0-9.]*" value="${p.baths||''}" ${_is} class="no-spin"></div>
+      <div><label ${_ls}>Sqft</label><input id="ep-sqft" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.sqft||''}" ${_is} class="no-spin"></div>
+      <div><label ${_ls}>Lot Size (sqft)</label><input id="ep-lot" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.lotSize||''}" ${_is} class="no-spin"></div>
+      <div><label ${_ls}>Property Type</label><select id="ep-type" ${_is}>${['SFR','DUPLEX','TRIPLEX','QUAD','CONDO','LOT'].map(t=>`<option value="${t}"${p.type===t?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div><label ${_ls}>Rent Estimate ($/mo)</label><input id="ep-rent-est" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.rentRange?.mid||''}" ${_is} class="no-spin"></div>
+      <div><label ${_ls}>Monthly Rent (confirmed)</label><input id="ep-rent" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.monthlyRent||''}" ${_is} class="no-spin"></div>
     </div>
     <div style="display:flex;gap:.5rem">
       <button onclick="savePropertyEdit('${id}')" style="flex:1;padding:.55rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">💾 Save Changes</button>
@@ -509,6 +521,51 @@ function doEstimateRent(id){
   }catch(e){
     console.error('doEstimateRent error:',e);
     if(reason){reason.textContent='⚠️ '+(e.message||String(e));reason.style.display='block';}
+  }
+}
+
+// Re-scrape listing URL from edit form
+async function rescrapeEdit(id){
+  const url=(document.getElementById('ep-url')?.value||'').trim();
+  const status=document.getElementById('ep-scrape-status');
+  const btn=document.getElementById('ep-scrape-btn');
+  if(!url){if(status){status.textContent='⚠️ Paste a listing URL first';status.style.display='block';}return;}
+  if(btn){btn.disabled=true;btn.textContent='⏳ Scraping...';}
+  if(status){status.textContent='Fetching property details...';status.style.display='block';status.style.color='var(--text2)';}
+  try{
+    const token=await getAccessToken();
+    if(!token) throw new Error('Not signed in');
+    const res=await fetch(`${EDGE_BASE}/fetch-listing`,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify({url})
+    });
+    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||`HTTP ${res.status}`);}
+    const d=await res.json();
+    console.log('rescrape result:',d);
+    const g=s=>document.getElementById(s);
+    // Fill form fields with scraped data
+    if(d.address){const street=d.address.split(',')[0].trim();g('ep-addr').value=street;}
+    if(d.city) g('ep-city').value=d.city;
+    if(d.zip) g('ep-zip').value=d.zip;
+    if(d.price) g('ep-price').value=d.price;
+    if(d.property_type) g('ep-type').value=d.property_type;
+    if(d.beds) g('ep-beds').value=d.beds;
+    if(d.baths) g('ep-baths').value=d.baths;
+    if(d.sqft) g('ep-sqft').value=d.sqft;
+    if(d.rent_estimate) g('ep-rent-est').value=d.rent_estimate;
+    const parts=[];
+    if(d.price)parts.push('$'+Number(d.price).toLocaleString());
+    if(d.beds)parts.push(d.beds+'bd');
+    if(d.baths)parts.push(d.baths+'ba');
+    if(d.sqft)parts.push(d.sqft.toLocaleString()+' sqft');
+    status.innerHTML='✅ Scraped: '+parts.join(' · ')+' — review & save';
+    status.style.color='var(--green)';
+  }catch(e){
+    console.error('rescrapeEdit error:',e);
+    if(status){status.textContent='❌ '+(e.message||String(e));status.style.color='var(--red)';}
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🔄 Scrape';}
   }
 }
 

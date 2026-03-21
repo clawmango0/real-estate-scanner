@@ -46,7 +46,7 @@ serve(async (req) => {
       const body = await req.json();
       const allowed = ["monthly_rent", "condition", "improvement", "status", "curated", "notes", "price_drop", "price_drop_amt",
                        "rent_estimate", "beds", "baths", "sqft", "lot_size", "listed_price", "address", "latitude", "longitude",
-                       "property_type", "is_new"];
+                       "property_type", "is_new", "city", "state", "zip", "listing_url"];
       const updates: Record<string, unknown> = {};
       for (const k of allowed) if (k in body) updates[k] = body[k];
       const { data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single();

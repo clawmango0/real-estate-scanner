@@ -136,6 +136,9 @@ async function savePropertyEdit(id){
   const g=s=>document.getElementById(s);
   const updates={};
   const addr=(g('ep-addr')?.value||'').trim(); if(addr)updates.address=addr;
+  const city=(g('ep-city')?.value||'').trim(); updates.city=city; // allow clearing
+  const zip=(g('ep-zip')?.value||'').trim(); if(zip)updates.zip=zip;
+  const url=(g('ep-url')?.value||'').trim(); if(url)updates.listing_url=url;
   const price=Math.round(+g('ep-price')?.value||0); if(price)updates.listed_price=price;
   const beds=+g('ep-beds')?.value||0; if(beds)updates.beds=beds;
   const baths=+g('ep-baths')?.value||0; if(baths)updates.baths=baths;
@@ -151,6 +154,9 @@ async function savePropertyEdit(id){
   const p=props.find(x=>x.id===id);
   if(p){
     if(updates.address)p.address=updates.address;
+    if('city' in updates){p.rawCity=updates.city; p.city=updates.city?(updates.city+', TX'+(updates.zip?' '+updates.zip:p.zip?' '+p.zip:'')):(p.city);}
+    if(updates.zip)p.zip=updates.zip;
+    if(updates.listing_url)p.listingUrl=updates.listing_url;
     if(updates.listed_price)p.listed=updates.listed_price;
     if(updates.beds)p.beds=updates.beds;
     if(updates.baths)p.baths=updates.baths;
