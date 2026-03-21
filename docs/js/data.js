@@ -256,7 +256,7 @@ function _buildAddPropHTML(){
       <span style="font-size:.65rem;color:var(--text2)">Drag to your bookmarks bar</span>
     </div>
     <div style="display:flex;align-items:center;gap:.6rem">
-      <a href="${_bookmarkletCode()}" onclick="event.preventDefault();alert('Drag this button to your bookmarks bar, then click it on any Zillow/Realtor/Redfin listing page!')" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#14B8A6);color:#fff;padding:.35rem .8rem;border-radius:6px;font-size:.72rem;font-weight:600;text-decoration:none;cursor:grab;white-space:nowrap">📌 Add to LockBoxIQ</a>
+      <a href="${_bookmarkletCode()}" onclick="event.preventDefault();alert('Drag this to your bookmarks bar, then click it on any Zillow/Realtor/Redfin listing page!')" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#14B8A6);color:#fff;padding:.4rem .9rem;border-radius:6px;font-size:.75rem;font-weight:600;text-decoration:none;cursor:grab;white-space:nowrap" title="Drag to bookmarks bar">Add to LockBoxIQ</a>
       <span style="font-size:.62rem;color:var(--text2);line-height:1.3">Visit any listing → click the bookmarklet → property details auto-captured from your browser (bypasses scraper blocks)</span>
     </div>
   </div>
