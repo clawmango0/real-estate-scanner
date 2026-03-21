@@ -355,11 +355,110 @@ async function claudeFallback(html: string, listingUrl: string): Promise<Listing
   }
 }
 
+// ── URL Variant Generator ────────────────────────────────
+function generateUrlVariants(url: string): string[] {
+  const variants: string[] = [url];
+  const clean = url.replace(/\?.*$/, "").replace(/\/$/, "");
+  if (clean !== url) variants.push(clean);
+
+  if (url.includes("zillow.com")) {
+    // Try mobile Zillow
+    const mobile = url.replace("www.zillow.com", "m.zillow.com");
+    if (mobile !== url) variants.push(mobile);
+  } else if (url.includes("realtor.com")) {
+    // Try with rdc client_id param
+    variants.push(clean + "?client_id=rdc-x&variant=pdetails_redesign_2021");
+  } else if (url.includes("redfin.com")) {
+    // Try stingray API path
+    const homeMatch = url.match(/\/home\/(\d+)/);
+    if (homeMatch) variants.push(`https://www.redfin.com/stingray/api/home/details/belowTheFold?propertyId=${homeMatch[1]}`);
+  }
+
+  // Deduplicate, max 3
+  return [...new Set(variants)].slice(0, 3);
+}
+
+// ── Parse address from URL slug ──────────────────────────
+function addressFromUrl(url: string): { street: string; city: string; state: string; zip: string } | null {
+  try {
+    const path = new URL(url).pathname;
+    // Zillow: /homedetails/6009-Maple-Springs-Dr-Fort-Worth-TX-76001/12345_zpid
+    const zm = path.match(/\/homedetails\/([^/]+)\/\d+_zpid/);
+    if (zm) {
+      const parts = zm[1].split("-");
+      const zip = parts.pop() || "";
+      const state = parts.pop() || "";
+      const streetTypes = /^(Dr|St|Ln|Rd|Blvd|Ave|Ct|Pl|Way|Trl|Cir|Loop|Pkwy|Cv|Run|Pass|Xing|Holw|Bnd|Pt|Ridge|Glen|Ter|Creek|Park|View|Hill|Lake|Meadow|Crk)$/i;
+      let splitIdx = parts.length;
+      for (let i = parts.length - 1; i >= 2; i--) { if (streetTypes.test(parts[i])) { splitIdx = i + 1; break; } }
+      return { street: parts.slice(0, splitIdx).join(" "), city: parts.slice(splitIdx).join(" "), state, zip };
+    }
+    // Realtor: /realestateandhomes-detail/6009-Maple-Springs-Dr_Fort-Worth_TX_76001_M...
+    const rm = path.match(/\/realestateandhomes-detail\/([^/]+)/);
+    if (rm) {
+      const slug = rm[1].replace(/_M\d[\w-]*$/, "");
+      const p = slug.split("_");
+      const zip = p.pop() || ""; const state = p.pop() || ""; const city = (p.pop() || "").replace(/-/g, " ");
+      return { street: (p.join("_")).replace(/-/g, " "), city, state, zip };
+    }
+    // Redfin: /TX/Fort-Worth/6009-Maple-Springs-Dr-76001/home/12345
+    const rfm = path.match(/\/([A-Z]{2})\/([^/]+)\/([^/]+?)(?:-(\d{5}))?\/(home|unit)\/\d+/);
+    if (rfm) return { street: rfm[3].replace(/-/g, " "), city: rfm[2].replace(/-/g, " "), state: rfm[1], zip: rfm[4] || "" };
+  } catch { /* ignore */ }
+  return null;
+}
+
+// ── Merge partial results (fill empty fields only) ───────
+function mergeDetails(base: ListingDetails, overlay: ListingDetails): ListingDetails {
+  const out = { ...base };
+  for (const [k, v] of Object.entries(overlay)) {
+    if (v !== undefined && v !== null && v !== "" && v !== 0 && !(k in out && (out as Record<string,unknown>)[k])) {
+      (out as Record<string,unknown>)[k] = v;
+    }
+  }
+  return out;
+}
+
+function detailsQuality(d: ListingDetails | null): number {
+  if (!d) return 0;
+  let score = 0;
+  if (d.price) score += 3;
+  if (d.beds) score++;
+  if (d.baths) score++;
+  if (d.sqft) score += 2;
+  if (d.address) score += 2;
+  if (d.city) score++;
+  if (d.zip) score++;
+  return score;
+}
+
+// ── Address-based cross-site search ──────────────────────
+async function searchByAddress(street: string, city: string, state: string, zip: string): Promise<ScrapeResult> {
+  const slug = street.replace(/\s+/g, "-");
+  const citySlug = city.replace(/\s+/g, "-");
+  const urls = [
+    `https://www.zillow.com/homes/${slug}-${citySlug}-${state}-${zip}_rb/`,
+    `https://www.realtor.com/realestateandhomes-detail/${slug}_${citySlug}_${state}_${zip}`,
+  ];
+  console.log(`searchByAddress: trying ${urls.length} constructed URLs`);
+  for (const tryUrl of urls) {
+    try {
+      console.log(`  Trying: ${tryUrl}`);
+      const result = await scrapeListing(tryUrl);
+      if (result.details && detailsQuality(result.details) >= 4) {
+        console.log(`  searchByAddress success via ${tryUrl}`);
+        return result;
+      }
+    } catch (e) { console.error(`  searchByAddress error for ${tryUrl}:`, e); }
+  }
+  return { details: null, html: "", source: "search" };
+}
+
 // ── Main scrape orchestrator ─────────────────────────────
 interface ScrapeResult {
   details: ListingDetails | null;
   html: string;
-  source: string;  // "zillow" | "realtor" | "redfin"
+  source: string;  // "zillow" | "realtor" | "redfin" | "search"
 }
 
 async function scrapeListing(url: string): Promise<ScrapeResult> {
@@ -372,31 +471,91 @@ async function scrapeListing(url: string): Promise<ScrapeResult> {
 
   console.log(`Scraping: source=${source}, htmlLen=${html.length}, has__NEXT_DATA__=${html.includes("__NEXT_DATA__")}, hasJsonLd=${html.includes("application/ld+json")}`);
 
+  // Collect partial results and merge the best
+  let merged: ListingDetails = {};
+
   // Try site-specific parsers first
   if (isZillow) {
     const d = parseZillowNextData(html, url);
-    if (d) { console.log("Zillow __NEXT_DATA__ success"); return { details: d, html, source }; }
+    if (d) { console.log("Zillow __NEXT_DATA__ success"); merged = mergeDetails(merged, d); }
   }
 
   if (isRealtor) {
     const d = parseRealtorNextData(html, url);
-    if (d) { console.log("Realtor __NEXT_DATA__ success"); return { details: d, html, source }; }
+    if (d) { console.log("Realtor __NEXT_DATA__ success"); merged = mergeDetails(merged, d); }
   }
+
+  // If we have good data already, return early
+  if (detailsQuality(merged) >= 6) return { details: merged, html, source };
 
   // Try JSON-LD (works for many sites)
   const ld = parseJsonLd(html, url);
-  if (ld) { console.log("JSON-LD success"); return { details: ld, html, source }; }
+  if (ld) { console.log("JSON-LD found"); merged = mergeDetails(merged, ld); }
+  if (detailsQuality(merged) >= 6) return { details: merged, html, source };
 
   // Try regex patterns
   const rx = regexFallback(html, url);
-  if (rx) { console.log("Regex fallback success"); return { details: rx, html, source }; }
+  if (rx) { console.log("Regex fallback found"); merged = mergeDetails(merged, rx); }
+  if (detailsQuality(merged) >= 4) return { details: merged, html, source };
 
   // Last resort: Claude AI extraction
-  console.log("All parsers failed, trying Claude AI fallback");
+  console.log("Trying Claude AI fallback");
   const ai = await claudeFallback(html, url);
-  if (ai) { console.log("Claude AI fallback success"); return { details: ai, html, source }; }
+  if (ai) { console.log("Claude AI fallback found"); merged = mergeDetails(merged, ai); }
+  if (detailsQuality(merged) >= 3) return { details: merged, html, source };
 
-  return { details: null, html, source };
+  return { details: Object.keys(merged).length > 0 ? merged : null, html, source };
+}
+
+// ── Multi-URL scrape with variants ───────────────────────
+async function scrapeWithVariants(url: string): Promise<ScrapeResult & { missing?: string[] }> {
+  const variants = generateUrlVariants(url);
+  let bestResult: ScrapeResult = { details: null, html: "", source: "" };
+  let bestScore = 0;
+
+  for (const variant of variants) {
+    console.log(`Trying variant: ${variant}`);
+    try {
+      const result = await scrapeListing(variant);
+      const score = detailsQuality(result.details);
+      if (score > bestScore) {
+        bestResult = result;
+        bestScore = score;
+      }
+      if (score >= 6) break; // Good enough, stop trying
+    } catch (e) { console.error(`Variant failed: ${variant}`, e); }
+  }
+
+  // If still poor results, try address-based cross-site search
+  if (bestScore < 4) {
+    const addr = addressFromUrl(url);
+    if (addr && addr.street) {
+      console.log(`URL variants insufficient (score=${bestScore}), trying address search: ${addr.street}, ${addr.city}`);
+      const searchResult = await searchByAddress(addr.street, addr.city, addr.state, addr.zip);
+      const searchScore = detailsQuality(searchResult.details);
+      if (searchScore > bestScore) {
+        // Merge address info from URL even if search had better data
+        if (searchResult.details && addr) {
+          searchResult.details = mergeDetails(searchResult.details, { address: addr.street, city: addr.city, state: addr.state, zip: addr.zip, listing_url: url });
+        }
+        bestResult = searchResult;
+        bestScore = searchScore;
+      }
+    }
+  }
+
+  // Compute missing fields
+  const missing: string[] = [];
+  if (bestResult.details) {
+    if (!bestResult.details.price) missing.push("price");
+    if (!bestResult.details.beds) missing.push("beds");
+    if (!bestResult.details.baths) missing.push("baths");
+    if (!bestResult.details.sqft) missing.push("sqft");
+    if (!bestResult.details.city) missing.push("city");
+    if (!bestResult.details.zip) missing.push("zip");
+  }
+
+  return { ...bestResult, missing };
 }
 
 // ── Agent/Realtor extraction ─────────────────────────────
@@ -716,9 +875,26 @@ serve(async (req) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...cors, "Content-Type": "application/json" } });
 
   try {
-    const { url } = await req.json();
+    const body = await req.json();
+    const { url, address, city, state, zip } = body;
+
+    // Mode 1: Address-based search (no URL required)
+    if (!url && address) {
+      console.log(`fetch-listing: address search mode — ${address}, ${city || ""}, ${state || "TX"}`);
+      const result = await searchByAddress(
+        address, city || "", state || "TX", zip || ""
+      );
+      if (!result.details) {
+        return new Response(JSON.stringify({ error: "Could not find property by address", address }), { status: 422, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+      // Ensure address fields are populated
+      result.details = mergeDetails(result.details, { address, city, state: state || "TX", zip });
+      return new Response(JSON.stringify(result.details), { headers: { ...cors, "Content-Type": "application/json" } });
+    }
+
+    // Mode 2: URL-based scrape
     if (!url || typeof url !== "string") {
-      return new Response(JSON.stringify({ error: "url is required" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "url or address is required" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
     // SSRF protection: only allow known real estate hostnames
@@ -750,10 +926,19 @@ serve(async (req) => {
       } catch (e) { console.error("redf.in resolve error:", e); }
     }
 
-    console.log(`fetch-listing: scraping ${cleanUrl}`);
-    const { details, html: scrapedHtml, source } = await scrapeListing(cleanUrl);
+    console.log(`fetch-listing: scraping ${cleanUrl} (with variants + fallback)`);
+    const { details, html: scrapedHtml, source, missing } = await scrapeWithVariants(cleanUrl);
 
     if (!details) {
+      // Last resort: try to populate from URL pattern
+      const addr = addressFromUrl(cleanUrl);
+      if (addr && addr.street) {
+        return new Response(JSON.stringify({
+          error: "Scraping failed — partial address from URL",
+          partial: { address: addr.street, city: addr.city, state: addr.state, zip: addr.zip, listing_url: cleanUrl },
+          missing: ["price", "beds", "baths", "sqft"],
+        }), { status: 422, headers: { ...cors, "Content-Type": "application/json" } });
+      }
       return new Response(JSON.stringify({ error: "Could not fetch listing details", url: cleanUrl }), { status: 422, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
@@ -762,12 +947,14 @@ serve(async (req) => {
       const propertyZip = details.zip;
       const agents = extractAgentInfo(scrapedHtml, source, propertyZip);
       if (agents.length > 0) {
-        // Fire and forget — don't block the response
         updateRealtorRepo(agents).catch(e => console.error("Agent repo update failed:", e));
       }
     }
 
-    return new Response(JSON.stringify(details), { headers: { ...cors, "Content-Type": "application/json" } });
+    // Include missing fields list so client can show warnings
+    const response: Record<string, unknown> = { ...details };
+    if (missing && missing.length > 0) response._missing = missing;
+    return new Response(JSON.stringify(response), { headers: { ...cors, "Content-Type": "application/json" } });
   } catch (err) {
     console.error("fetch-listing error:", err);
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });

@@ -296,14 +296,23 @@ async function fetchListingDetails(url,infoEl){
       headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
       body:JSON.stringify({url})
     });
-    if(!res.ok){
-      const err=await res.json().catch(()=>({}));
-      infoEl.innerHTML=infoEl.innerHTML.replace(/<span class="ap-loading">.*?<\/span>/,'<span style="color:var(--amber)">Fetch failed — enter details manually</span>');
-      console.warn('fetch-listing:',err.error||res.status);
+    const d=await res.json().catch(()=>({}));
+    console.log('fetch-listing result:',d);
+    // Handle 422 with partial data from URL pattern
+    if(!res.ok&&d.partial){
+      const g=id=>document.getElementById(id);
+      if(d.partial.address)g('ap-addr').value=d.partial.address;
+      if(d.partial.city)g('ap-city').value=d.partial.city;
+      if(d.partial.zip)g('ap-zip').value=d.partial.zip;
+      const miss=(d.missing||[]).join(', ');
+      infoEl.innerHTML=`<span style="color:var(--amber)">⚠️ Partial — got address from URL but missing: ${miss}. Enter details manually.</span>`;
       return;
     }
-    const d=await res.json();
-    console.log('fetch-listing result:',d);
+    if(!res.ok){
+      infoEl.innerHTML=infoEl.innerHTML.replace(/<span class="ap-loading">.*?<\/span>/,`<span style="color:var(--amber)">Fetch failed: ${d.error||res.status} — enter details manually</span>`);
+      console.warn('fetch-listing:',d.error||res.status);
+      return;
+    }
     // Fill all available fields
     const g=id=>document.getElementById(id);
     if(d.address)g('ap-addr').value=d.address.replace(/,\s*(TX|tx)\s*\d{5}$/,'').trim();
@@ -315,7 +324,7 @@ async function fetchListingDetails(url,infoEl){
     if(d.baths)g('ap-baths').value=d.baths;
     if(d.sqft)g('ap-sqft').value=d.sqft;
     if(d.rent_estimate)g('ap-rent').value=d.rent_estimate;
-    // Update parsed info line
+    // Build info line
     const parts=[];
     if(d.price)parts.push('$'+Number(d.price).toLocaleString());
     if(d.beds)parts.push(d.beds+'bd');
@@ -323,7 +332,10 @@ async function fetchListingDetails(url,infoEl){
     if(d.sqft)parts.push(d.sqft.toLocaleString()+' sqft');
     if(d.rent_estimate)parts.push('rent $'+d.rent_estimate.toLocaleString()+'/mo');
     const street=d.address?d.address.split(',')[0]:(g('ap-addr').value||'');
-    infoEl.innerHTML=`✅ <strong>${street}</strong>, ${d.city||''}, ${d.state||'TX'} ${d.zip||''} — ${parts.join(' · ')||'details fetched'}`;
+    const miss=d._missing||[];
+    let line=`✅ <strong>${street}</strong>, ${d.city||''}, ${d.state||'TX'} ${d.zip||''} — ${parts.join(' · ')||'details fetched'}`;
+    if(miss.length>0) line+=` <span style="color:var(--amber)">(missing: ${miss.join(', ')})</span>`;
+    infoEl.innerHTML=line;
   }catch(e){
     if(e.name==='AbortError')return;
     console.error('fetchListingDetails error:',e);

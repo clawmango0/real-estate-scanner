@@ -45,6 +45,7 @@ function buildMod(id){
       <div style="display:flex;gap:.4rem">
         <input id="ep-url" value="${esc(p.listingUrl||'')}" placeholder="https://www.zillow.com/homedetails/..." ${_is} style="flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.35rem .5rem;font-size:.8rem">
         <button onclick="rescrapeEdit('${id}')" id="ep-scrape-btn" style="padding:.35rem .7rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.75rem;white-space:nowrap">🔄 Scrape</button>
+        <button onclick="searchByAddrEdit('${id}')" style="padding:.35rem .7rem;background:var(--adim);border:1px solid var(--accent);color:var(--accent);border-radius:6px;cursor:pointer;font-size:.75rem;white-space:nowrap">🔍 Search</button>
       </div>
       <div id="ep-scrape-status" style="font-size:.68rem;color:var(--text2);margin-top:.3rem;display:none"></div>
     </div>
@@ -524,6 +525,26 @@ function doEstimateRent(id){
   }
 }
 
+// Fill edit form fields from scraped data object, return summary
+function _fillEditFields(d){
+  const g=s=>document.getElementById(s);
+  if(d.address){const street=d.address.split(',')[0].trim();if(g('ep-addr'))g('ep-addr').value=street;}
+  if(d.city&&g('ep-city')) g('ep-city').value=d.city;
+  if(d.zip&&g('ep-zip')) g('ep-zip').value=d.zip;
+  if(d.price&&g('ep-price')) g('ep-price').value=d.price;
+  if(d.property_type&&g('ep-type')) g('ep-type').value=d.property_type;
+  if(d.beds&&g('ep-beds')) g('ep-beds').value=d.beds;
+  if(d.baths&&g('ep-baths')) g('ep-baths').value=d.baths;
+  if(d.sqft&&g('ep-sqft')) g('ep-sqft').value=d.sqft;
+  if(d.rent_estimate&&g('ep-rent-est')) g('ep-rent-est').value=d.rent_estimate;
+  const parts=[];
+  if(d.price)parts.push('$'+Number(d.price).toLocaleString());
+  if(d.beds)parts.push(d.beds+'bd');
+  if(d.baths)parts.push(d.baths+'ba');
+  if(d.sqft)parts.push(d.sqft.toLocaleString()+' sqft');
+  return parts.join(' · ');
+}
+
 // Re-scrape listing URL from edit form
 async function rescrapeEdit(id){
   const url=(document.getElementById('ep-url')?.value||'').trim();
@@ -531,7 +552,7 @@ async function rescrapeEdit(id){
   const btn=document.getElementById('ep-scrape-btn');
   if(!url){if(status){status.textContent='⚠️ Paste a listing URL first';status.style.display='block';}return;}
   if(btn){btn.disabled=true;btn.textContent='⏳ Scraping...';}
-  if(status){status.textContent='Fetching property details...';status.style.display='block';status.style.color='var(--text2)';}
+  if(status){status.textContent='Trying URL variants & fallbacks...';status.style.display='block';status.style.color='var(--text2)';}
   try{
     const token=await getAccessToken();
     if(!token) throw new Error('Not signed in');
@@ -540,29 +561,69 @@ async function rescrapeEdit(id){
       headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
       body:JSON.stringify({url})
     });
-    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||`HTTP ${res.status}`);}
     const d=await res.json();
     console.log('rescrape result:',d);
-    const g=s=>document.getElementById(s);
-    // Fill form fields with scraped data
-    if(d.address){const street=d.address.split(',')[0].trim();g('ep-addr').value=street;}
-    if(d.city) g('ep-city').value=d.city;
-    if(d.zip) g('ep-zip').value=d.zip;
-    if(d.price) g('ep-price').value=d.price;
-    if(d.property_type) g('ep-type').value=d.property_type;
-    if(d.beds) g('ep-beds').value=d.beds;
-    if(d.baths) g('ep-baths').value=d.baths;
-    if(d.sqft) g('ep-sqft').value=d.sqft;
-    if(d.rent_estimate) g('ep-rent-est').value=d.rent_estimate;
-    const parts=[];
-    if(d.price)parts.push('$'+Number(d.price).toLocaleString());
-    if(d.beds)parts.push(d.beds+'bd');
-    if(d.baths)parts.push(d.baths+'ba');
-    if(d.sqft)parts.push(d.sqft.toLocaleString()+' sqft');
-    status.innerHTML='✅ Scraped: '+parts.join(' · ')+' — review & save';
-    status.style.color='var(--green)';
+    // Handle 422 with partial data
+    if(!res.ok&&d.partial){
+      _fillEditFields(d.partial);
+      const miss=(d.missing||[]).join(', ');
+      status.innerHTML=`⚠️ Partial data from URL — missing: <strong>${miss}</strong>. Enter manually or <a href="#" onclick="searchByAddrEdit('${id}');return false" style="color:var(--accent)">🔍 search by address</a>`;
+      status.style.color='var(--amber)';
+      return;
+    }
+    if(!res.ok) throw new Error(d.error||`HTTP ${res.status}`);
+    const summary=_fillEditFields(d);
+    // Show missing fields warning if any
+    const miss=d._missing||[];
+    if(miss.length>0){
+      status.innerHTML=`✅ Scraped: ${summary} — <span style="color:var(--amber)">missing: ${miss.join(', ')}</span>`;
+      status.style.color='var(--green)';
+    } else {
+      status.innerHTML='✅ Scraped: '+summary+' — review & save';
+      status.style.color='var(--green)';
+    }
   }catch(e){
     console.error('rescrapeEdit error:',e);
+    if(status){
+      status.innerHTML=`❌ ${e.message||String(e)} — <a href="#" onclick="searchByAddrEdit('${id}');return false" style="color:var(--accent)">🔍 Try search by address</a>`;
+      status.style.color='var(--red)';
+    }
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🔄 Scrape';}
+  }
+}
+
+// Search by address when URL scrape fails
+async function searchByAddrEdit(id){
+  const g=s=>(document.getElementById(s)?.value||'').trim();
+  const addr=g('ep-addr');
+  const city=g('ep-city');
+  const zip=g('ep-zip');
+  if(!addr){const st=document.getElementById('ep-scrape-status');if(st){st.textContent='⚠️ Enter an address first';st.style.display='block';}return;}
+  const status=document.getElementById('ep-scrape-status');
+  const btn=document.getElementById('ep-scrape-btn');
+  if(btn){btn.disabled=true;btn.textContent='🔍 Searching...';}
+  if(status){status.textContent='Searching for property by address...';status.style.display='block';status.style.color='var(--text2)';}
+  try{
+    const token=await getAccessToken();
+    if(!token) throw new Error('Not signed in');
+    const res=await fetch(`${EDGE_BASE}/fetch-listing`,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify({address:addr,city,state:'TX',zip})
+    });
+    const d=await res.json();
+    if(!res.ok) throw new Error(d.error||`HTTP ${res.status}`);
+    const summary=_fillEditFields(d);
+    const miss=d._missing||[];
+    if(miss.length>0){
+      status.innerHTML=`✅ Found: ${summary} — <span style="color:var(--amber)">missing: ${miss.join(', ')}</span>`;
+    } else {
+      status.innerHTML='✅ Found: '+summary+' — review & save';
+    }
+    status.style.color='var(--green)';
+  }catch(e){
+    console.error('searchByAddrEdit error:',e);
     if(status){status.textContent='❌ '+(e.message||String(e));status.style.color='var(--red)';}
   }finally{
     if(btn){btn.disabled=false;btn.textContent='🔄 Scrape';}
