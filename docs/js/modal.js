@@ -294,11 +294,18 @@ function _modBrrrr(id,p,cond,impr){
   const bh=rent?cocCalc(p.listed,rent):null;
   return _propDetailsHtml(p)+
   `<div class="sec">💰 Est. Monthly Rent</div>
+  ${p.rentRange?`<div class="infobox" style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap">
+    <span style="color:var(--amber);font-size:.72rem">${p.rentRange.source==='claude'?'🤖 Claude Rent Est:':'💡 Rent Estimate:'}</span>
+    <strong style="color:var(--amber)">${M(p.rentRange.low)} – ${M(p.rentRange.high)}/mo</strong>
+    <button onclick="mRent['${id}']=${Math.round((p.rentRange.low+p.rentRange.high)/2)};document.getElementById('rent-inp-${id}').value=mRent['${id}'];buildMod('${id}')" style="background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:5px;padding:.2rem .5rem;font-size:.65rem;cursor:pointer;margin-left:auto">Use midpoint</button>
+  </div>`:''}
   <div class="rent-input-row">
     <label>Set estimated rent for BRRRR analysis</label>
     <input type="text" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" inputmode="numeric" pattern="[0-9]*" class="no-spin" oninput="mRent['${id}']=Math.round(+this.value.replace(/[^0-9]/g,''))||0" onblur="if(mRent['${id}'])buildMod('${id}')">
     <button class="save-btn" onclick="saveRent('${id}')">Save</button>
-  </div>`+
+    <button class="ai-btn" id="ai-rent-${id}" onclick="askClaudeRent('${id}')">🤖 Ask Claude</button>
+  </div>
+  <div id="ai-reason-${id}" style="display:none;font-size:.68rem;color:var(--text2);margin-top:.3rem;padding:.3rem .5rem;background:var(--card);border-radius:5px;border:1px solid var(--border)"></div>`+
   _condImprHtml(id,cond,impr)+
   (b?`
   <div class="sec">🔁 BRRRR Analysis</div>
