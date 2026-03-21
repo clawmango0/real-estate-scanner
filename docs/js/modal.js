@@ -165,7 +165,7 @@ function buildMod(id){
     <div class="sec">🏚️ Condition</div><div class="g4">${condBtns}</div>
     <div class="sec">🔨 Improvement Plan</div><div class="g4 g4i">${imprBtns}</div>
 
-    <div class="sec">🧾 Tax Parameters</div>
+    ${rent?`<div class="sec">🧾 Tax Parameters</div>
     <div class="txs">
       <div class="tr2">
         <label>Filing Status</label>
