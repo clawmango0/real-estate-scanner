@@ -49,13 +49,15 @@ async function fetchHtml(url: string): Promise<string> {
 
   // Fall back to ScraperAPI if we didn't get useful property data
   // Direct fetch often returns a captcha page or JS-only shell for Zillow/Realtor
-  const hasUsefulData = html.length > 5000 && (
+  const hasUsefulData = html.length > 1000 && (
     html.includes("gdpClientCache") ||         // Zillow __NEXT_DATA__
     html.includes("initialReduxState") ||      // Realtor __NEXT_DATA__
     html.includes("ldp-page-content") ||       // Realtor rendered content
     html.includes('"list_price"') ||           // Realtor JSON data
     html.includes("RealEstateListing") ||      // Redfin JSON-LD
-    (html.includes('"price"') && html.includes('"bedrooms"')) // Generic property data
+    (html.includes('"price"') && html.includes('"bedrooms"')) || // Generic property data
+    (/listed\s+(?:at|for)\s+\$[\d,]+/i.test(html)) ||  // Meta description with price
+    (/<meta\s+name="description"[^>]*(?:bed|bath|sqft)/i.test(html)) // Meta with property details
   );
   if (!hasUsefulData && SCRAPER_KEY) {
     // Try ScraperAPI without render first (faster, works when __NEXT_DATA__ is in static HTML)
@@ -258,6 +260,74 @@ function parseJsonLd(html: string, listingUrl: string): ListingDetails | null {
           };
         }
       } catch {}
+    }
+    return null;
+  } catch { return null; }
+}
+
+// ── Meta tag parser (works even on JS-only shells) ───────
+function parseMetaTags(html: string, listingUrl: string): ListingDetails | null {
+  try {
+    // Extract meta description: "3 bed, 2 bath, 1843 sqft. single family home ... listed at $299,987"
+    const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]+)"/i)
+                   || html.match(/<meta\s+content="([^"]+)"\s+name="description"/i);
+    const ogDescMatch = html.match(/<meta\s+property="og:description"\s+content="([^"]+)"/i)
+                     || html.match(/<meta\s+content="([^"]+)"\s+property="og:description"/i);
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+
+    // Combine all text sources
+    const texts = [descMatch?.[1], ogDescMatch?.[1], titleMatch?.[1]].filter(Boolean).join(" | ");
+    if (!texts) return null;
+
+    console.log(`Meta tag text: ${texts.slice(0, 200)}`);
+
+    // Extract price: "listed at $299,987" or "$299,987" or "price: $299,987"
+    const priceM = texts.match(/(?:listed\s+(?:at|for)|price[:\s]+|asking)\s*\$?([\d,]+)/i)
+                || texts.match(/\$([\d,]{4,})/);
+    // Extract beds: "3 bed" or "3 br" or "3-bed"
+    const bedsM = texts.match(/(\d+)\s*[-\s]?(?:bed|br|bedroom)/i);
+    // Extract baths: "2 bath" or "2 ba" or "2.5-bath"
+    const bathsM = texts.match(/([\d.]+)\s*[-\s]?(?:bath|ba\b)/i);
+    // Extract sqft: "1,843 sqft" or "1843 sq ft" or "1,843-sqft"
+    const sqftM = texts.match(/([\d,]+)\s*[-\s]?(?:sqft|sq\.?\s*ft)/i);
+
+    // Extract address from og:street-address or title
+    const streetM = html.match(/<meta\s+property="og:street-address"\s+content="([^"]+)"/i);
+    const cityM = html.match(/<meta\s+property="og:locality"\s+content="([^"]+)"/i);
+    const stateM = html.match(/<meta\s+property="og:region"\s+content="([^"]+)"/i);
+    const zipM = html.match(/<meta\s+property="og:postal-code"\s+content="([^"]+)"/i);
+
+    // Also try parsing address from title: "532 Plainview Dr, Hurst, TX 76054"
+    let titleAddr: { street?: string; city?: string; state?: string; zip?: string } = {};
+    if (titleMatch) {
+      const tm = titleMatch[1].match(/^(.+?),\s*(.+?),\s*([A-Z]{2})\s*(\d{5})/);
+      if (tm) titleAddr = { street: tm[1].trim(), city: tm[2].trim(), state: tm[3], zip: tm[4] };
+    }
+
+    // Property type from description
+    let propType: string | undefined;
+    if (/single\s*family/i.test(texts)) propType = "SFR";
+    else if (/condo/i.test(texts)) propType = "CONDO";
+    else if (/duplex/i.test(texts)) propType = "DUPLEX";
+    else if (/triplex/i.test(texts)) propType = "TRIPLEX";
+    else if (/multi/i.test(texts)) propType = "DUPLEX";
+    else if (/lot|land/i.test(texts)) propType = "LOT";
+
+    if (priceM || bedsM || bathsM || sqftM) {
+      const d: ListingDetails = {
+        price: priceM ? Number(priceM[1].replace(/,/g, "")) : undefined,
+        beds: bedsM ? Number(bedsM[1]) : undefined,
+        baths: bathsM ? Number(bathsM[1]) : undefined,
+        sqft: sqftM ? Number(sqftM[1].replace(/,/g, "")) : undefined,
+        address: streetM?.[1] || titleAddr.street,
+        city: cityM?.[1] || titleAddr.city,
+        state: stateM?.[1] || titleAddr.state,
+        zip: zipM?.[1] || titleAddr.zip,
+        property_type: propType,
+        listing_url: listingUrl,
+      };
+      console.log("Meta tag parse success:", JSON.stringify(d));
+      return d;
     }
     return null;
   } catch { return null; }
@@ -589,6 +659,11 @@ async function scrapeListing(url: string): Promise<ScrapeResult> {
   // Try JSON-LD (works for many sites)
   const ld = parseJsonLd(html, url);
   if (ld) { console.log("JSON-LD found"); merged = mergeDetails(merged, ld); }
+  if (detailsQuality(merged) >= 6) return { details: merged, html, source };
+
+  // Try meta tags (title, og:*, description — works even on JS-only shells)
+  const mt = parseMetaTags(html, url);
+  if (mt) { console.log("Meta tag parse found"); merged = mergeDetails(merged, mt); }
   if (detailsQuality(merged) >= 6) return { details: merged, html, source };
 
   // Try regex patterns
