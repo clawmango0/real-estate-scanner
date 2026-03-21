@@ -432,25 +432,123 @@ function detailsQuality(d: ListingDetails | null): number {
   return score;
 }
 
-// ── Address-based cross-site search ──────────────────────
+// ── Google search → extract listing URLs → scrape ────────
 async function searchByAddress(street: string, city: string, state: string, zip: string): Promise<ScrapeResult> {
-  const slug = street.replace(/\s+/g, "-");
-  const citySlug = city.replace(/\s+/g, "-");
-  const urls = [
-    `https://www.zillow.com/homes/${slug}-${citySlug}-${state}-${zip}_rb/`,
-    `https://www.realtor.com/realestateandhomes-detail/${slug}_${citySlug}_${state}_${zip}`,
-  ];
-  console.log(`searchByAddress: trying ${urls.length} constructed URLs`);
-  for (const tryUrl of urls) {
+  const query = `${street}, ${city}, ${state} ${zip}`.replace(/,\s*,/g, ",").trim();
+  console.log(`searchByAddress: Google search for "${query}"`);
+
+  // Step 1: Google search for the address
+  let searchHtml = "";
+  try {
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query + " property listing zillow OR realtor.com OR redfin")}&num=10`;
+    const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 15000);
+    const r = await fetch(searchUrl, {
+      headers: { "User-Agent": UA, "Accept": "text/html", "Accept-Language": "en-US,en;q=0.5" },
+      signal: ac.signal,
+    });
+    clearTimeout(t);
+    if (r.ok) searchHtml = await r.text();
+    console.log(`Google search: status=${r.status}, len=${searchHtml.length}`);
+  } catch (e) { console.error("Google search fetch error:", e); }
+
+  // Step 2: Extract real estate listing URLs from search results
+  const listingUrls: string[] = [];
+  if (searchHtml) {
+    // Google results contain URLs in href="/url?q=..." or direct hrefs
+    const urlPattern = /(?:href="\/url\?q=|href=")(https?:\/\/(?:www\.)?(?:zillow\.com|realtor\.com|redfin\.com)[^"&]+)/g;
+    let m;
+    while ((m = urlPattern.exec(searchHtml)) !== null) {
+      let found = decodeURIComponent(m[1]).split("&")[0];
+      // Only keep detail/property pages, not search/category pages
+      if (found.includes("/homedetails/") || found.includes("/realestateandhomes-detail/") ||
+          found.includes("/home/") || found.includes("/property/")) {
+        if (!listingUrls.includes(found)) listingUrls.push(found);
+      }
+    }
+    console.log(`Found ${listingUrls.length} listing URLs from Google:`, listingUrls.slice(0, 3));
+  }
+
+  // Step 3: Try scraping each found listing URL
+  for (const tryUrl of listingUrls.slice(0, 3)) {
     try {
-      console.log(`  Trying: ${tryUrl}`);
+      console.log(`  Scraping Google result: ${tryUrl}`);
       const result = await scrapeListing(tryUrl);
       if (result.details && detailsQuality(result.details) >= 4) {
         console.log(`  searchByAddress success via ${tryUrl}`);
+        // Ensure listing_url is set
+        if (!result.details.listing_url) result.details.listing_url = tryUrl;
         return result;
       }
-    } catch (e) { console.error(`  searchByAddress error for ${tryUrl}:`, e); }
+    } catch (e) { console.error(`  Scrape failed for ${tryUrl}:`, e); }
   }
+
+  // Step 4: If no listing URLs found or all failed, try Claude on Google snippets
+  if (searchHtml && ANTHROPIC_KEY) {
+    console.log("Trying Claude extraction from Google search snippets");
+    try {
+      // Extract text snippets from search results (strip HTML tags, keep useful text)
+      const snippets = searchHtml
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .slice(0, 15000);
+
+      const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 30000);
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514", max_tokens: 300,
+          messages: [{ role: "user", content: `Extract property details for "${query}" from these Google search result snippets. Return ONLY a JSON object with fields (omit unknown): price (number), beds (number), baths (number), sqft (number), address (string), city (string), state (string, 2-letter), zip (string, 5-digit), property_type (SFR/DUPLEX/TRIPLEX/QUAD/CONDO/LOT). No markdown.\n\nSnippets:\n${snippets}` }],
+        }),
+        signal: ac.signal,
+      });
+      clearTimeout(t);
+      if (resp.ok) {
+        const result = await resp.json();
+        const text = result.content?.[0]?.text || "";
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          console.log("Claude extracted from Google:", JSON.stringify(parsed));
+          const details: ListingDetails = {
+            price: parsed.price ? Number(parsed.price) : undefined,
+            beds: parsed.beds ? Number(parsed.beds) : undefined,
+            baths: parsed.baths ? Number(parsed.baths) : undefined,
+            sqft: parsed.sqft ? Number(parsed.sqft) : undefined,
+            address: parsed.address || street,
+            city: parsed.city || city,
+            state: parsed.state || state,
+            zip: parsed.zip || zip,
+            property_type: parsed.property_type,
+          };
+          if (detailsQuality(details) >= 3) {
+            return { details, html: searchHtml, source: "google" };
+          }
+        }
+      }
+    } catch (e) { console.error("Claude Google extraction error:", e); }
+  }
+
+  // Step 5: Last resort — construct URLs from address pattern and try
+  const slug = street.replace(/\s+/g, "-");
+  const citySlug = (city || "").replace(/\s+/g, "-");
+  const constructedUrls = [];
+  if (citySlug && state) {
+    constructedUrls.push(`https://www.zillow.com/homes/${slug}-${citySlug}-${state}-${zip}_rb/`);
+    constructedUrls.push(`https://www.realtor.com/realestateandhomes-detail/${slug}_${citySlug}_${state}_${zip}`);
+  }
+  for (const tryUrl of constructedUrls) {
+    try {
+      console.log(`  Trying constructed URL: ${tryUrl}`);
+      const result = await scrapeListing(tryUrl);
+      if (result.details && detailsQuality(result.details) >= 4) {
+        return result;
+      }
+    } catch (e) { console.error(`  Constructed URL failed: ${tryUrl}`, e); }
+  }
+
   return { details: null, html: "", source: "search" };
 }
 
