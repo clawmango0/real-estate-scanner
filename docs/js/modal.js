@@ -78,7 +78,7 @@ function buildMod(id){
 
   const _it=_invType();
   if(_it!=='buyhold'){
-    _buildTypedModal(id,p,cond,impr,_it);
+    _buildTypedModal(id,p,cond,impr,_it,taxP);
     return;
   }
 
@@ -290,7 +290,7 @@ function _curateHtml(id,p){
 }
 
 // ── Typed modal dispatcher ───────────────────────────────────────────────────
-function _buildTypedModal(id,p,cond,impr,type){
+function _buildTypedModal(id,p,cond,impr,type,taxP){
   let badges=sourceBadge(p.source);
   if(p.isNew)badges+=`<span class="bdg bn">🆕 New</span>`;
   if(p.priceDrop)badges+=`<span class="bdg bd">📉 −${M(p.dropAmt||0)}</span>`;
