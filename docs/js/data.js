@@ -87,31 +87,27 @@ async function saveProperty(id, updates){
   }
 }
 
-async function estimateRent(id){
+function estimateRent(id){
   const p=props.find(x=>x.id===id);
   if(!p) return null;
-  const token=await getAccessToken();
-  if(!token) throw new Error('Not signed in');
-  const res=await fetch(`${EDGE_BASE}/estimate-rent`,{
-    method:'POST',
-    headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
-    body:JSON.stringify({
-      address:p.address, city:p.rawCity||p.city, zip:p.zip||'',
-      beds:p.beds, baths:p.baths, sqft:p.sqft,
-      listed_price:p.listed, property_type:p.type,
-      neighborhood:p._hood
-    })
-  });
-  if(!res.ok){
-    const err=await res.json().catch(()=>({error:'Unknown error'}));
-    throw new Error(err.error||`HTTP ${res.status}`);
-  }
-  const data=await res.json();
-  // Save estimate to DB
-  await saveProperty(id,{rent_estimate:data.estimate});
-  // Update local state with Claude's range
-  p.rentRange={low:data.low,high:data.high,source:'claude'};
-  return data;
+  const result=localRentEstimate(p);
+  if(result.error) throw new Error(result.error);
+  // Save estimate to DB (fire-and-forget)
+  saveProperty(id,{rent_estimate:result.estimate});
+  // Update local state
+  p.rentRange={low:result.low,high:result.high,source:'local'};
+  return result;
+}
+
+function maybeReEstimate(id){
+  const p=props.find(x=>x.id===id);
+  if(!p||!p.rentRange||p.rentRange.source!=='local') return;
+  const result=localRentEstimate(p);
+  if(!result||result.error) return;
+  p.rentRange={low:result.low,high:result.high,source:'local'};
+  mRent[id]=result.estimate;
+  saveProperty(id,{rent_estimate:result.estimate});
+  recomputeOne(p);
 }
 
 function toggleEdit(){if(openId){mEdit[openId]=!mEdit[openId];buildMod(openId);}}
@@ -143,6 +139,7 @@ async function savePropertyEdit(id){
     if(updates.property_type)p.type=updates.property_type;
     if(updates.rent_estimate){const re=updates.rent_estimate;p.rentRange={low:Math.round(re*0.88/25)*25,high:Math.round(re*1.12/25)*25,source:'manual'};}
     if(updates.monthly_rent) p.monthlyRent=updates.monthly_rent;
+    maybeReEstimate(id);
     recomputeOne(p);
   }
   mEdit[id]=false;

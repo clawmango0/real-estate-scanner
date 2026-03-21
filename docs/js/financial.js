@@ -175,6 +175,92 @@ function passiveCalc(investAmt,prefReturn,holdYrs,equityMultiple){
   return{annDist,totalReturn,totalDistributions,exitProceeds,profit,irr,npv,equityMultiple,prefReturn,holdYrs};
 }
 
+// ── Local Rent Estimator (DFW-calibrated, no API) ────────────────────────────
+function localRentEstimate(p){
+  // Validation
+  if(!p.listed) return{error:'Listed price is required'};
+  if(!p.beds)   return{error:'Please enter beds'};
+  if(!p.baths)  return{error:'Please enter baths'};
+  if(!p.sqft)   return{error:'Please enter sqft'};
+  if((p.type||'').toUpperCase()==='LOT') return{error:'Rent estimation not available for lots'};
+
+  const price=p.listed, beds=p.beds, baths=p.baths, sqft=p.sqft;
+  const hood=p._hood||{};
+  const condKey=(typeof mCond!=='undefined'&&mCond[p.id])||p.condition||'good';
+  const imprKey=(typeof mImpr!=='undefined'&&mImpr[p.id])||p.improvement||'asis';
+  const parts=[];  // reasoning fragments
+
+  // A. Base yield from price-to-rent ratio (DFW-calibrated)
+  let yieldPct;
+  if(price<=75000)       yieldPct=0.0095;
+  else if(price<=150000) yieldPct=0.0085;
+  else if(price<=250000) yieldPct=0.0072;
+  else if(price<=400000) yieldPct=0.0060;
+  else                   yieldPct=0.0050;
+  let baseRent=price*yieldPct;
+  parts.push(`${(yieldPct*100).toFixed(2)}% yield on ${M(price)} = ${M(baseRent)} base`);
+
+  // B. ZHVI adjustment
+  const zhvi=hood.zhvi;
+  if(zhvi&&zhvi>0){
+    const ratio=price/zhvi;
+    const zhviAdj=1-(1-ratio)*0.15;
+    const clamped=Math.max(0.85,Math.min(1.15,zhviAdj));
+    baseRent*=clamped;
+    if(Math.abs(clamped-1)>0.01){
+      parts.push(`ZHVI ${M(zhvi)} adj ${clamped<1?'':'+'}`+((clamped-1)*100).toFixed(1)+'%');
+    }
+  }
+
+  // C. Property type adjustment
+  const typeUpper=(p.type||'SFR').toUpperCase();
+  const typeAdj={SFR:1.0,DUPLEX:1.10,TRIPLEX:1.05,QUAD:1.05,CONDO:0.92}[typeUpper]||1.0;
+  baseRent*=typeAdj;
+  if(typeAdj!==1.0) parts.push(`${typeUpper} adj ${typeAdj>1?'+':''}${((typeAdj-1)*100).toFixed(0)}%`);
+
+  // D. Bedroom/bath adjustment (3bd/2ba baseline)
+  const bedAdj=1+(beds-3)*0.05;
+  const bathAdj=1+Math.max(0,baths-2)*0.025;
+  baseRent*=bedAdj*bathAdj;
+  if(beds!==3||baths!==2) parts.push(`${beds}bd/${baths}ba adj`);
+
+  // E. Sqft reasonableness check ($0.80-$1.40/sqft for DFW)
+  let rentPerSqft=baseRent/sqft;
+  if(rentPerSqft<0.80){baseRent=sqft*0.80; parts.push(`floor at $0.80/sqft`);}
+  else if(rentPerSqft>1.40){baseRent=sqft*1.40; parts.push(`cap at $1.40/sqft`);}
+  rentPerSqft=baseRent/sqft;
+
+  // F. Condition adjustment
+  const condAdj={distressed:-0.10,needswork:-0.05,good:0,updated:0.05}[condKey]||0;
+  if(condAdj!==0){baseRent*=(1+condAdj); parts.push(`${condKey} ${condAdj>0?'+':''}${(condAdj*100).toFixed(0)}%`);}
+
+  // G. Improvement adjustment (post-rehab expected rent)
+  const imprAdj={asis:0,cosmetic:0.02,moderate:0.04,fullrehab:0.08}[imprKey]||0;
+  if(imprAdj!==0){baseRent*=(1+imprAdj); parts.push(`${imprKey} +${(imprAdj*100).toFixed(0)}%`);}
+
+  // H. Market heat from appreciation
+  const appr1=hood.appreci1;
+  if(appr1!==undefined&&appr1!==null){
+    if(appr1>4){baseRent*=1.03; parts.push(`hot market (+${appr1.toFixed(1)}%/yr)`);}
+    else if(appr1<0){baseRent*=0.97; parts.push(`weak market (${appr1.toFixed(1)}%/yr)`);}
+  }
+
+  // Round to nearest $25
+  const estimate=Math.round(baseRent/25)*25;
+  const low=Math.round(estimate*0.88/25)*25;
+  const high=Math.round(estimate*1.12/25)*25;
+
+  // Build reasoning string
+  const zip=p.zip||hood.zip||'';
+  const areaName=hood.area?` (${hood.area})`:'';
+  const reasoning=`Based on ${typeUpper} at ${M(price)} in ${zip}${areaName}: `
+    +`${beds}bd/${baths}ba, ${sqft.toLocaleString()} sqft ($${rentPerSqft.toFixed(2)}/sqft). `
+    +(zhvi?`ZIP ZHVI ${M(zhvi)}${price<zhvi?' (below market)':price>zhvi?' (above market)':''}. `:'' )
+    +`Range: ${M(low)} \u2013 ${M(high)}/mo.`;
+
+  return{estimate,low,high,reasoning};
+}
+
 const M=n=>'$'+Math.abs(Math.round(n)).toLocaleString();
 const MS=n=>(n>=0?'+':'')+M(n);
 const PCT=n=>(n*100).toFixed(1)+'%';
