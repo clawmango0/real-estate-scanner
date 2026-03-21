@@ -30,6 +30,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
   // Any authenticated event: SIGNED_IN, INITIAL_SESSION, TOKEN_REFRESHED, etc.
   // Always cache the latest access-token so API calls use a fresh one.
   _accessToken = session.access_token;
+  // Save token for bookmarklet use
+  try { localStorage.setItem('lbiq_token', _accessToken); } catch(_){}
   const firstLogin = !currentUser;
   currentUser = session.user;
   document.getElementById('user-email-btn').textContent = currentUser.email;
@@ -38,6 +40,31 @@ sb.auth.onAuthStateChange(async (event, session) => {
     loadMailboxBg();
     loadProperties();
     loadProjects();
+    // Handle bookmarklet ?add= param
+    try{
+      const u=new URL(location.href);
+      const addParam=u.searchParams.get('add');
+      if(addParam){
+        const d=JSON.parse(addParam);
+        history.replaceState(null,'',u.pathname); // clean URL
+        setTimeout(()=>{
+          openAddProp();
+          const g=id=>document.getElementById(id);
+          if(d.address)g('ap-addr').value=d.address;
+          if(d.city)g('ap-city').value=d.city;
+          if(d.zip)g('ap-zip').value=d.zip;
+          if(d.price)g('ap-price').value=d.price;
+          if(d.property_type)g('ap-type').value=d.property_type;
+          if(d.beds)g('ap-beds').value=d.beds;
+          if(d.baths)g('ap-baths').value=d.baths;
+          if(d.sqft)g('ap-sqft').value=d.sqft;
+          if(d.rent_estimate)g('ap-rent').value=d.rent_estimate;
+          if(d.listing_url)g('ap-url').value=d.listing_url;
+          const info=g('ap-parsed');
+          if(info)info.innerHTML='<span style="color:var(--green)">✅ Imported from bookmarklet — review & save</span>';
+        },500);
+      }
+    }catch(_){}
   }
 });
 

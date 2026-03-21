@@ -244,8 +244,23 @@ function closeAddProp(e){
   document.getElementById('aov').classList.remove('open');
 }
 
+function _bookmarkletCode(){
+  // The bookmarklet runs on the listing page, grabs HTML + URL, and POSTs to our parse endpoint
+  return `javascript:void((function(){var u=location.href;var h=['zillow.com','realtor.com','redfin.com'];if(!h.some(function(d){return u.includes(d)})){alert('Open a Zillow, Realtor, or Redfin listing first');return;}var html=document.documentElement.outerHTML;var s=document.createElement('script');var overlay=document.createElement('div');overlay.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999999;background:linear-gradient(135deg,rgb(13,148,136),rgb(20,184,166));color:white;padding:12px 20px;font:600 14px/1.4 system-ui;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.3)';overlay.textContent='Sending to LockBoxIQ...';document.body.appendChild(overlay);fetch('https://tgborqvdkujajsggfbcy.supabase.co/functions/v1/fetch-listing',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('lbiq_token')},body:JSON.stringify({html:html.slice(0,200000),source_url:u})}).then(function(r){return r.json()}).then(function(d){if(d.error){overlay.style.background='rgb(220,38,38)';overlay.textContent='Error: '+d.error;setTimeout(function(){overlay.remove()},4000);return;}var p=[];if(d.price)p.push('$'+Number(d.price).toLocaleString());if(d.beds)p.push(d.beds+'bd');if(d.baths)p.push(d.baths+'ba');if(d.sqft)p.push(d.sqft.toLocaleString()+' sqft');overlay.innerHTML='<span style=font-size:18px>LockBoxIQ</span><br>'+p.join(' / ')+'<br><a href=https://lockboxiq.com/?add='+encodeURIComponent(JSON.stringify(d))+' style=color:white;text-decoration:underline>Open in dashboard</a>';setTimeout(function(){overlay.remove()},8000);}).catch(function(e){overlay.style.background='rgb(220,38,38)';overlay.textContent='Failed: '+e.message;setTimeout(function(){overlay.remove()},4000);});})())`;
+}
+
 function _buildAddPropHTML(){
-  return`<div style="margin-bottom:1rem">
+  return`<div style="margin-bottom:.8rem;padding:.6rem .8rem;background:linear-gradient(135deg,rgba(13,148,136,.1),rgba(20,184,166,.08));border:1px solid rgba(20,184,166,.25);border-radius:8px">
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
+      <span style="font-size:.8rem;font-weight:600;color:var(--accent)">Bookmarklet</span>
+      <span style="font-size:.65rem;color:var(--text2)">Drag to your bookmarks bar</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:.6rem">
+      <a href="${_bookmarkletCode()}" onclick="event.preventDefault();alert('Drag this button to your bookmarks bar, then click it on any Zillow/Realtor/Redfin listing page!')" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#14B8A6);color:#fff;padding:.35rem .8rem;border-radius:6px;font-size:.72rem;font-weight:600;text-decoration:none;cursor:grab;white-space:nowrap">📌 Add to LockBoxIQ</a>
+      <span style="font-size:.62rem;color:var(--text2);line-height:1.3">Visit any listing → click the bookmarklet → property details auto-captured from your browser (bypasses scraper blocks)</span>
+    </div>
+  </div>
+  <div style="margin-bottom:1rem">
     <label style="font-size:.68rem;color:var(--text2);display:block;margin-bottom:4px">Paste Zillow, Realtor, or Redfin URL</label>
     <div style="display:flex;gap:.4rem">
       <input id="ap-url" type="url" placeholder="https://www.zillow.com/homedetails/..." style="flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:.45rem .6rem;font-size:.8rem" oninput="parseAddUrl()">

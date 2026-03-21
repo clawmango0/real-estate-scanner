@@ -7,8 +7,10 @@ const SCRAPER_KEY   = Deno.env.get("SCRAPER_API_KEY") ?? "";
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const GITHUB_PAT    = Deno.env.get("GITHUB_PAT") ?? "";
 
+// Allow any origin for bookmarklet support (auth is via JWT, not CORS)
+const _origin = (req?: Request) => req?.headers?.get("origin") || "https://lockboxiq.com";
 const cors = {
-  "Access-Control-Allow-Origin": "https://lockboxiq.com",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
@@ -1055,6 +1057,29 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { url, address, city, state, zip } = body;
+
+    // Mode 0: Parse raw HTML from bookmarklet (no fetch needed)
+    if (body.html && body.source_url) {
+      console.log(`fetch-listing: parse-html mode, source=${body.source_url.slice(0, 80)}, len=${body.html.length}`);
+      const source = body.source_url.includes("zillow.com") ? "zillow" : body.source_url.includes("realtor.com") ? "realtor" : "redfin";
+      const html = body.html as string;
+      let details: ListingDetails | null = null;
+      // Run all parsers with merge
+      let merged: ListingDetails = { listing_url: body.source_url };
+      const isZillow = source === "zillow", isRealtor = source === "realtor";
+      if (isZillow) { const d = parseZillowNextData(html, body.source_url); if (d) merged = mergeDetails(merged, d); }
+      if (isRealtor) { const d = parseRealtorNextData(html, body.source_url); if (d) merged = mergeDetails(merged, d); }
+      const ld = parseJsonLd(html, body.source_url); if (ld) merged = mergeDetails(merged, ld);
+      const mt = parseMetaTags(html, body.source_url); if (mt) merged = mergeDetails(merged, mt);
+      const rx = regexFallback(html, body.source_url); if (rx) merged = mergeDetails(merged, rx);
+      details = detailsQuality(merged) >= 2 ? merged : null;
+      if (!details) {
+        const ai = await claudeFallback(html, body.source_url);
+        if (ai) details = mergeDetails(merged, ai);
+      }
+      if (!details) return new Response(JSON.stringify({ error: "Could not parse HTML" }), { status: 422, headers: { ...cors, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify(details), { headers: { ...cors, "Content-Type": "application/json" } });
+    }
 
     // Mode 1: Address-based search (no URL required)
     if (!url && address) {
