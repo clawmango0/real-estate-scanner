@@ -88,11 +88,11 @@ function buildMod(id){
     ${p.rentRange?`<div class="infobox" style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap">
       <span style="color:var(--amber);font-size:.72rem">${p.rentRange.source==='local'?'📊 Rent Est:':'💡 Rent Estimate:'}</span>
       <strong style="color:var(--amber)">${M(p.rentRange.low)} – ${M(p.rentRange.high)}/mo</strong>
-      <button onclick="mRent['${id}']=${Math.round((p.rentRange.low+p.rentRange.high)/2)};document.getElementById('rent-inp-${id}').value=mRent['${id}'];buildMod('${id}')" style="background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:5px;padding:.2rem .5rem;font-size:.65rem;cursor:pointer;margin-left:auto">Use midpoint</button>
+      <button onclick="mRent['${id}']=${Math.round((p.rentRange.low+p.rentRange.high)/2)};autoRentBlur('${id}')" style="background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:5px;padding:.2rem .5rem;font-size:.65rem;cursor:pointer;margin-left:auto">Use midpoint</button>
     </div>`:''}
     <div class="rent-input-row">
       <label>Set estimated rent to unlock offer analysis</label>
-      <input type="text" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" inputmode="numeric" pattern="[0-9]*" class="no-spin" oninput="mRent['${id}']=Math.round(+this.value.replace(/[^0-9]/g,''))||0" onblur="if(mRent['${id}'])buildMod('${id}')">
+      <input type="text" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" inputmode="numeric" pattern="[0-9]*" class="no-spin" oninput="mRent['${id}']=Math.round(+this.value.replace(/[^0-9]/g,''))||0" onblur="autoRentBlur('${id}')">
       <button class="save-btn" onclick="saveRent('${id}')">Save</button>
       <button class="est-btn" id="ai-rent-${id}" onclick="doEstimateRent('${id}')">📊 Estimate Rent</button>
     </div>
@@ -297,11 +297,11 @@ function _modBrrrr(id,p,cond,impr){
   ${p.rentRange?`<div class="infobox" style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap">
     <span style="color:var(--amber);font-size:.72rem">${p.rentRange.source==='local'?'📊 Rent Est:':'💡 Rent Estimate:'}</span>
     <strong style="color:var(--amber)">${M(p.rentRange.low)} – ${M(p.rentRange.high)}/mo</strong>
-    <button onclick="mRent['${id}']=${Math.round((p.rentRange.low+p.rentRange.high)/2)};document.getElementById('rent-inp-${id}').value=mRent['${id}'];buildMod('${id}')" style="background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:5px;padding:.2rem .5rem;font-size:.65rem;cursor:pointer;margin-left:auto">Use midpoint</button>
+    <button onclick="mRent['${id}']=${Math.round((p.rentRange.low+p.rentRange.high)/2)};autoRentBlur('${id}')" style="background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:5px;padding:.2rem .5rem;font-size:.65rem;cursor:pointer;margin-left:auto">Use midpoint</button>
   </div>`:''}
   <div class="rent-input-row">
     <label>Set estimated rent for BRRRR analysis</label>
-    <input type="text" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" inputmode="numeric" pattern="[0-9]*" class="no-spin" oninput="mRent['${id}']=Math.round(+this.value.replace(/[^0-9]/g,''))||0" onblur="if(mRent['${id}'])buildMod('${id}')">
+    <input type="text" id="rent-inp-${id}" value="${rent||''}" placeholder="e.g. 1800" inputmode="numeric" pattern="[0-9]*" class="no-spin" oninput="mRent['${id}']=Math.round(+this.value.replace(/[^0-9]/g,''))||0" onblur="autoRentBlur('${id}')">
     <button class="save-btn" onclick="saveRent('${id}')">Save</button>
     <button class="est-btn" id="ai-rent-${id}" onclick="doEstimateRent('${id}')">📊 Estimate Rent</button>
   </div>
@@ -475,6 +475,18 @@ async function saveRent(id){
   buildMod(id);
   await saveProperty(id,{monthly_rent:val,status:p.status});
 }
+// Auto-save rent on blur — keeps calcs + table in sync without needing Save click
+function autoRentBlur(id){
+  const val=mRent[id];
+  if(!val)return;
+  const p=props.find(x=>x.id===id);
+  if(!p)return;
+  p.monthlyRent=val;
+  recomputeOne(p);
+  renderApp();
+  buildMod(id);
+  saveProperty(id,{monthly_rent:val,status:p.status});
+}
 
 function doEstimateRent(id){
   const btn=document.getElementById('ai-rent-'+id);
@@ -485,7 +497,11 @@ function doEstimateRent(id){
     if(!data)throw new Error('No estimate returned');
     mRent[id]=data.estimate;
     const p=props.find(x=>x.id===id);
-    if(p)recomputeOne(p);
+    if(p){
+      p.monthlyRent=data.estimate;
+      recomputeOne(p);
+      saveProperty(id,{monthly_rent:data.estimate,rent_estimate:data.estimate,status:p.status});
+    }
     renderApp();
     buildMod(id);
     const r2=document.getElementById('ai-reason-'+id);
@@ -497,8 +513,8 @@ function doEstimateRent(id){
 }
 
 function togAcc(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
-function setMC(id,v){mCond[id]=v;maybeReEstimate(id);buildMod(id);}
-function setMI(id,v){mImpr[id]=v;maybeReEstimate(id);buildMod(id);}
+function setMC(id,v){mCond[id]=v;saveProperty(id,{condition:v});maybeReEstimate(id);const p=props.find(x=>x.id===id);if(p){p.condition=v;recomputeOne(p);}renderApp();buildMod(id);}
+function setMI(id,v){mImpr[id]=v;saveProperty(id,{improvement:v});maybeReEstimate(id);const p=props.find(x=>x.id===id);if(p){p.improvement=v;recomputeOne(p);}renderApp();buildMod(id);}
 function uTax(id,key,val){
   if(!mTax[id]){const fs=GP.filingStatus||'single';const r=agiToRates(GP.agi,fs);mTax[id]={agi:GP.agi,filing:fs,marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate};}
   mTax[id][key]=val;
