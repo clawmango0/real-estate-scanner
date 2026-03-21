@@ -4,8 +4,8 @@ function buildMod(id){
   const p=props.find(x=>x.id===id); if(!p) return;
   const cond=mCond[id]||p.condition||'good';
   const impr=mImpr[id]||p.improvement||'asis';
-  // Seed tax state from AGI on first open
-  if(!mTax[id]){const fs=GP.filingStatus||'single';const r=agiToRates(GP.agi,fs);mTax[id]={agi:GP.agi,filing:fs,marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate,participation:GP.participation||'active',costSegPct:GP.costSegPct??0.20,sec179:GP.sec179||0};}
+  // Seed tax state from project or global defaults on first open
+  if(!mTax[id]){const ap=activeProject;const fs=GP.filingStatus||'single';const r=agiToRates(GP.agi,fs);mTax[id]={agi:GP.agi,filing:fs,marg:r.marg,ltcg:r.ltcg,recap:GP.recapRate,participation:ap?.participation||GP.participation||'active',costSegPct:ap?.cost_seg_pct??GP.costSegPct??0.20,sec179:ap?.sec179||GP.sec179||0};}
   const taxP={filing:(mTax[id].filing||GP.filingStatus||'single'),marginal:mTax[id].marg,ltcg:mTax[id].ltcg,recap:mTax[id].recap,agi:mTax[id].agi,participation:mTax[id].participation||'active'};
   const _autoRates=agiToRates(taxP.agi,taxP.filing);
   const rent=mRent[id]??p.monthlyRent;
@@ -193,7 +193,7 @@ function buildMod(id){
         </select>
       </div>
       <div class="tr2"><label>Cost Segregation</label><input type="range" min="0" max="50" step="5" value="${Math.round((mTax[id].costSegPct||0)*100)}" oninput="uTax('${id}','costSegPct',+this.value/100);document.getElementById('tv-cs-${id}').textContent=this.value+'%'"><span class="tv2" id="tv-cs-${id}">${Math.round((mTax[id].costSegPct||0)*100)}%</span></div>
-      <div class="tr2"><label>§179 Expense</label><input type="text" value="${mTax[id].sec179||0}" inputmode="numeric" pattern="[0-9]*" class="no-spin" style="width:100px" oninput="uTax('${id}','sec179',Math.min(2500000,Math.round(+this.value.replace(/[^0-9]/g,''))||0))" onblur="buildMod('${id}')"><span style="font-size:.6rem;color:var(--text3)">max $2.5M</span></div>
+      <div class="tr2"><label>§179 Expense</label><input type="text" value="${mTax[id].sec179||0}" inputmode="numeric" pattern="[0-9]*" class="no-spin" style="width:100px" oninput="if(!mTax['${id}'])mTax['${id}']={};mTax['${id}'].sec179=Math.min(2500000,Math.round(+this.value.replace(/[^0-9]/g,''))||0)" onblur="buildMod('${id}')"><span style="font-size:.6rem;color:var(--text3)">max $2.5M</span></div>
       <div style="font-size:.6rem;color:var(--text3);margin-top:.25rem;padding-left:.1rem">2025 brackets · 100% bonus dep (OBBBA) · std deduction applied</div>
     </div>
 

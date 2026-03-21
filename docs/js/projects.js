@@ -102,6 +102,10 @@ function renderProjectCards(){
     if(proj.prop_types&&proj.prop_types.length) parts.push(proj.prop_types.join('/'));
     if(proj.max_price) parts.push('≤'+M2(proj.max_price));
     const meta=parts.join(' · ')||'All types';
+    const partLabels={active:'Active',material:'Material',repro:'RE Pro'};
+    const partLabel=partLabels[proj.participation]||'Active';
+    const csPct=Math.round((proj.cost_seg_pct??0.20)*100);
+    const taxMeta=`${partLabel} · CS ${csPct}%${proj.sec179?` · §179 ${M2(proj.sec179)}`:''}`;
     html+=`<div class="pcard${isActive?' pactive':''}" onclick="setProject(projects.find(x=>x.id==='${proj.id}'))">
       <div class="pc-act">
         <button onclick="event.stopPropagation();openProjMod('${proj.id}')">✏ Edit</button>
@@ -109,6 +113,7 @@ function renderProjectCards(){
       </div>
       <div class="pc-name"><span class="inv-badge" style="background:${(INV_TYPES[proj.investment_type]||INV_TYPES.buyhold).color}22;color:${(INV_TYPES[proj.investment_type]||INV_TYPES.buyhold).color}">${(INV_TYPES[proj.investment_type]||INV_TYPES.buyhold).short}</span>${esc(proj.name)}</div>
       <div class="pc-meta">${meta}</div>
+      <div class="pc-meta" style="color:var(--teal);font-size:.55rem">${taxMeta}</div>
       <div class="pc-map" data-proj-id="${proj.id}"></div>
       <div class="pc-grid">
         <div><div class="pcl">Props</div><div class="pcv">${st.count}</div></div>
@@ -182,7 +187,8 @@ function openProjMod(id){
   _editProj=id
     ?{...projects.find(p=>p.id===id)}
     :{id:null,name:'',investment_type:'buyhold',cities:[],prop_types:[],min_beds:null,max_beds:null,
-      min_baths:null,max_baths:null,max_price:null,down_pct:null,rate:null,hold_yrs:null};
+      min_baths:null,max_baths:null,max_price:null,down_pct:null,rate:null,hold_yrs:null,
+      participation:'active',cost_seg_pct:0.20,sec179:0};
   _buildProjModal();
   document.getElementById('pov').classList.add('open');
   // Init map AFTER modal is visible (display:flex) + animation settles (0.2s)
@@ -257,6 +263,23 @@ function _buildProjModal(){
           <option value="10" ${p.hold_yrs===10?'selected':''}>10 years</option>
           <option value="15" ${p.hold_yrs===15?'selected':''}>15 years</option>
         </select>
+      </div>
+    </div>
+    <div class="sec" style="margin:.6rem 0 .3rem;font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Tax Strategy</div>
+    <div class="txs">
+      <div class="pf-row"><span class="pf-lbl">Participation</span>
+        <select id="pf-participation" style="flex:1">
+          <option value="active"   ${(p.participation||'active')==='active'  ?'selected':''}>Active ($25k limit)</option>
+          <option value="material" ${p.participation==='material'?'selected':''}>Material (no limit)</option>
+          <option value="repro"    ${p.participation==='repro'   ?'selected':''}>RE Professional (no limit)</option>
+        </select>
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Cost Segregation</span>
+        <input type="number" class="no-spin" id="pf-costseg" placeholder="20" value="${p.cost_seg_pct!=null?Math.round(p.cost_seg_pct*100):''}" min="0" max="50" step="5">
+        <span style="color:var(--text3);font-size:.7rem">%</span>
+      </div>
+      <div class="pf-row"><span class="pf-lbl">§179 Expense</span>
+        <input type="number" class="no-spin" id="pf-sec179" placeholder="0" value="${p.sec179||''}" style="flex:1">
       </div>
     </div>
     <button class="psave-btn" onclick="saveProject()">${p.id?'Save Changes':'Create Project'}</button>
@@ -382,7 +405,10 @@ async function saveProject(){
     max_price:n(maxP),
     down_pct: downRaw?+downRaw/100:null,
     rate:     rateRaw?+rateRaw/100:null,
-    hold_yrs: holdRaw?+holdRaw:null
+    hold_yrs: holdRaw?+holdRaw:null,
+    participation: document.getElementById('pf-participation')?.value||'active',
+    cost_seg_pct: (()=>{const v=document.getElementById('pf-costseg')?.value;return v!==''&&v!=null?+v/100:0.20;})(),
+    sec179: n(document.getElementById('pf-sec179')?.value)||0
   };
   let saved;
   if(_editProj.id){
