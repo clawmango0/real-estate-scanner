@@ -1,4 +1,12 @@
 
+// Toast notification helper
+function _showToast(msg,color){
+  let t=document.getElementById('lbiq-toast');
+  if(!t){t=document.createElement('div');t.id='lbiq-toast';t.style.cssText='position:fixed;top:1rem;left:50%;transform:translateX(-50%);z-index:99999;padding:.6rem 1.2rem;border-radius:8px;font:600 .82rem/1.4 system-ui;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.3);transition:opacity .3s;pointer-events:none';document.body.appendChild(t);}
+  t.style.background=color||'var(--accent)';t.textContent=msg;t.style.opacity='1';
+  clearTimeout(_showToast._t);_showToast._t=setTimeout(()=>{t.style.opacity='0';},4000);
+}
+
 // Cached access-token — always kept fresh by onAuthStateChange
 let _accessToken = null;
 
@@ -40,29 +48,99 @@ sb.auth.onAuthStateChange(async (event, session) => {
     loadMailboxBg();
     loadProperties();
     loadProjects();
-    // Handle bookmarklet ?add= param
+    // Handle bookmarklet ?autosave= param (auto-save, no user interaction)
+    // Also supports legacy ?add= param (opens form for review)
     try{
       const u=new URL(location.href);
+      const autoParam=u.searchParams.get('autosave');
       const addParam=u.searchParams.get('add');
-      if(addParam){
-        const d=JSON.parse(addParam);
+      if(autoParam||addParam){
+        const d=JSON.parse(autoParam||addParam);
         history.replaceState(null,'',u.pathname); // clean URL
-        setTimeout(()=>{
-          openAddProp();
-          const g=id=>document.getElementById(id);
-          if(d.address)g('ap-addr').value=d.address;
-          if(d.city)g('ap-city').value=d.city;
-          if(d.zip)g('ap-zip').value=d.zip;
-          if(d.price)g('ap-price').value=d.price;
-          if(d.property_type)g('ap-type').value=d.property_type;
-          if(d.beds)g('ap-beds').value=d.beds;
-          if(d.baths)g('ap-baths').value=d.baths;
-          if(d.sqft)g('ap-sqft').value=d.sqft;
-          if(d.rent_estimate)g('ap-rent').value=d.rent_estimate;
-          if(d.listing_url)g('ap-url').value=d.listing_url;
-          const info=g('ap-parsed');
-          if(info)info.innerHTML='<span style="color:var(--green)">✅ Imported from bookmarklet — review & save</span>';
-        },500);
+        if(autoParam){
+          // Auto-save: directly insert property without opening form
+          setTimeout(async()=>{
+            try{
+              const token=await getAccessToken();
+              if(!token){console.error('autosave: not signed in');return;}
+              const body={};
+              if(d.address)body.address=d.address;
+              if(d.city)body.city=d.city;
+              body.state=d.state||'TX';
+              if(d.zip)body.zip=d.zip;
+              if(d.price)body.listed_price=Math.round(+String(d.price).replace(/[^0-9]/g,''));
+              if(d.beds)body.beds=+d.beds;
+              if(d.baths)body.baths=+d.baths;
+              if(d.sqft)body.sqft=Math.round(+String(d.sqft).replace(/[^0-9]/g,''));
+              if(d.property_type)body.property_type=d.property_type;
+              if(d.listing_url)body.listing_url=d.listing_url;
+              if(d.source)body.source=d.source;
+              if(d.rent_estimate)body.rent_estimate=+d.rent_estimate;
+              if(d.lot_size)body.lot_size=+d.lot_size;
+              const res=await fetch(EDGE_BASE+'/properties',{
+                method:'POST',
+                headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+                body:JSON.stringify(body)
+              });
+              if(!res.ok){
+                const err=await res.json().catch(()=>({error:'Unknown'}));
+                if(err.code==='23505'){
+                  // Duplicate — find existing and open modal
+                  const needle=(d.address||'').toLowerCase().replace(/,/g,'').split(/\s+/).slice(0,3).join(' ');
+                  const match=props.find(p=>(p.address||'').toLowerCase().replace(/,/g,'').startsWith(needle));
+                  if(match){openM(match.id);}
+                  _showToast('Property already exists','var(--amber)');
+                }else{
+                  _showToast('Save failed: '+(err.error||''),'var(--red)');
+                }
+                return;
+              }
+              const newProp=await res.json();
+              const h=newProp.hood;
+              props.unshift({...newProp,_tiers:null,_cocL:null,_cfL:null,_hood:h||null,_nbScore:h?nbScore({schools:h.schools,crime:h.crime,rentGrowth:h.rentGrowth}):null});
+              // Run rent estimate and set at midpoint+5%
+              const p=props[0];
+              if(p.listed&&p.beds&&p.baths&&p.sqft){
+                try{
+                  const est=localRentEstimate(p);
+                  if(est&&est.estimate){
+                    const rent5=Math.round(est.estimate*1.05/25)*25;
+                    p.monthlyRent=rent5;
+                    p.rentRange={low:est.low,high:est.high,source:'local'};
+                    mRent[p.id]=rent5;
+                    recomputeOne(p);
+                    saveProperty(p.id,{monthly_rent:rent5,rent_estimate:est.estimate});
+                  }
+                }catch(_){}
+              }
+              refreshAll();
+              _showToast('✅ '+(d.address||'Property')+' saved!','var(--green)');
+              // Auto-open the property modal
+              openM(newProp.id);
+            }catch(e){
+              console.error('autosave error:',e);
+              _showToast('Save failed: '+e.message,'var(--red)');
+            }
+          },800);
+        }else{
+          // Legacy ?add= — open form for review
+          setTimeout(()=>{
+            openAddProp();
+            const g=id=>document.getElementById(id);
+            if(d.address)g('ap-addr').value=d.address;
+            if(d.city)g('ap-city').value=d.city;
+            if(d.zip)g('ap-zip').value=d.zip;
+            if(d.price)g('ap-price').value=d.price;
+            if(d.property_type)g('ap-type').value=d.property_type;
+            if(d.beds)g('ap-beds').value=d.beds;
+            if(d.baths)g('ap-baths').value=d.baths;
+            if(d.sqft)g('ap-sqft').value=d.sqft;
+            if(d.rent_estimate)g('ap-rent').value=d.rent_estimate;
+            if(d.listing_url)g('ap-url').value=d.listing_url;
+            const info=g('ap-parsed');
+            if(info)info.innerHTML='<span style="color:var(--green)">✅ Imported from bookmarklet — review & save</span>';
+          },500);
+        }
       }
     }catch(_){}
   }
