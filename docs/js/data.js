@@ -109,14 +109,14 @@ function autoEstimateAll(){
     const result=localRentEstimate(p);
     if(!result||result.error) continue;
     p.rentRange={low:result.low,high:result.high,source:'local'};
-    const mid10=Math.round(result.estimate*1.10/25)*25; // midpoint + 10%
-    p.monthlyRent=mid10;
-    mRent[p.id]=mid10;
+    const mid5=Math.round(result.estimate*1.05/25)*25; // midpoint + 5%
+    p.monthlyRent=mid5;
+    mRent[p.id]=mid5;
     // Fire-and-forget DB save
-    saveProperty(p.id,{rent_estimate:result.estimate,monthly_rent:mid10});
+    saveProperty(p.id,{rent_estimate:result.estimate,monthly_rent:mid5});
     updated++;
   }
-  if(updated) console.log(`Auto-estimated rent for ${updated} properties (mid+10%)`);
+  if(updated) console.log(`Auto-estimated rent for ${updated} properties (mid+5%)`);
 }
 
 function maybeReEstimate(id){

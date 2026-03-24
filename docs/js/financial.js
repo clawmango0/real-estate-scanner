@@ -306,13 +306,13 @@ function localRentEstimate(p){
   const imprKey=(typeof mImpr!=='undefined'&&mImpr[p.id])||p.improvement||'asis';
   const parts=[];  // reasoning fragments
 
-  // A. Base yield from price-to-rent ratio (DFW-calibrated)
+  // A. Base yield from price-to-rent ratio (DFW-calibrated, 2025-26 market)
   let yieldPct;
   if(price<=75000)       yieldPct=0.0095;
-  else if(price<=150000) yieldPct=0.0085;
-  else if(price<=250000) yieldPct=0.0072;
-  else if(price<=400000) yieldPct=0.0060;
-  else                   yieldPct=0.0050;
+  else if(price<=150000) yieldPct=0.0088;
+  else if(price<=250000) yieldPct=0.0078;
+  else if(price<=400000) yieldPct=0.0065;
+  else                   yieldPct=0.0055;
   let baseRent=price*yieldPct;
   parts.push(`${(yieldPct*100).toFixed(2)}% yield on ${M(price)} = ${M(baseRent)} base`);
 
@@ -359,6 +359,18 @@ function localRentEstimate(p){
   if(appr1!==undefined&&appr1!==null){
     if(appr1>4){baseRent*=1.03; parts.push(`hot market (+${appr1.toFixed(1)}%/yr)`);}
     else if(appr1<0){baseRent*=0.97; parts.push(`weak market (${appr1.toFixed(1)}%/yr)`);}
+  }
+
+  // I. School district premium — A/B-rated ISDs command higher rents
+  const schools=hood.schools;
+  if(schools&&schools>=8){
+    // 9-10 (A-rated): +12%, 8 (B+/B): +6%
+    const schAdj=schools>=9?0.12:0.06;
+    baseRent*=(1+schAdj);
+    parts.push(`schools ${schools}/10 +${(schAdj*100).toFixed(0)}%`);
+  } else if(schools&&schools<=4){
+    baseRent*=0.95;
+    parts.push(`weak schools ${schools}/10 -5%`);
   }
 
   // Round to nearest $25
