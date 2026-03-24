@@ -263,6 +263,9 @@ const _settingsFields=[
     {key:'agi',label:'Adjusted Gross Income',unit:'$',type:'text'},
     {key:'landPct',label:'Land % of Value',unit:'%',min:10,max:40,step:5,mult:100},
   ]},
+  {group:'Display',items:[
+    {key:'showWalkScore',label:'Show Walk Score',type:'toggle'},
+  ]},
 ];
 
 function _buildSettingsHTML(){
@@ -275,6 +278,8 @@ function _buildSettingsHTML(){
       if(f.type==='select'){
         const opts=f.options.map(o=>`<option value="${o}" ${val===o||val+''===o+''?'selected':''}>${f.optionLabels?f.optionLabels[o]:o}</option>`).join('');
         html+=`<div class="s-row"><label>${f.label}</label><select id="sg-${f.key}" class="s-sel">${opts}</select>${f.unit?`<span class="s-unit">${f.unit}</span>`:''}</div>`;
+      }else if(f.type==='toggle'){
+        html+=`<div class="s-row"><label>${f.label}</label><label style="display:flex;align-items:center;cursor:pointer"><input id="sg-${f.key}" type="checkbox" ${val?'checked':''}><span style="margin-left:.4rem;font-size:.72rem;color:var(--text2)">${val?'On':'Off'}</span></label></div>`;
       }else if(f.type==='text'){
         html+=`<div class="s-row"><label>${f.label}</label><input id="sg-${f.key}" type="text" inputmode="numeric" value="${Math.round(val).toLocaleString()}" class="s-text no-spin"><span class="s-unit">${f.unit}</span></div>`;
       }else{
@@ -309,7 +314,8 @@ function saveSettings(){
       const el=document.getElementById('sg-'+f.key);
       if(!el)return;
       let v;
-      if(f.type==='select')v=f.optionLabels?el.value:+el.value;
+      if(f.type==='toggle')v=el.checked;
+      else if(f.type==='select')v=f.optionLabels?el.value:+el.value;
       else if(f.type==='text')v=Math.round(+el.value.replace(/[^0-9]/g,''))||0;
       else v=f.mult?(+el.value/f.mult):(+el.value);
       GP[f.key]=v;
