@@ -70,7 +70,8 @@ Quality gate: `detailsQuality()` scores 0-12 (price=3, sqft=2, beds/baths/addres
 ## Conventions
 - **Property types:** SFR, DUPLEX, TRIPLEX, QUAD, CONDO, LOT
 - **Sources:** zillow, realtor, redfin, har, auction, tax
-- **Curation states:** fav, ni (not interested), blk (blocked)
+- **Pipeline stages:** inbox, shortlist, diligence, offer, contract, closed, archived
+- **Legacy curation:** fav, ni, blk (kept in sync by setStage() for backwards compat)
 - **Conditions:** distressed, needswork, good, updated
 - **Improvements:** asis, cosmetic, moderate, fullrehab
 - **Default state:** TX (DFW market focus)
