@@ -26,7 +26,7 @@ async function geocodeAddress(address: string, city?: string, state?: string): P
 // Backfill null zip/city on properties (non-blocking, runs after GET response)
 async function backfillMissingGeo(supabase: ReturnType<typeof createClient>) {
   try {
-    const { data: rows } = await supabase.from("properties").select("id, address, city, state, zip").or("zip.is.null,city.is.null,city.eq.").limit(5);
+    const { data: rows } = await supabase.from("properties").select("id, address, city, state, zip").or("zip.is.null,city.is.null,city.eq.").limit(20);
     if (!rows?.length) return;
     console.log(`Backfill: ${rows.length} properties with missing zip/city`);
     for (const row of rows) {
