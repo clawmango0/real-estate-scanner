@@ -118,7 +118,7 @@ function toggleExpand(id, event) {
 function _tableHead(it){
   const addr='<th onclick="srt(\'address\')">Address</th>';
   const listed='<th onclick="srt(\'listed\')" class="hs">Listed</th>';
-  const star='<th>⭐</th>';
+  const star='<th onclick="srt(\'stage\')">Stage</th>';
   if(it==='flipper') return `${addr}${listed}<th>ARV</th><th>MAO</th><th class="hs">Rehab</th><th>Profit</th><th>ROI</th>${star}`;
   if(it==='brrrr')   return `${addr}${listed}<th>ARV</th><th onclick="srt('monthlyRent')">Rent</th><th onclick="srt('_cocL')">CoC</th><th>Refi</th><th class="hs">Cash Left</th>${star}`;
   if(it==='str')     return `${addr}${listed}<th>RevPAR</th><th>Gross Rev</th><th>Net CF</th><th onclick="srt('_cocL')">CoC</th>${star}`;
@@ -139,13 +139,8 @@ function _addrCell(p){
 function _listedCell(p){return `<td class="hs" onclick="openM('${p.id}')"><span class="mn">${M(p.listed)}</span></td>`;}
 function _starCell(p){
   const s=p.stage||'inbox';
-  const icon=STAGE_ICONS[s]||'📥';
-  return `<td><div class="cc">
-    <button class="cb stg-prev" onclick="event.stopPropagation();prevStage('${p.id}')" title="Previous stage">◂</button>
-    <span class="stg-badge stg-${s}" title="${STAGE_LABELS[s]||s}">${icon}</span>
-    <button class="cb stg-next" onclick="event.stopPropagation();nextStage('${p.id}')" title="Next stage">▸</button>
-    <button class="cb stg-arch ${s==='archived'?'abl':''}" onclick="event.stopPropagation();setStage('${p.id}','archived')" title="Archive">📦</button>
-  </div></td>`;
+  const opts=STAGES.map(st=>`<option value="${st}"${s===st?' selected':''}>${STAGE_LABELS[st]}</option>`).join('');
+  return `<td><select class="stg-sel" onchange="event.stopPropagation();setStage('${p.id}',this.value)">${opts}</select></td>`;
 }
 
 function _tableRow(p,it){
