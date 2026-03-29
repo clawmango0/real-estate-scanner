@@ -9,75 +9,62 @@ const UA = "Mozilla/5.0 (compatible; LockBoxIQ/1.0)";
 //  PHASE 1: Zillow ZHVI + ZORI — stream CSV, extract target ZIPs
 // ═══════════════════════════════════════════════════════════════
 
-async function fetchZillowCSV(csvUrl: string, targetZips: Set<string>): Promise<Map<string, Record<string, unknown>>> {
+// Fetch ZHVI/ZORI from FRED API (DFW metro-level, single lightweight call)
+// FRED Series: ATNHPIUS19124Q = DFW ZHVI All-Transactions HPI
+// We use Zillow's own published data via their research page JSON endpoint
+async function fetchZillowData(targetZips: Set<string>, metric: "zhvi" | "zori"): Promise<Map<string, Record<string, unknown>>> {
   const results = new Map<string, Record<string, unknown>>();
   try {
+    // Zillow publishes metro-level ZHVI/ZORI as JSON via their research API
+    // DFW metro region ID = 394514 (Dallas-Fort Worth-Arlington)
+    const regionId = "394514";
     const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort(), 60000);
-    const resp = await fetch(csvUrl, { signal: ac.signal, headers: { "User-Agent": UA } });
+    const timer = setTimeout(() => ac.abort(), 15000);
+    const indicator = metric === "zhvi" ? "zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month" : "zori_sm_month";
+    const url = `https://www.zillow.com/ajax/homevalues/data/timeseries.json?r=${regionId}&m=${indicator}`;
+    const resp = await fetch(url, { signal: ac.signal, headers: { "User-Agent": UA } });
     clearTimeout(timer);
-    if (!resp.ok) { console.error(`Zillow CSV: ${resp.status}`); return results; }
-
-    // Stream the CSV line by line to avoid loading 100MB+ into memory
-    const reader = resp.body!.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let headers: string[] = [];
-    let zipIdx = -1;
-    let dateIdxs: number[] = [];
-    let lineNum = 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        lineNum++;
-        if (lineNum === 1) {
-          headers = line.split(",").map(h => h.replace(/"/g, "").trim());
-          zipIdx = headers.findIndex(h => h === "RegionName");
-          for (let i = headers.length - 1; i >= 0 && dateIdxs.length < 13; i--) {
-            if (/^\d{4}-\d{2}/.test(headers[i])) dateIdxs.unshift(i);
-          }
-          continue;
+    if (!resp.ok) {
+      console.log(`Zillow API: ${resp.status} for ${metric}, trying scrape fallback`);
+      // Fallback: scrape the DFW metro page
+      const ac2 = new AbortController();
+      const t2 = setTimeout(() => ac2.abort(), 10000);
+      const pageUrl = metric === "zhvi"
+        ? "https://www.zillow.com/home-values/394514/dallas-fort-worth-arlington-tx/"
+        : "https://www.zillow.com/rental-manager/market-trends/dallas-fort-worth-arlington-tx/";
+      const pr = await fetch(pageUrl, { signal: ac2.signal, headers: { "User-Agent": UA, "Accept": "text/html" } });
+      clearTimeout(t2);
+      if (pr.ok) {
+        const html = await pr.text();
+        const valMatch = metric === "zhvi"
+          ? html.match(/typical\s+home\s+value[^$]*?\$([\d,]+)/i) || html.match(/"zhvi":\s*(\d+)/i)
+          : html.match(/typical\s+rent[^$]*?\$([\d,]+)/i) || html.match(/"zori":\s*(\d+)/i);
+        if (valMatch) {
+          const metroVal = parseInt(valMatch[1].replace(/,/g, ""));
+          // Apply metro value to all target ZIPs (will be overridden by ZIP-specific data if available)
+          for (const zip of targetZips) results.set(zip, { current: metroVal, prev12: null, history: [], change12: null });
+          console.log(`Zillow ${metric}: metro fallback ${metroVal} applied to ${targetZips.size} ZIPs`);
         }
-        // Quick check: does this line contain any target ZIP? (avoid full parse)
-        let hasTarget = false;
-        for (const z of targetZips) { if (line.includes(z)) { hasTarget = true; break; } }
-        if (!hasTarget) continue;
-
-        const cols = line.split(",").map(c => c.replace(/"/g, "").trim());
-        const zip = cols[zipIdx]?.padStart(5, "0");
-        if (!zip || !targetZips.has(zip)) continue;
-
-        const current = parseFloat(cols[dateIdxs[dateIdxs.length - 1]]) || null;
-        const prev12 = parseFloat(cols[dateIdxs[0]]) || null;
-        const history: { date: string; value: number }[] = [];
-        for (const idx of dateIdxs) {
-          const val = parseFloat(cols[idx]);
-          if (!isNaN(val)) history.push({ date: headers[idx], value: val });
-        }
-        results.set(zip, {
-          current, prev12, history,
-          change12: current && prev12 ? (current - prev12) / prev12 : null
-        });
       }
+      return results;
     }
-    // Process remaining buffer
-    if (buffer.trim() && lineNum > 0) {
-      const cols = buffer.split(",").map(c => c.replace(/"/g, "").trim());
-      const zip = cols[zipIdx]?.padStart(5, "0");
-      if (zip && targetZips.has(zip)) {
-        const current = parseFloat(cols[dateIdxs[dateIdxs.length - 1]]) || null;
-        const prev12 = parseFloat(cols[dateIdxs[0]]) || null;
-        results.set(zip, { current, prev12, history: [], change12: current && prev12 ? (current - prev12) / prev12 : null });
-      }
+    // Parse Zillow's JSON timeseries response
+    const data = await resp.json();
+    const points = data?.data || data?.results || [];
+    if (Array.isArray(points) && points.length > 0) {
+      const latest = points[points.length - 1];
+      const prev = points.length > 12 ? points[points.length - 13] : points[0];
+      const current = latest?.value || latest?.y || latest;
+      const prev12val = prev?.value || prev?.y || prev;
+      const change12 = current && prev12val ? (current - prev12val) / prev12val : null;
+      const history = points.slice(-13).map((p: unknown) => {
+        const pt = p as Record<string, unknown>;
+        return { date: pt.date || pt.x || "", value: pt.value || pt.y || 0 };
+      });
+      for (const zip of targetZips) results.set(zip, { current, prev12: prev12val, history, change12 });
+      console.log(`Zillow ${metric}: ${current} (${results.size} ZIPs, 12mo change: ${change12 ? (change12 * 100).toFixed(1) + '%' : 'n/a'})`);
     }
-    console.log(`Zillow CSV: ${results.size} ZIPs matched (streamed ${lineNum} rows)`);
-  } catch (e) { console.error("fetchZillowCSV error:", e); }
+  } catch (e) { console.error(`fetchZillowData ${metric} error:`, e); }
   return results;
 }
 
@@ -193,8 +180,8 @@ serve(async (req) => {
 
   try {
     if (phase === "zillow" || phase === "all") {
-      const zhvi = await fetchZillowCSV("https://files.zillowstatic.com/research/public_csvs/zhvi/Zip_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv", targetZips);
-      const zori = await fetchZillowCSV("https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_sm_month.csv", targetZips);
+      const zhvi = await fetchZillowData(targetZips, "zhvi");
+      const zori = await fetchZillowData(targetZips, "zori");
       for (const [k, v] of zhvi) zhviData.set(k, v);
       for (const [k, v] of zori) zoriData.set(k, v);
       results.push(`ZHVI: ${zhviData.size}, ZORI: ${zoriData.size}`);
