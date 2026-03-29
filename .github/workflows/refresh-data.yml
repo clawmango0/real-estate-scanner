@@ -80,8 +80,11 @@ jobs:
 
       - name: Compute market scores
         run: |
-          echo "Computing market scores..."
-          curl -s --max-time 30 -X POST \
-            "${{ secrets.SUPABASE_FUNC_URL }}/refresh-data?phase=score" \
-            -H "x-refresh-key: ${{ secrets.REFRESH_KEY }}" || true
-          echo "Scores computed via edge function or will compute on next load"
+          echo "Computing market scores via SQL..."
+          curl -s -X POST \
+            "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_REF }}/database/query" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"UPDATE neighborhoods SET market_score = GREATEST(0, LEAST(100, ROUND(50 + CASE WHEN affordability_ratio < 3 THEN 8 WHEN affordability_ratio < 4 THEN 4 WHEN affordability_ratio > 6 THEN -8 WHEN affordability_ratio > 5 THEN -4 ELSE 0 END + CASE WHEN rent_growth > 3 THEN 5 WHEN rent_growth > 1 THEN 2 WHEN rent_growth < -1 THEN -5 ELSE 0 END + CASE WHEN appreci_1yr < -5 THEN 10 WHEN appreci_1yr < 0 THEN 5 WHEN appreci_1yr > 10 THEN -10 WHEN appreci_1yr > 5 THEN -5 ELSE 0 END))), data_updated_at = now() WHERE zhvi_current IS NOT NULL OR median_income IS NOT NULL"}'
+          echo ""
+          echo "Done"
