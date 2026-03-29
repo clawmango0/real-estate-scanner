@@ -296,30 +296,49 @@ let _analyticsOpen=false;
 function toggleAnalytics(){
   _analyticsOpen=!_analyticsOpen;
   const btn=document.getElementById('analytics-btn');
-  const panel=document.getElementById('analytics-panel');
-  if(!panel) return;
   if(_analyticsOpen){
     btn.classList.add('on');
-    panel.style.display='block';
-    renderAnalytics();
+    _openAnalyticsOverlay();
   } else {
     btn.classList.remove('on');
-    panel.style.display='none';
+    _closeAnalyticsOverlay();
   }
 }
 
+function _openAnalyticsOverlay(){
+  let ov=document.getElementById('analytics-ov');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='analytics-ov';
+    ov.className='ov';
+    ov.onclick=function(e){if(e.target===ov){toggleAnalytics();}};
+    ov.innerHTML='<div class="modal an-modal"><div class="mhd"><div><div class="madr">Market Analytics</div></div><button class="xcl" onclick="toggleAnalytics()">✕</button></div><div class="mb" id="analytics-body" style="padding:0;max-height:85vh;overflow-y:auto"></div></div>';
+    document.getElementById('app').appendChild(ov);
+  }
+  ov.classList.add('open');
+  renderAnalytics();
+}
+
+function _closeAnalyticsOverlay(){
+  const ov=document.getElementById('analytics-ov');
+  if(ov) ov.classList.remove('open');
+  _analyticsOpen=false;
+  const btn=document.getElementById('analytics-btn');
+  if(btn) btn.classList.remove('on');
+}
+
 function renderAnalytics(){
-  const panel=document.getElementById('analytics-panel');
-  if(!panel||!_analyticsOpen) return;
+  const body=document.getElementById('analytics-body');
+  if(!body||!_analyticsOpen) return;
   const list=_aProps();
   if(!list.length){
-    panel.innerHTML='<div class="an-empty" style="padding:2rem">No properties to analyze. Add properties via email alerts or the bookmarklet.</div>';
+    body.innerHTML='<div class="an-empty" style="padding:2rem">No properties to analyze.</div>';
     return;
   }
   const projName=activeProject?activeProject.name:'All Properties';
-  panel.innerHTML=`
+  body.innerHTML=`
     <div class="an-header">
-      <div class="an-title">Market Analytics — ${esc(projName)}</div>
+      <div class="an-title">${esc(projName)}</div>
       <div class="an-count">${list.length} properties</div>
     </div>
     <div class="an-grid">

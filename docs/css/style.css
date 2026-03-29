@@ -435,8 +435,8 @@ tbody tr{animation:fi .18s ease both}
 .ap-dots::after{content:'';animation:ap-dots 1.4s steps(4,end) infinite}
 @keyframes ap-dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
 
-/* ── Analytics Panel ──────────────────────────────────── */
-#analytics-panel{display:none;margin:1rem 1.5rem;border:1px solid var(--amber);border-radius:10px;background:var(--bg2);overflow:hidden}
+/* ── Analytics Modal ──────────────────────────────────── */
+.an-modal{max-width:960px}
 .an-header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem;border-bottom:1px solid var(--border)}
 .an-title{font-size:.82rem;font-weight:700}
 .an-count{font-size:.65rem;color:var(--text2)}
