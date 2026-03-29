@@ -23,7 +23,8 @@ function _verdict(p) {
 function _expandHtml(p) {
   const v = _verdict(p);
   const rent = effectiveRent(p);
-  const rentSrc = p.monthlyRent ? 'Confirmed' : (p.rentRange ? { low: 'Low est.', mid: 'Mid est.', high: 'High est.', 'mid+5': 'Mid+5% est.' }[gRentMode] || 'Estimated') : 'None';
+  const _rentLabels = { low: 'Low est.', mid: 'Mid est.', high: 'High est.', 'mid+5': 'Mid+5% est.' };
+  const rentSrc = p.monthlyRent ? 'Confirmed' : (p.rentRange ? (_rentLabels[gRentMode] || 'Estimated') : 'None');
   const rentConf = p.monthlyRent ? 'confirmed' : (p.rentRange ? `±12% (${M(p.rentRange.low)}–${M(p.rentRange.high)})` : 'no estimate');
 
   // Neighborhood mini breakdown

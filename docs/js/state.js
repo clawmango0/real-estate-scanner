@@ -36,7 +36,7 @@ function recomputeOne(p){
   p._cfL=c?c.cfMo:null;
   if(p._cocL!==null) p.status=p._cocL>=GP.cocMin?'pass':'fail';
   // Smart resurface: flag skipped properties that now pass
-  if(oldStatus==='fail'&&p.status==='pass'&&p.curated==='ni'){
+  if(oldStatus==='fail'&&p.status==='pass'&&(p.stage||'inbox')==='archived'){
     p._resurface=true;
     p._resurfaceReason='Now passes criteria with current settings';
   }

@@ -107,11 +107,11 @@ function renderProjectCards(){
     // 4th stat varies by investment type
     let stat4Label='AvgCF',stat4Val=cfStr,stat4Color=st.avgCf>=0?'var(--green)':'#f87171';
     if(it==='flipper'){
-      const rois=filtered.filter(p=>p.curated!=='blk').map(p=>{const f=flipCalc(p.listed,mCond[p.id]||p.condition||'good',mImpr[p.id]||p.improvement||'asis');return f?f.roi:null;}).filter(r=>r!==null);
+      const rois=filtered.filter(p=>(p.stage||'inbox')!=='archived').map(p=>{const f=flipCalc(p.listed,mCond[p.id]||p.condition||'good',mImpr[p.id]||p.improvement||'asis');return f?f.roi:null;}).filter(r=>r!==null);
       const avgR=rois.length?rois.reduce((a,b)=>a+b,0)/rois.length:0;
       stat4Label='AvgROI';stat4Val=avgR?PCT(avgR):'—';stat4Color=avgR>=0.15?'var(--green)':'var(--amber)';
     } else if(it==='wholesaler'){
-      const fees=filtered.filter(p=>p.curated!=='blk').map(p=>{const cond=mCond[p.id]||p.condition||'good',im=mImpr[p.id]||p.improvement||'asis';const arv=p.listed*(1+(COND[cond]?.adj||0))+(p.listed*(IMPR[im]?.upliftPct||0));const w=wholesaleCalc(p.listed,arv);return w?w.assignFee:0;});
+      const fees=filtered.filter(p=>(p.stage||'inbox')!=='archived').map(p=>{const cond=mCond[p.id]||p.condition||'good',im=mImpr[p.id]||p.improvement||'asis';const arv=p.listed*(1+(COND[cond]?.adj||0))+(p.listed*(IMPR[im]?.upliftPct||0));const w=wholesaleCalc(p.listed,arv);return w?w.assignFee:0;});
       const tot=fees.reduce((a,b)=>a+b,0);
       stat4Label='TotFees';stat4Val=tot?'$'+Math.round(tot).toLocaleString():'—';stat4Color='var(--green)';
     }
