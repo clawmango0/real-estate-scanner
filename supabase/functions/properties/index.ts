@@ -65,7 +65,8 @@ serve(async (req) => {
     }
     return new Response("Not found", { status: 404, headers: cors });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+    const errMsg = err instanceof Error ? err.message : (typeof err === 'object' && err !== null ? JSON.stringify(err) : String(err));
+    return new Response(JSON.stringify({ error: errMsg }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
   }
 });
 
