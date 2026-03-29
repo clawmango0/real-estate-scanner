@@ -87,6 +87,7 @@ function renderProjectCards(){
   const allSt=_projStats(props);
   const allActive=activeProject===null;
   let html=`<div class="pcard${allActive?' pactive':''}" onclick="setProject(null)">
+    <div class="pc-act"><button onclick="event.stopPropagation();openAnalytics(null)">📊 Analytics</button></div>
     <div class="pc-name">All Properties</div>
     <div class="pc-meta">No filters active</div>
     <div class="pc-map" data-proj-id="all"></div>
@@ -126,6 +127,7 @@ function renderProjectCards(){
     const taxMeta=`${partLabel} · CS ${csPct}%${proj.sec179?` · §179 ${M2(proj.sec179)}`:''}`;
     html+=`<div class="pcard${isActive?' pactive':''}" onclick="setProject(projects.find(x=>x.id==='${proj.id}'))">
       <div class="pc-act">
+        <button onclick="event.stopPropagation();openAnalytics('${proj.id}')">📊</button>
         <button onclick="event.stopPropagation();openProjMod('${proj.id}')">✏ Edit</button>
         <button class="del-btn" onclick="event.stopPropagation();deleteProject('${proj.id}')">🗑 Delete</button>
       </div>
