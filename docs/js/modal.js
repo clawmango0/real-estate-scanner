@@ -22,7 +22,8 @@ function buildMod(id){
   const nbs=p._nbScore;
   const zipAppr=h?Number(h.appreci5??h.appreci3??h.appreci1??null):null;
   const apprUsed=zipAppr!=null&&!isNaN(zipAppr)?zipAppr:GP.appreci;
-  // Apply cost seg / sec179 from modal tax state to GP for this calc
+  // Temporarily apply cost seg / sec179 from modal tax state for this calc, then restore
+  const _gpSave={costSegPct:GP.costSegPct,sec179:GP.sec179,participation:GP.participation};
   GP.costSegPct=mTax[id].costSegPct||0;
   GP.sec179=mTax[id].sec179||0;
   GP.participation=mTax[id].participation||'active';
@@ -30,6 +31,8 @@ function buildMod(id){
   // 5-year Schedule E calculations
   const yrs=[];
   if(rent){let carry=0;for(let yr=1;yr<=5;yr++){const se=schedE(ofPrc,rent,cond,impr,yr,taxP,carry);carry=se.passCarry;yrs.push(se);}}
+  // Restore GP to prevent leaking per-property tax params into global calculations
+  GP.costSegPct=_gpSave.costSegPct;GP.sec179=_gpSave.sec179;GP.participation=_gpSave.participation;
   const y1=yrs[0]||null,y2=yrs[1]||null;
 
   let badges=sourceBadge(p.source);
@@ -69,7 +72,7 @@ function buildMod(id){
       <div><label ${_ls}>Sqft</label><input id="ep-sqft" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.sqft||''}" ${_is} class="no-spin"></div>
       <div><label ${_ls}>Lot Size (sqft)</label><input id="ep-lot" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.lotSize||''}" ${_is} class="no-spin"></div>
       <div><label ${_ls}>Property Type</label><select id="ep-type" ${_is}>${['SFR','DUPLEX','TRIPLEX','QUAD','CONDO','LOT'].map(t=>`<option value="${t}"${p.type===t?' selected':''}>${t}</option>`).join('')}</select></div>
-      <div><label ${_ls}>Rent Estimate ($/mo)</label><input id="ep-rent-est" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.rentRange?.mid||''}" ${_is} class="no-spin"></div>
+      <div><label ${_ls}>Rent Estimate ($/mo)</label><input id="ep-rent-est" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.rentRange?Math.round((p.rentRange.low+p.rentRange.high)/2):''}" ${_is} class="no-spin"></div>
       <div><label ${_ls}>Monthly Rent (confirmed)</label><input id="ep-rent" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.monthlyRent||''}" ${_is} class="no-spin"></div>
     </div>
     <div style="display:flex;gap:.5rem">

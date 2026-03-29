@@ -535,22 +535,23 @@ let _spTimer = null;
 function _saveStrategyParams() {
   if (!activeProject || !activeProject.id) return;
   clearTimeout(_spTimer);
+  // Capture project ID and params NOW, not at timer execution time
+  // (prevents race condition if user switches projects during debounce)
+  const projId = activeProject.id;
+  const sp = {
+    str_adr: activeProject._str_adr, str_occ: activeProject._str_occ,
+    str_clean: activeProject._str_clean, str_plat: activeProject._str_plat,
+    ws_assign: activeProject._ws_assign, ws_rehab: activeProject._ws_rehab,
+    comm_units: activeProject._comm_units, comm_rpu: activeProject._comm_rpu,
+    comm_vac: activeProject._comm_vac,
+    pass_invest: activeProject._pass_invest, pass_pref: activeProject._pass_pref,
+    pass_hold: activeProject._pass_hold, pass_eqm: activeProject._pass_eqm,
+  };
+  Object.keys(sp).forEach(k => { if (sp[k] === undefined) delete sp[k]; });
   _spTimer = setTimeout(async () => {
-    const sp = {
-      str_adr: activeProject._str_adr, str_occ: activeProject._str_occ,
-      str_clean: activeProject._str_clean, str_plat: activeProject._str_plat,
-      ws_assign: activeProject._ws_assign, ws_rehab: activeProject._ws_rehab,
-      comm_units: activeProject._comm_units, comm_rpu: activeProject._comm_rpu,
-      comm_vac: activeProject._comm_vac,
-      pass_invest: activeProject._pass_invest, pass_pref: activeProject._pass_pref,
-      pass_hold: activeProject._pass_hold, pass_eqm: activeProject._pass_eqm,
-    };
-    // Remove undefined values
-    Object.keys(sp).forEach(k => { if (sp[k] === undefined) delete sp[k]; });
-    const { error } = await sb.from('projects').update({ strategy_params: sp }).eq('id', activeProject.id);
+    const { error } = await sb.from('projects').update({ strategy_params: sp }).eq('id', projId);
     if (error) console.error('_saveStrategyParams:', error);
-    // Update local project cache
-    const idx = projects.findIndex(x => x.id === activeProject.id);
+    const idx = projects.findIndex(x => x.id === projId);
     if (idx >= 0) projects[idx].strategy_params = sp;
   }, 500);
 }
