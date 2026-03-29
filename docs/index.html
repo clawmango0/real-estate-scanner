@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.99.2/dist/umd/supabase.min.js" integrity="sha384-zETTH+6IXxKQ6zbGcT6H6EDdnGaae9uhI8uO7doTJoNEmPGeTKVOe5S6/XybS9JH" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<link rel="stylesheet" href="css/style.css?v=25">
+<link rel="stylesheet" href="css/style.css?v=26">
 </head>
 <body>
 
@@ -139,6 +139,7 @@
       <button class="fc" onclick="setFil('duplex',this)">🏘 Multi</button>
       <button class="fc" onclick="setFil('new',this)">🆕 New</button>
       <button class="fc" onclick="setFil('drop',this)">📉 Drop</button>
+      <button class="an-toggle" id="analytics-btn" onclick="toggleAnalytics()">📊 Analytics</button>
     </div>
     <div class="rent-mode-row">
       <span class="rm-lbl">Rent assumption:</span>
@@ -148,6 +149,8 @@
       <button class="rm" data-m="mid+5" onclick="setRentMode('mid+5')">Mid +5%</button>
     </div>
   </div>
+
+  <div id="analytics-panel"></div>
 
   <div id="props-container">
     <!-- Populated by JS -->
@@ -202,15 +205,16 @@
 </div>
 
 
-<script src="js/config.js?v=25"></script>
-<script src="js/financial.js?v=25"></script>
-<script src="js/state.js?v=25"></script>
-<script src="js/projects.js?v=25"></script>
-<script src="js/auth.js?v=25"></script>
-<script src="js/session.js?v=25"></script>
-<script src="js/data.js?v=25"></script>
-<script src="js/render.js?v=25"></script>
-<script src="js/curation.js?v=25"></script>
-<script src="js/modal.js?v=25"></script>
+<script src="js/config.js?v=26"></script>
+<script src="js/financial.js?v=26"></script>
+<script src="js/state.js?v=26"></script>
+<script src="js/projects.js?v=26"></script>
+<script src="js/auth.js?v=26"></script>
+<script src="js/session.js?v=26"></script>
+<script src="js/data.js?v=26"></script>
+<script src="js/render.js?v=26"></script>
+<script src="js/curation.js?v=26"></script>
+<script src="js/modal.js?v=26"></script>
+<script src="js/analytics.js?v=26"></script>
 </body>
 </html>

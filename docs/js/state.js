@@ -41,6 +41,7 @@ function refreshAll(){
   recomputeRents();
   renderApp();
   if(typeof renderProjectCards==='function') renderProjectCards();
+  if(typeof renderAnalytics==='function') renderAnalytics();
 }
 
 function setRentMode(mode){
@@ -50,5 +51,6 @@ function setRentMode(mode){
   recomputeRents();
   renderApp();
   if(typeof renderProjectCards==='function') renderProjectCards();
+  if(typeof renderAnalytics==='function') renderAnalytics();
 }
 

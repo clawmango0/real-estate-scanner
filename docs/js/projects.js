@@ -59,6 +59,7 @@ function setProject(proj){
   recomputeRents();
   renderProjectCards();
   renderApp();
+  if(typeof renderAnalytics==='function') renderAnalytics();
 }
 
 // Build and inject the project cards row
