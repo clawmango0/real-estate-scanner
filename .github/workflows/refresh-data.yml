@@ -1,9 +1,9 @@
 name: Refresh Market Data
 
-# Run on the 1st of each month at 6am UTC, or manually
+# Run every Monday at 6am UTC (midnight CST), or manually
 on:
   schedule:
-    - cron: '0 6 1 * *'
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -63,7 +63,7 @@ jobs:
       - name: Upload Zillow data
         run: |
           echo "Uploading Zillow data..."
-          RESPONSE=$(curl -s --max-time 60 -X POST \
+          RESPONSE=$(curl -s --max-time 120 -X POST \
             "${{ secrets.SUPABASE_FUNC_URL }}/refresh-data?phase=zillow" \
             -H "x-refresh-key: ${{ secrets.REFRESH_KEY }}" \
             -H "Content-Type: application/json" \
@@ -72,19 +72,77 @@ jobs:
 
       - name: Refresh Census demographics
         run: |
-          echo "Running Census refresh..."
-          RESPONSE=$(curl -s --max-time 60 -X POST \
-            "${{ secrets.SUPABASE_FUNC_URL }}/refresh-data?phase=census" \
-            -H "x-refresh-key: ${{ secrets.REFRESH_KEY }}")
-          echo "Census: $RESPONSE"
+          echo "Fetching Census ACS data and uploading via SQL..."
+          python3 -c "
+          import json, urllib.request, os
+
+          # Fetch all Texas ZCTAs from Census ACS 5-Year
+          url = 'https://api.census.gov/data/2023/acs/acs5?get=B19013_001E,B01003_001E,B25001_001E&for=zip%20code%20tabulation%20area:*&in=state:48'
+          print('Fetching Census ACS for Texas...')
+          resp = urllib.request.urlopen(url, timeout=30)
+          data = json.loads(resp.read())
+          print(f'Got {len(data)-1} ZCTAs')
+
+          # Build SQL UPDATE statements in batches
+          updates = []
+          for row in data[1:]:
+              income = int(row[0]) if row[0] and row[0] != '-666666666' else None
+              pop = int(row[1]) if row[1] else None
+              units = int(row[2]) if row[2] else None
+              zcta = row[3].zfill(5)
+              if income is None and pop is None:
+                  continue
+              parts = []
+              if income: parts.append(f'median_income={income}')
+              if pop: parts.append(f'population={pop}')
+              if units: parts.append(f'housing_units={units}')
+              parts.append(\"data_updated_at=now()\")
+              updates.append(f\"UPDATE neighborhoods SET {', '.join(parts)} WHERE zip='{zcta}';\")
+
+          print(f'Built {len(updates)} UPDATE statements')
+
+          # Execute via Supabase Management API in batches of 100
+          token = os.environ.get('SUPABASE_TOKEN', '')
+          project = os.environ.get('SUPABASE_REF', '')
+          batch_size = 100
+          updated = 0
+          for i in range(0, len(updates), batch_size):
+              batch = ' '.join(updates[i:i+batch_size])
+              payload = json.dumps({'query': batch}).encode()
+              req = urllib.request.Request(
+                  f'https://api.supabase.com/v1/projects/{project}/database/query',
+                  data=payload,
+                  headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
+                  method='POST')
+              try:
+                  urllib.request.urlopen(req, timeout=30)
+                  updated += len(updates[i:i+batch_size])
+              except Exception as e:
+                  print(f'Batch {i//batch_size} error: {e}')
+          print(f'Census: updated {updated} neighborhoods')
+          "
+        env:
+          SUPABASE_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Compute affordability ratios
+        if: always()
+        run: |
+          echo "Computing affordability ratios..."
+          curl -s -X POST \
+            "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_REF }}/database/query" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"UPDATE neighborhoods SET affordability_ratio = ROUND(CAST(zhvi_current AS numeric) / median_income * 100) / 100 WHERE zhvi_current IS NOT NULL AND median_income IS NOT NULL AND median_income > 0"}'
+          echo " Done"
 
       - name: Compute market scores
+        if: always()
         run: |
-          echo "Computing market scores via SQL..."
+          echo "Computing market scores..."
           curl -s -X POST \
             "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_REF }}/database/query" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"query":"UPDATE neighborhoods SET market_score = GREATEST(0, LEAST(100, ROUND(50 + CASE WHEN affordability_ratio < 3 THEN 8 WHEN affordability_ratio < 4 THEN 4 WHEN affordability_ratio > 6 THEN -8 WHEN affordability_ratio > 5 THEN -4 ELSE 0 END + CASE WHEN rent_growth > 3 THEN 5 WHEN rent_growth > 1 THEN 2 WHEN rent_growth < -1 THEN -5 ELSE 0 END + CASE WHEN appreci_1yr < -5 THEN 10 WHEN appreci_1yr < 0 THEN 5 WHEN appreci_1yr > 10 THEN -10 WHEN appreci_1yr > 5 THEN -5 ELSE 0 END))), data_updated_at = now() WHERE zhvi_current IS NOT NULL OR median_income IS NOT NULL"}'
-          echo ""
-          echo "Done"
+          echo " Done"
