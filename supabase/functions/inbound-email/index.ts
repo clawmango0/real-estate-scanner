@@ -486,45 +486,50 @@ async function resolveZillowUrl(
   address: string,
   city: string,
   state: string,
-  zip: string
+  zip: string,
+  isSinglePropertyEmail: boolean = false
 ): Promise<string | null> {
-  // 1. Direct homedetails URL from email
-  if (urlScan.homedetails.length > 0) {
-    console.log("URL source: direct homedetails in email");
-    return urlScan.homedetails[0];
-  }
-
-  // 2. ZPID found in email URLs
-  if (urlScan.zpids.length > 0) {
-    const url = `https://www.zillow.com/homedetails/${urlScan.zpids[0]}_zpid/`;
-    console.log("URL source: ZPID from email →", url);
-    return url;
-  }
-
-  // 3. Follow tracking link redirects (fresh at processing time)
-  // Pick the first non-homepage tracking target that looks property-specific
-  const propertyTargets = trackingTargets.filter(t =>
-    !t.includes("utm_content=headerzillowlogo") &&
-    !t.includes("utm_content=footer") &&
-    !t.includes("unsubscribe") &&
-    t.includes("zillow.com")
-  );
-  for (const target of propertyTargets.slice(0, 3)) {
-    if (target.includes("rtoken") || target.includes("homedetails")) {
-      const resolved = await followTrackingRedirect(target.startsWith("http") ? target : `https://${target}`);
-      if (resolved) {
-        console.log("URL source: tracking redirect →", resolved.slice(0, 120));
-        return resolved;
-      }
-    }
-  }
-
-  // 4. Autocomplete address lookup (free, no key needed)
+  // 1. Autocomplete address lookup FIRST — most reliable because it matches
+  // the specific property by address, not a generic email ZPID.
+  // Email ZPIDs in multi-property digests belong to only one listing and
+  // get misapplied to all properties if used indiscriminately.
   if (address) {
     const searchAddr = [address, city, state || "TX", zip].filter(Boolean).join(" ");
     console.log("URL source: autocomplete lookup for:", searchAddr);
     const url = await findZillowUrl(searchAddr);
     if (url) return url;
+  }
+
+  // 2. Direct homedetails URL — ONLY for single-property emails
+  if (isSinglePropertyEmail && urlScan.homedetails.length > 0) {
+    console.log("URL source: direct homedetails in single-property email");
+    return urlScan.homedetails[0];
+  }
+
+  // 3. ZPID from email — ONLY for single-property emails
+  if (isSinglePropertyEmail && urlScan.zpids.length > 0) {
+    const url = `https://www.zillow.com/homedetails/${urlScan.zpids[0]}_zpid/`;
+    console.log("URL source: ZPID from single-property email →", url);
+    return url;
+  }
+
+  // 4. Follow tracking link redirects — ONLY for single-property emails
+  if (isSinglePropertyEmail) {
+    const propertyTargets = trackingTargets.filter(t =>
+      !t.includes("utm_content=headerzillowlogo") &&
+      !t.includes("utm_content=footer") &&
+      !t.includes("unsubscribe") &&
+      t.includes("zillow.com")
+    );
+    for (const target of propertyTargets.slice(0, 3)) {
+      if (target.includes("rtoken") || target.includes("homedetails")) {
+        const resolved = await followTrackingRedirect(target.startsWith("http") ? target : `https://${target}`);
+        if (resolved) {
+          console.log("URL source: tracking redirect →", resolved.slice(0, 120));
+          return resolved;
+        }
+      }
+    }
   }
 
   return null;
@@ -1210,9 +1215,11 @@ serve(async(req)=>{
       if (p.source === "redfin") { console.log(`Skipping Zillow scrape for Redfin property: ${p.address}`); continue; }
 
       console.log(`── Resolving URL for: ${p.address}`);
+      const isSingle = props.filter(x => x.address).length === 1;
       const scrapeUrl = await resolveZillowUrl(
         urlScan, urlScan.trackingTargets,
-        p.address, p.city || "", p.state || "TX", p.zip || ""
+        p.address, p.city || "", p.state || "TX", p.zip || "",
+        isSingle
       );
 
       if (!scrapeUrl) {
