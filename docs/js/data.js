@@ -55,7 +55,7 @@ function _showPropsError(msg){
   c.innerHTML=`<div class="empty-state">
     <div class="e-icon">⚠️</div>
     <h3>Could not load properties</h3>
-    <p style="font-family:monospace;font-size:.8rem;word-break:break-all">${msg}</p>
+    <p style="font-family:monospace;font-size:.8rem;word-break:break-all">${esc(msg)}</p>
     <button onclick="loadProperties()" style="margin-top:1.2rem;padding:.55rem 1.4rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.9rem">↺ Retry</button>
   </div>`;
 }

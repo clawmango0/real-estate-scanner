@@ -55,7 +55,7 @@ function exportCSV(){
     };
   }
   const rows=list.map(rowFn);
-  const csvEsc=v=>{const s=String(v??'');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
+  const csvEsc=v=>{let s=String(v??'');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
   const csv=[headers.map(csvEsc).join(','),...rows.map(r=>r.map(csvEsc).join(','))].join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
