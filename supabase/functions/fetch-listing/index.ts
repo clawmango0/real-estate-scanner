@@ -107,6 +107,33 @@ async function fetchHtml(url: string): Promise<string> {
   return html;
 }
 
+// ── Address Geocoding — US Census Bureau (free, no key) ──
+interface GeoResult { city?: string; state?: string; zip?: string; lat?: number; lng?: number; }
+
+async function geocodeAddress(address: string, city?: string, state?: string, zip?: string): Promise<GeoResult | null> {
+  const parts = [address];
+  if (city) parts.push(city);
+  parts.push(state || 'TX');
+  if (zip) parts.push(zip);
+  const query = parts.join(', ').replace(/,\s*,/g, ',').trim();
+  if (query.length < 5) return null;
+  try {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 8000);
+    const url = `https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(query)}&benchmark=Public_AR_Current&vintage=Current_Current&format=json`;
+    const r = await fetch(url, { signal: ac.signal, headers: { "User-Agent": UA } });
+    clearTimeout(timer);
+    if (!r.ok) return null;
+    const data = await r.json();
+    const match = data?.result?.addressMatches?.[0];
+    if (!match) return null;
+    const addr = match.addressComponents || {};
+    const geo = match.coordinates || {};
+    console.log(`Census geocoder: "${query}" → ${addr.city}, ${addr.state} ${addr.zip}`);
+    return { city: addr.city, state: addr.state, zip: addr.zip, lat: geo.y ? Number(geo.y) : undefined, lng: geo.x ? Number(geo.x) : undefined };
+  } catch { return null; }
+}
+
 // ── Site-specific parsers ────────────────────────────────
 
 function parseZillowNextData(html: string, listingUrl: string): ListingDetails | null {
@@ -1148,6 +1175,24 @@ serve(async (req) => {
       const agents = extractAgentInfo(scrapedHtml, source, propertyZip);
       if (agents.length > 0) {
         updateRealtorRepo(agents).catch(e => console.error("Agent repo update failed:", e));
+      }
+    }
+
+    // Geocode to fill missing city/zip — never return null values
+    if (details && (!details.zip || !details.city)) {
+      const geo = await geocodeAddress(details.address || '', details.city, details.state, details.zip);
+      if (geo) {
+        if (!details.city && geo.city) details.city = geo.city;
+        if (!details.zip && geo.zip) details.zip = geo.zip;
+        if (!details.state && geo.state) details.state = geo.state;
+        // Also fill lat/lng if available
+        if (!details.lot_size && geo.lat) (details as Record<string,unknown>).latitude = geo.lat;
+        if (geo.lng) (details as Record<string,unknown>).longitude = geo.lng;
+        // Remove city/zip from missing list if geocoded
+        if (missing) {
+          const idx1 = missing.indexOf('city'); if (idx1 >= 0 && details.city) missing.splice(idx1, 1);
+          const idx2 = missing.indexOf('zip'); if (idx2 >= 0 && details.zip) missing.splice(idx2, 1);
+        }
       }
     }
 

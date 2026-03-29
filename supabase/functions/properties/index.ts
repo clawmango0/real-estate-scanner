@@ -3,6 +3,47 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL  = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+const UA = "Mozilla/5.0 (compatible; LockBoxIQ/1.0)";
+
+// ── Address Geocoding — US Census Bureau (free, no key) ──
+async function geocodeAddress(address: string, city?: string, state?: string): Promise<{city?:string;state?:string;zip?:string;lat?:number;lng?:number}|null> {
+  const parts = [address]; if (city) parts.push(city); parts.push(state || 'TX');
+  const query = parts.join(', ').replace(/,\s*,/g, ',').trim();
+  if (query.length < 5) return null;
+  try {
+    const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 8000);
+    const r = await fetch(`https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(query)}&benchmark=Public_AR_Current&vintage=Current_Current&format=json`, { signal: ac.signal, headers: { "User-Agent": UA } });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const data = await r.json();
+    const match = data?.result?.addressMatches?.[0];
+    if (!match) return null;
+    const addr = match.addressComponents || {}; const geo = match.coordinates || {};
+    return { city: addr.city, state: addr.state, zip: addr.zip, lat: geo.y ? Number(geo.y) : undefined, lng: geo.x ? Number(geo.x) : undefined };
+  } catch { return null; }
+}
+
+// Backfill null zip/city on properties (non-blocking, runs after GET response)
+async function backfillMissingGeo(supabase: ReturnType<typeof createClient>) {
+  try {
+    const { data: rows } = await supabase.from("properties").select("id, address, city, state, zip").or("zip.is.null,city.is.null,city.eq.").limit(5);
+    if (!rows?.length) return;
+    console.log(`Backfill: ${rows.length} properties with missing zip/city`);
+    for (const row of rows) {
+      const geo = await geocodeAddress(String(row.address || ''), String(row.city || ''), String(row.state || 'TX'));
+      if (!geo) continue;
+      const updates: Record<string, unknown> = {};
+      if ((!row.zip || row.zip === '') && geo.zip) updates.zip = geo.zip;
+      if ((!row.city || row.city === '') && geo.city) updates.city = geo.city;
+      if (geo.lat) updates.latitude = geo.lat;
+      if (geo.lng) updates.longitude = geo.lng;
+      if (Object.keys(updates).length) {
+        await supabase.from("properties").update(updates).eq("id", row.id);
+        console.log(`Backfill: ${row.address} → ${geo.city}, ${geo.state} ${geo.zip}`);
+      }
+    }
+  } catch (e) { console.error("Backfill error:", e); }
+}
 const cors = {
   "Access-Control-Allow-Origin": "https://lockboxiq.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -27,6 +68,8 @@ serve(async (req) => {
         .select("*, neighborhoods(area_name, schools, crime_safety, walk_score, rent_growth, appreci_1yr, appreci_3yr, appreci_5yr, zhvi_current)")
         .order("created_at", { ascending: false });
       if (error) throw error;
+      // Fire-and-forget: backfill any properties with null zip/city
+      backfillMissingGeo(supabase).catch(e => console.error("Backfill launch error:", e));
       return new Response(JSON.stringify((data || []).map(shapeProperty)), { headers: { ...cors, "Content-Type": "application/json" } });
     }
     if (req.method === "POST" && isCollection) {

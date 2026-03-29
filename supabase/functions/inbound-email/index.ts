@@ -246,6 +246,54 @@ async function scrapeRedfin(listingUrl: string): Promise<ScrapeResult> {
 }
 
 // ══════════════════════════════════════════════════════════
+//  ADDRESS GEOCODING — US Census Bureau Geocoder (free, no key)
+// ══════════════════════════════════════════════════════════
+interface GeoResult { city?: string; state?: string; zip?: string; lat?: number; lng?: number; }
+
+async function geocodeAddress(address: string, city?: string, state?: string, zip?: string): Promise<GeoResult | null> {
+  // Build the best query string from available parts
+  const parts = [address];
+  if (city) parts.push(city);
+  parts.push(state || 'TX');
+  if (zip) parts.push(zip);
+  const query = parts.join(', ').replace(/,\s*,/g, ',').trim();
+  if (query.length < 5) return null;
+
+  try {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 8000);
+    const url = `https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(query)}&benchmark=Public_AR_Current&vintage=Current_Current&format=json`;
+    const r = await fetch(url, { signal: ac.signal, headers: { "User-Agent": UA } });
+    clearTimeout(timer);
+    if (!r.ok) { console.log(`Census geocoder: status=${r.status}`); return null; }
+    const data = await r.json();
+    const match = data?.result?.addressMatches?.[0];
+    if (!match) { console.log(`Census geocoder: no match for "${query}"`); return null; }
+
+    const addr = match.addressComponents || {};
+    const geo = match.coordinates || {};
+    const geographies = match.geographies || {};
+    // Extract zip from address components
+    const matchedZip = addr.zip || null;
+    const matchedCity = addr.city || null;
+    const matchedState = addr.state || null;
+
+    console.log(`Census geocoder: "${query}" → ${matchedCity}, ${matchedState} ${matchedZip}`);
+    return {
+      city: matchedCity,
+      state: matchedState,
+      zip: matchedZip,
+      lat: geo.y ? Number(geo.y) : undefined,
+      lng: geo.x ? Number(geo.x) : undefined,
+    };
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') console.log('Census geocoder: timeout');
+    else console.error('Census geocoder error:', e);
+    return null;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
 //  CLAUDE PARSER
 // ══════════════════════════════════════════════════════════
 // Strip zero-width Unicode junk that Zillow/Realtor emails use for tracking.
@@ -1076,12 +1124,22 @@ serve(async(req)=>{
   let n=0;
   for(const p of props){
     if(!p.address)continue;
+
+    // Geocode to fill missing city/zip — never store null values
+    if (!p.zip || !p.city) {
+      const geo = await geocodeAddress(p.address, p.city, p.state, p.zip);
+      if (geo) {
+        if (!p.city && geo.city) p.city = geo.city;
+        if (!p.zip && geo.zip) p.zip = geo.zip;
+        if (!p.state && geo.state) p.state = geo.state;
+        if (!p.latitude && geo.lat) p.latitude = geo.lat;
+        if (!p.longitude && geo.lng) p.longitude = geo.lng;
+      }
+    }
+
     const newPrice = p.listed_price?Number(p.listed_price):null;
     const isPriceDrop = Boolean(p.price_drop);
 
-    // Build record with ONLY data fields — NOT user-curated fields
-    // (condition, improvement, curated, notes, monthly_rent get DB defaults on insert
-    // and are preserved on conflict-update since they're not in this record)
     const record: Record<string, unknown> = {
       user_id:mb.user_id, mailbox_id:mb.id, email_log_id:logId,
       address:p.address, city:p.city??"", state:p.state??"TX", zip:p.zip||null,
