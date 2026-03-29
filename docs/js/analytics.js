@@ -300,7 +300,7 @@ function toggleAnalytics(){
   if(!panel) return;
   if(_analyticsOpen){
     btn.classList.add('on');
-    panel.style.display='';
+    panel.style.display='block';
     renderAnalytics();
   } else {
     btn.classList.remove('on');
