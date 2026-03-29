@@ -1,0 +1,87 @@
+name: Refresh Market Data
+
+# Run on the 1st of each month at 6am UTC, or manually
+on:
+  schedule:
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download and extract Zillow ZHVI data
+        run: |
+          echo "Downloading ZHVI CSV..."
+          curl -s -o /tmp/zhvi.csv "https://files.zillowstatic.com/research/public_csvs/zhvi/Zip_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+          echo "Downloading ZORI CSV..."
+          curl -s -o /tmp/zori.csv "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_sm_month.csv"
+
+          python3 -c "
+          import csv, json, sys
+          result = {}
+          for metric, filepath in [('zhvi', '/tmp/zhvi.csv'), ('zori', '/tmp/zori.csv')]:
+              with open(filepath, 'r') as f:
+                  reader = csv.DictReader(f)
+                  headers = reader.fieldnames
+                  date_cols = [h for h in headers if h and h[:2] == '20']
+                  if not date_cols:
+                      print(f'No date columns in {metric}', file=sys.stderr)
+                      continue
+                  latest_col = date_cols[-1]
+                  count = 0
+                  for row in reader:
+                      zip_code = row.get('RegionName', '').strip().zfill(5)
+                      state = row.get('StateName', '').strip()
+                      if state != 'TX' and not zip_code.startswith('7'):
+                          continue
+                      val = row.get(latest_col, '').strip()
+                      if not val:
+                          continue
+                      try:
+                          current = round(float(val))
+                      except ValueError:
+                          continue
+                      if zip_code not in result:
+                          result[zip_code] = {}
+                      result[zip_code][metric] = current
+                      count += 1
+                  print(f'{metric}: {count} Texas ZIPs (latest: {latest_col})')
+          payload = json.dumps({'zillow': result})
+          with open('/tmp/zillow_payload.json', 'w') as f:
+              f.write(payload)
+          print(f'Total: {len(result)} ZIPs ({len(payload)} bytes)')
+          "
+
+      - name: Upload Zillow data
+        run: |
+          echo "Uploading Zillow data..."
+          RESPONSE=$(curl -s --max-time 60 -X POST \
+            "${{ secrets.SUPABASE_FUNC_URL }}/refresh-data?phase=zillow" \
+            -H "x-refresh-key: ${{ secrets.REFRESH_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d @/tmp/zillow_payload.json)
+          echo "Zillow: $RESPONSE"
+
+      - name: Refresh Census demographics
+        run: |
+          echo "Running Census refresh..."
+          RESPONSE=$(curl -s --max-time 60 -X POST \
+            "${{ secrets.SUPABASE_FUNC_URL }}/refresh-data?phase=census" \
+            -H "x-refresh-key: ${{ secrets.REFRESH_KEY }}")
+          echo "Census: $RESPONSE"
+
+      - name: Compute market scores
+        run: |
+          echo "Computing market scores..."
+          curl -s --max-time 30 -X POST \
+            "${{ secrets.SUPABASE_FUNC_URL }}/refresh-data?phase=score" \
+            -H "x-refresh-key: ${{ secrets.REFRESH_KEY }}" || true
+          echo "Scores computed via edge function or will compute on next load"
