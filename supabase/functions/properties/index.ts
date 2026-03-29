@@ -65,7 +65,7 @@ serve(async (req) => {
     if (req.method === "GET" && isCollection) {
       const { data, error } = await supabase
         .from("properties")
-        .select("*, neighborhoods(area_name, schools, crime_safety, walk_score, rent_growth, appreci_1yr, appreci_3yr, appreci_5yr, zhvi_current)")
+        .select("*, neighborhoods(area_name, schools, crime_safety, walk_score, rent_growth, appreci_1yr, appreci_3yr, appreci_5yr, zhvi_current, zori_current, zori_12mo_change, median_income, population, active_inventory, days_on_market, price_cut_pct, median_sale_price, market_score, affordability_ratio)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       // Fire-and-forget: backfill any properties with null zip/city
@@ -178,6 +178,11 @@ function shapeProperty(row: Record<string, unknown>) {
       rentGrowth: hood.rent_growth,
       appreci1: hood.appreci_1yr, appreci3: hood.appreci_3yr,
       appreci5: hood.appreci_5yr, zhvi: hood.zhvi_current,
+      zori: hood.zori_current, zoriChange: hood.zori_12mo_change,
+      medianIncome: hood.median_income, population: hood.population,
+      inventory: hood.active_inventory, dom: hood.days_on_market,
+      priceCutPct: hood.price_cut_pct, medianSalePrice: hood.median_sale_price,
+      marketScore: hood.market_score, affordability: hood.affordability_ratio,
       zip: row.zip
     } : null,
   };
