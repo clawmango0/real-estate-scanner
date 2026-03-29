@@ -333,7 +333,8 @@ function updateStats(){
   const topPool=activeProject?visible:pass;
   const topDeal=topPool.filter(p=>p._tiers&&effectiveRent(p)).sort((a,b)=>(b._cocL||0)-(a._cocL||0))[0];
   if(topDeal){
-    document.getElementById('td-name').textContent=`${topDeal.address} — ${topDeal.type}`;
+    const tdName=document.getElementById('td-name');
+    tdName.innerHTML=`<a href="#" onclick="event.preventDefault();openM('${topDeal.id}')" style="color:var(--text);text-decoration:none;border-bottom:1px dashed var(--amber)">${esc(topDeal.address)} — ${esc(topDeal.type)}</a>`;
     document.getElementById('td-list').textContent=M(topDeal.listed);
     document.getElementById('td-s').textContent=topDeal._tiers?M(topDeal._tiers.strong):'—';
     const er=effectiveRent(topDeal);
