@@ -49,7 +49,12 @@ serve(async (req) => {
                        "property_type", "is_new", "city", "state", "zip", "listing_url", "pipeline_stage"];
       const updates: Record<string, unknown> = {};
       for (const k of allowed) if (k in body) updates[k] = body[k];
-      const { data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single();
+      let { data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single();
+      // If pipeline_stage column doesn't exist yet, retry without it
+      if (error && updates.pipeline_stage !== undefined && String(error.message).includes("pipeline_stage")) {
+        delete updates.pipeline_stage;
+        ({ data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single());
+      }
       if (error) throw error;
       return new Response(JSON.stringify(shapeProperty(data)), { headers: { ...cors, "Content-Type": "application/json" } });
     }
