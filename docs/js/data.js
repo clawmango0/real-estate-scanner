@@ -60,16 +60,24 @@ function _showPropsError(msg){
   </div>`;
 }
 
+// Fields that affect financial calculations — changes trigger re-estimation + recomputation
+const _CORE_FIELDS=['listed_price','beds','baths','sqft','lot_size','zip','city','property_type','condition','improvement','monthly_rent','rent_estimate'];
+
 async function saveProperty(id, updates){
   const token = await getAccessToken();
   if(!token) return false;
   const idx=props.findIndex(p=>p.id===id);
-  // Snapshot for rollback
   const snapshot=idx>=0?{...props[idx]}:null;
   // Optimistic local update
   if(idx>=0){
     Object.assign(props[idx],updates);
     if('monthly_rent' in updates) props[idx].monthlyRent=updates.monthly_rent;
+    if('listed_price' in updates) props[idx].listed=updates.listed_price;
+    if('beds' in updates) props[idx].beds=updates.beds;
+    if('baths' in updates) props[idx].baths=updates.baths;
+    if('sqft' in updates) props[idx].sqft=updates.sqft;
+    if('lot_size' in updates) props[idx].lotSize=updates.lot_size;
+    if('property_type' in updates) props[idx].type=updates.property_type;
   }
   try{
     const res=await fetch(`${EDGE_BASE}/properties/${id}`,{
@@ -79,9 +87,16 @@ async function saveProperty(id, updates){
     });
     if(!res.ok){
       console.error(`saveProperty failed: ${res.status}`);
-      // Rollback local state
       if(idx>=0&&snapshot) Object.assign(props[idx],snapshot);
       return false;
+    }
+    // If any core financial field changed, re-estimate rent and recompute metrics
+    if(idx>=0 && _CORE_FIELDS.some(f=>f in updates)){
+      const p=props[idx];
+      maybeReEstimate(id);
+      recomputeOne(p);
+      renderApp();
+      if(typeof renderProjectCards==='function') renderProjectCards();
     }
     return true;
   }catch(e){
@@ -152,27 +167,17 @@ async function savePropertyEdit(id){
   if(!Object.keys(updates).length)return;
   const btn=g('m-edit-btn');if(btn)btn.disabled=true;
   await saveProperty(id,updates);
-  // Rebuild derived fields on local prop
+  // saveProperty handles core field sync + recomputation automatically.
+  // Handle display-only fields not covered by saveProperty:
   const p=props.find(x=>x.id===id);
   if(p){
     if(updates.address)p.address=updates.address;
     if('city' in updates){p.rawCity=updates.city; p.city=updates.city?(updates.city+', TX'+(updates.zip?' '+updates.zip:p.zip?' '+p.zip:'')):(p.city);}
-    if(updates.zip)p.zip=updates.zip;
     if(updates.listing_url)p.listingUrl=updates.listing_url;
-    if(updates.listed_price)p.listed=updates.listed_price;
-    if(updates.beds)p.beds=updates.beds;
-    if(updates.baths)p.baths=updates.baths;
-    if(updates.sqft)p.sqft=updates.sqft;
-    if(updates.lot_size)p.lotSize=updates.lot_size;
-    if(updates.property_type)p.type=updates.property_type;
     if(updates.rent_estimate){const re=updates.rent_estimate;p.rentRange={low:Math.round(re*0.88/25)*25,high:Math.round(re*1.12/25)*25,source:'manual'};}
-    if(updates.monthly_rent) p.monthlyRent=updates.monthly_rent;
-    maybeReEstimate(id);
-    recomputeOne(p);
   }
   mEdit[id]=false;
   buildMod(id);
-  renderApp();
 }
 
 /* ── Add Property from URL ─────────────────────────────── */
