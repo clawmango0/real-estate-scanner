@@ -36,8 +36,8 @@ async function loadProperties(){
         _tiers:null, _cocL:null, _cfL:null, // filled by recomputeRents()
         _hood:h||null,
         _nbScore:h?nbScore({schools:h.schools,crime:h.crime,rentGrowth:h.rentGrowth}):null,
-        _resurface:p.priceDrop&&p.curated==='ni',
-        _resurfaceReason:p.priceDrop&&p.curated==='ni'?'Price dropped since you skipped this':null,
+        _resurface:p.priceDrop&&(p.stage||'inbox')==='archived',
+        _resurfaceReason:p.priceDrop&&(p.stage||'inbox')==='archived'?'Price dropped since you skipped this':null,
       };
     });
     // Auto-estimate rent for properties that have no monthly_rent set

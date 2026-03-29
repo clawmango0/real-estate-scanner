@@ -219,13 +219,7 @@ function buildMod(id){
       </tbody>
     </table>`:''}
 
-    <div class="sec">Curate</div>
-    <div class="curbar">
-      <button class="${p.curated==='fav'?'af':''}" onclick="curate('${id}','fav')">⭐ ${p.curated==='fav'?'Favorited':'Favorite'}</button>
-      <button class="${p.curated==='ni'?'ani':''}" onclick="curate('${id}','ni')">👎 ${p.curated==='ni'?'Marked':'Not Interested'}</button>
-      <button class="${p.curated==='blk'?'abl':''}" onclick="curate('${id}','blk')">🚫 Block Forever</button>
-    </div>
-    ${p.listingUrl?`<a class="el" href="${p.listingUrl}" target="_blank">↗ View Listing</a>`:''}
+    ${_stageHtml(id,p)}
   `;
 }
 
@@ -283,11 +277,16 @@ function _condImprHtml(id,cond,impr){
 
 // ── Curation buttons shared across typed modals ──────────────────────────────
 function _curateHtml(id,p){
-  return `<div class="sec">Curate</div>
+  return _stageHtml(id,p);
+}
+
+function _stageHtml(id,p){
+  const s=p.stage||'inbox';
+  const active=STAGES.filter(x=>x!=='archived');
+  return `<div class="sec">Pipeline Stage</div>
   <div class="curbar">
-    <button class="${p.curated==='fav'?'af':''}" onclick="curate('${id}','fav')">⭐ ${p.curated==='fav'?'Favorited':'Favorite'}</button>
-    <button class="${p.curated==='ni'?'ani':''}" onclick="curate('${id}','ni')">👎 ${p.curated==='ni'?'Marked':'Not Interested'}</button>
-    <button class="${p.curated==='blk'?'abl':''}" onclick="curate('${id}','blk')">🚫 Block Forever</button>
+    ${active.map(st=>`<button class="${s===st?'af':''}" onclick="setStage('${id}','${st}')">${STAGE_ICONS[st]} ${STAGE_LABELS[st]}</button>`).join('')}
+    <button class="${s==='archived'?'abl':''}" onclick="setStage('${id}','archived')">📦 Archive</button>
   </div>
   ${p.listingUrl?`<a class="el" href="${p.listingUrl}" target="_blank">↗ View Listing</a>`:''}`;
 }
