@@ -84,6 +84,7 @@
     <div class="hdr-right">
       <button class="add-btn" onclick="openAddProp()" title="Add property manually">＋</button>
       <button class="inbox-btn" onclick="showInbox()">📧 My Inbox Address</button>
+      <button class="data-btn" onclick="openDataSources()" title="Data sources & methodology">📊 Data Sources</button>
       <button class="user-btn" onclick="openSettings()" id="user-email-btn">Sign Out</button>
     </div>
   </header>
@@ -197,6 +198,17 @@
     </div>
   </div>
 
+  <!-- Data Sources modal -->
+  <div class="ov" id="dsov" onclick="closeDataSources(event)">
+    <div class="modal" style="max-width:720px">
+      <div class="mhd">
+        <div><div class="madr">Data Sources & Methodology</div><div style="font-size:.68rem;color:var(--text2)">How LockBoxIQ powers your investment analysis</div></div>
+        <button class="xcl" onclick="closeDataSources()">✕</button>
+      </div>
+      <div class="mb" id="ds-body" style="max-height:80vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
   <!-- Settings modal -->
   <div class="ov" id="sov" onclick="closeSettings(event)">
     <div class="modal" style="max-width:580px">
@@ -222,5 +234,6 @@
 <script src="js/modal.js?v=26"></script>
 <script src="js/analytics.js?v=26"></script>
 <script src="js/export.js?v=26"></script>
+<script src="js/datasources.js?v=26"></script>
 </body>
 </html>
