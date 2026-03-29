@@ -288,59 +288,56 @@ function _portfolioComposition(list){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  MAIN RENDER
+//  MAIN RENDER — Project-scoped analytics overlay
 // ═══════════════════════════════════════════════════════════════════════════
 
 let _analyticsOpen=false;
+let _analyticsProj=null; // project object or null for "All Properties"
 
-function toggleAnalytics(){
-  _analyticsOpen=!_analyticsOpen;
-  const btn=document.getElementById('analytics-btn');
-  if(_analyticsOpen){
-    btn.classList.add('on');
-    _openAnalyticsOverlay();
-  } else {
-    btn.classList.remove('on');
-    _closeAnalyticsOverlay();
-  }
-}
-
-function _openAnalyticsOverlay(){
+// Called from project card "📊" button or "All Properties" card
+function openAnalytics(projId){
+  _analyticsProj=projId?projects.find(p=>p.id===projId)||null:null;
+  _analyticsOpen=true;
   let ov=document.getElementById('analytics-ov');
   if(!ov){
     ov=document.createElement('div');
     ov.id='analytics-ov';
     ov.className='ov';
-    ov.onclick=function(e){if(e.target===ov){toggleAnalytics();}};
-    ov.innerHTML='<div class="modal an-modal"><div class="mhd"><div><div class="madr">Market Analytics</div></div><button class="xcl" onclick="toggleAnalytics()">✕</button></div><div class="mb" id="analytics-body" style="padding:0;max-height:85vh;overflow-y:auto"></div></div>';
+    ov.onclick=function(e){if(e.target===ov)closeAnalytics();};
+    ov.innerHTML='<div class="modal an-modal"><div class="mhd"><div><div class="madr" id="an-title">Market Analytics</div><div style="font-size:.68rem;color:var(--text2)" id="an-subtitle"></div></div><button class="xcl" onclick="closeAnalytics()">✕</button></div><div class="mb" id="analytics-body" style="padding:0;max-height:85vh;overflow-y:auto"></div></div>';
     document.getElementById('app').appendChild(ov);
   }
   ov.classList.add('open');
   renderAnalytics();
 }
 
-function _closeAnalyticsOverlay(){
+function closeAnalytics(){
   const ov=document.getElementById('analytics-ov');
   if(ov) ov.classList.remove('open');
   _analyticsOpen=false;
-  const btn=document.getElementById('analytics-btn');
-  if(btn) btn.classList.remove('on');
+  _analyticsProj=null;
 }
+
+// Legacy toggle for filter bar button (now opens All Properties analytics)
+function toggleAnalytics(){ openAnalytics(null); }
 
 function renderAnalytics(){
   const body=document.getElementById('analytics-body');
   if(!body||!_analyticsOpen) return;
-  const list=_aProps();
+  // Scope to project if set, otherwise all non-archived
+  const list=_analyticsProj
+    ?props.filter(p=>projectFilter(p,_analyticsProj)).filter(p=>(p.stage||'inbox')!=='archived')
+    :props.filter(p=>(p.stage||'inbox')!=='archived');
+  const projName=_analyticsProj?_analyticsProj.name:'All Properties';
+  const titleEl=document.getElementById('an-title');
+  const subEl=document.getElementById('an-subtitle');
+  if(titleEl) titleEl.textContent=projName+' — Analytics';
+  if(subEl) subEl.textContent=list.length+' properties';
   if(!list.length){
-    body.innerHTML='<div class="an-empty" style="padding:2rem">No properties to analyze.</div>';
+    body.innerHTML='<div class="an-empty" style="padding:2rem">No properties match this project. Adjust filters or add properties via email alerts.</div>';
     return;
   }
-  const projName=activeProject?activeProject.name:'All Properties';
   body.innerHTML=`
-    <div class="an-header">
-      <div class="an-title">${esc(projName)}</div>
-      <div class="an-count">${list.length} properties</div>
-    </div>
     <div class="an-grid">
       <div class="an-card">
         <div class="an-card-title">CoC Return Distribution</div>
@@ -371,7 +368,7 @@ function renderAnalytics(){
         <div class="an-card-body">${_targetVsActual(list)}</div>
       </div>
       <div class="an-card an-card-wide">
-        <div class="an-card-title">Portfolio Composition (Favorites)</div>
+        <div class="an-card-title">Portfolio Composition (Shortlisted)</div>
         <div class="an-card-body">${_portfolioComposition(list)}</div>
       </div>
     </div>`;
