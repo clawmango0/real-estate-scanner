@@ -1,6 +1,10 @@
 let currentUser=null, userMailbox=null;
 let props=[], aV='all', aF='all', sCol=null, sDir=-1, openId=null;
 let mCond={}, mImpr={}, mTax={}, mRent={}, mEdit={};
+let expandedId = null;
+const STAGES=['inbox','shortlist','diligence','offer','contract','closed','archived'];
+const STAGE_LABELS={inbox:'Inbox',shortlist:'Shortlist',diligence:'Due Diligence',offer:'Offer',contract:'Contract',closed:'Closed',archived:'Archived'};
+const STAGE_ICONS={inbox:'📥',shortlist:'⭐',diligence:'🔍',offer:'📝',contract:'📋',closed:'✅',archived:'📦'};
 let gRentMode='mid'; // global rent assumption: 'low' | 'mid' | 'high' | 'mid+5'
 
 // ── PROJECTS STATE ──────────────────────────────────────
@@ -24,12 +28,18 @@ function effectiveRent(p){
 
 // Recompute derived fields for a single property using current GP + gRentMode.
 function recomputeOne(p){
+  const oldStatus=p.status;
   const r=effectiveRent(p);
   p._tiers=getTiers(r)||null;
   const c=r?cocCalc(p.listed,r):null;
   p._cocL=c?c.coc:null;
   p._cfL=c?c.cfMo:null;
   if(p._cocL!==null) p.status=p._cocL>=GP.cocMin?'pass':'fail';
+  // Smart resurface: flag skipped properties that now pass
+  if(oldStatus==='fail'&&p.status==='pass'&&p.curated==='ni'){
+    p._resurface=true;
+    p._resurfaceReason='Now passes criteria with current settings';
+  }
 }
 
 // Recompute _tiers / _cocL / _cfL / status for all props.

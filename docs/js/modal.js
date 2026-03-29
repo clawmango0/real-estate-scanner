@@ -2,6 +2,9 @@ function _invType(){return activeProject?.investment_type||'buyhold';}
 
 function buildMod(id){
   const p=props.find(x=>x.id===id); if(!p) return;
+  // Clear resurface flag when user reviews property
+  const _rp=props.find(x=>x.id===id);
+  if(_rp&&_rp._resurface){_rp._resurface=false;_rp._resurfaceReason=null;}
   const cond=mCond[id]||p.condition||'good';
   const impr=mImpr[id]||p.improvement||'asis';
   // Seed tax state from project or global defaults on first open
@@ -391,10 +394,10 @@ function _modSTR(id,p,cond,impr,taxP){
   return _propDetailsHtml(p)+
   `<div class="sec">🏖️ STR Revenue Inputs</div>
   <div class="txs">
-    <div class="tr2"><label>Avg Daily Rate</label><input type="text" value="${adr}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_adr=+this.value||150;buildMod('${id}')"></div>
-    <div class="tr2"><label>Occupancy %</label><input type="text" value="${Math.round(occ*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_occ=(+this.value||70)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
-    <div class="tr2"><label>Cleaning Fee</label><input type="text" value="${clean}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_clean=+this.value||0;buildMod('${id}')"></div>
-    <div class="tr2"><label>Platform Fee</label><input type="text" value="${Math.round(plat*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_plat=(+this.value||3)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Avg Daily Rate</label><input type="text" value="${adr}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_adr=+this.value||150;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Occupancy %</label><input type="text" value="${Math.round(occ*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_occ=(+this.value||70)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Cleaning Fee</label><input type="text" value="${clean}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_clean=+this.value||0;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Platform Fee</label><input type="text" value="${Math.round(plat*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_plat=(+this.value||3)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
   </div>`+
   (s?`
   <div class="sec">💰 STR Analysis</div>
@@ -434,8 +437,8 @@ function _modWholesale(id,p,cond,impr){
   (w?`
   <div class="sec">📋 Wholesale Analysis</div>
   <div class="txs" style="margin-bottom:.5rem">
-    <div class="tr2"><label>Assignment Fee %</label><input type="text" value="${Math.round(assignPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_assign=(+this.value||7)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
-    <div class="tr2"><label>Est. Rehab %</label><input type="text" value="${Math.round(rehabPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_rehab=(+this.value||10)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Assignment Fee %</label><input type="text" value="${Math.round(assignPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_assign=(+this.value||7)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Est. Rehab %</label><input type="text" value="${Math.round(rehabPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_rehab=(+this.value||10)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
   </div>
   <div class="k3" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi"><div class="kl">ARV</div><div class="kv" style="color:var(--green)">${M(w.arv)}</div></div>
@@ -460,9 +463,9 @@ function _modCommercial(id,p,cond,impr,taxP){
   return _propDetailsHtml(p)+
   `<div class="sec">🏢 Commercial Inputs</div>
   <div class="txs">
-    <div class="tr2"><label>Units</label><input type="text" value="${units}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_units=+this.value||2;buildMod('${id}')"></div>
-    <div class="tr2"><label>Rent/Unit/mo</label><input type="text" value="${rpu}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._comm_rpu=+this.value||800;buildMod('${id}')"></div>
-    <div class="tr2"><label>Vacancy %</label><input type="text" value="${Math.round(vac*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_vac=(+this.value||5)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Units</label><input type="text" value="${units}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_units=+this.value||2;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Rent/Unit/mo</label><input type="text" value="${rpu}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._comm_rpu=+this.value||800;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Vacancy %</label><input type="text" value="${Math.round(vac*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_vac=(+this.value||5)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
   </div>`+
   (c?`
   <div class="sec">📊 Commercial Analysis</div>
@@ -496,10 +499,10 @@ function _modPassive(id,p,cond,impr){
   return _propDetailsHtml(p)+
   `<div class="sec">💼 Syndication Inputs</div>
   <div class="txs">
-    <div class="tr2"><label>Investment Amount</label><input type="text" value="${invest}" inputmode="numeric" class="no-spin" style="width:100px" onblur="if(activeProject)activeProject._pass_invest=+this.value||50000;buildMod('${id}')"></div>
-    <div class="tr2"><label>Pref Return %</label><input type="text" value="${Math.round(pref*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_pref=(+this.value||8)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
-    <div class="tr2"><label>Hold Years</label><input type="text" value="${hold}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_hold=+this.value||5;buildMod('${id}')"></div>
-    <div class="tr2"><label>Equity Multiple</label><input type="text" value="${eqm}" inputmode="decimal" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_eqm=+this.value||2.0;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">×</span></div>
+    <div class="tr2"><label>Investment Amount</label><input type="text" value="${invest}" inputmode="numeric" class="no-spin" style="width:100px" onblur="if(activeProject)activeProject._pass_invest=+this.value||50000;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Pref Return %</label><input type="text" value="${Math.round(pref*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_pref=(+this.value||8)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Hold Years</label><input type="text" value="${hold}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_hold=+this.value||5;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Equity Multiple</label><input type="text" value="${eqm}" inputmode="decimal" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_eqm=+this.value||2.0;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">×</span></div>
   </div>`+
   (ps?`
   <div class="sec">📈 Syndication Returns</div>

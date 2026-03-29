@@ -5,7 +5,7 @@
 // ── Utility ─────────────────────────────────────────────────────────────────
 function _aProps(){
   let list=activeProject?props.filter(p=>projectFilter(p,activeProject)):props;
-  return list.filter(p=>p.curated!=='blk');
+  return list.filter(p=>(p.stage||'inbox')!=='archived');
 }
 
 function _median(arr){
@@ -187,7 +187,7 @@ function _appreciationVsCashFlow(list){
   if(valid.length<3) return '<div class="an-empty">Need 3+ properties with CoC + neighborhood data</div>';
   const points=valid.map(p=>{
     const appreci=(p._hood.appreci1||p._hood.rentGrowth||0);
-    const isFav=p.curated==='fav';
+    const isFav=(p.stage||'inbox')==='shortlist';
     return {
       x:p._cocL*100,
       y:appreci,
@@ -232,7 +232,7 @@ function _budgetPosition(list){
 }
 
 function _targetVsActual(list){
-  const favs=list.filter(p=>p.curated==='fav');
+  const favs=list.filter(p=>(p.stage||'inbox')==='shortlist');
   const pass=list.filter(p=>p.status==='pass');
   if(favs.length<2&&pass.length<2) return '<div class="an-empty">Favorite or pass 2+ properties to compare</div>';
   const pool=favs.length>=2?favs:pass;
@@ -259,7 +259,7 @@ function _targetVsActual(list){
 }
 
 function _portfolioComposition(list){
-  const favs=list.filter(p=>p.curated==='fav');
+  const favs=list.filter(p=>(p.stage||'inbox')==='shortlist');
   if(!favs.length) return '<div class="an-empty">Favorite properties to see portfolio composition</div>';
   // By type
   const byType=_groupBy(favs,p=>p.type||'SFR');
