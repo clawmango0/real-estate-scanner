@@ -1142,7 +1142,7 @@ serve(async(req)=>{
 
     const record: Record<string, unknown> = {
       user_id:mb.user_id, mailbox_id:mb.id, email_log_id:logId,
-      address:p.address, city:p.city??"", state:p.state??"TX", zip:p.zip||null,
+      address:String(p.address||'').trim(), city:String(p.city||'').trim(), state:String(p.state||'TX').trim(), zip:p.zip?String(p.zip).trim():null,
       listed_price:newPrice,
       beds:p.beds?Number(p.beds):null, baths:p.baths?Number(p.baths):null,
       sqft:p.sqft?Number(p.sqft):null,

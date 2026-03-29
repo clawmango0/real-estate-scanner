@@ -124,16 +124,19 @@ function shapeProperty(row: Record<string, unknown>) {
     if (u.includes("CONDO"))   return "CONDO";
     return "SFR";
   };
-  const cityDisplay = row.city
-    ? `${row.city}, ${row.state} ${row.zip}`
-    : (hood ? String(hood.area_name || `${row.state} ${row.zip}`) : `${row.state} ${row.zip}`);
+  const _city = String(row.city || '').trim();
+  const _state = String(row.state || 'TX').trim();
+  const _zip = row.zip ? String(row.zip).trim() : '';
+  const cityDisplay = _city
+    ? `${_city}, ${_state}${_zip ? ' ' + _zip : ''}`
+    : (hood ? String(hood.area_name || `${_state}${_zip ? ' ' + _zip : ''}`) : `${_state}${_zip ? ' ' + _zip : ''}`);
 
   // Strip embedded city/state/zip from address to produce a clean street address.
   // DB address field often contains full "123 Main St, City, TX 76XXX".
   let streetAddr = String(row.address || '').trim();
-  const stateStr = String(row.state || 'TX');
-  const zipStr   = String(row.zip   || '');
-  const cityStr  = String(row.city  || '');
+  const stateStr = _state;
+  const zipStr   = _zip;
+  const cityStr  = _city;
   if (zipStr) {
     streetAddr = streetAddr.replace(new RegExp(',?\\s+' + stateStr + '\\s+' + zipStr + '$'), '').trim();
   }
