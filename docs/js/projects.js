@@ -4,6 +4,23 @@ function _applyProjectGP(proj){
   if(!Object.keys(_gpOrig).length) _gpOrig={rate:GP.rate,downPct:GP.downPct};
   if(proj.rate!=null)     GP.rate=proj.rate;
   if(proj.down_pct!=null) GP.downPct=proj.down_pct;
+  // Hydrate strategy params from DB column onto project object
+  if (proj.strategy_params) {
+    const sp = proj.strategy_params;
+    if (sp.str_adr != null) proj._str_adr = sp.str_adr;
+    if (sp.str_occ != null) proj._str_occ = sp.str_occ;
+    if (sp.str_clean != null) proj._str_clean = sp.str_clean;
+    if (sp.str_plat != null) proj._str_plat = sp.str_plat;
+    if (sp.ws_assign != null) proj._ws_assign = sp.ws_assign;
+    if (sp.ws_rehab != null) proj._ws_rehab = sp.ws_rehab;
+    if (sp.comm_units != null) proj._comm_units = sp.comm_units;
+    if (sp.comm_rpu != null) proj._comm_rpu = sp.comm_rpu;
+    if (sp.comm_vac != null) proj._comm_vac = sp.comm_vac;
+    if (sp.pass_invest != null) proj._pass_invest = sp.pass_invest;
+    if (sp.pass_pref != null) proj._pass_pref = sp.pass_pref;
+    if (sp.pass_hold != null) proj._pass_hold = sp.pass_hold;
+    if (sp.pass_eqm != null) proj._pass_eqm = sp.pass_eqm;
+  }
 }
 function _restoreGP(){
   if(_gpOrig.rate!==undefined)    GP.rate=_gpOrig.rate;
@@ -42,11 +59,11 @@ function projectFilter(p,proj){
 
 // Compute card stats for an array of properties
 function _projStats(list){
-  const v=list.filter(p=>p.curated!=='blk');
+  const v=list.filter(p=>(p.stage||'inbox')!=='archived');
   const pass=v.filter(p=>p.status==='pass');
   const cfs=pass.filter(p=>p._cfL>0).map(p=>p._cfL);
   return{count:v.length,pass:pass.length,
-         favs:v.filter(p=>p.curated==='fav').length,
+         favs:v.filter(p=>(p.stage||'inbox')==='shortlist').length,
          newDrop:v.filter(p=>p.isNew||p.priceDrop).length,
          avgCf:cfs.length?Math.round(cfs.reduce((a,b)=>a+b,0)/cfs.length):0};
 }
@@ -59,6 +76,7 @@ function setProject(proj){
   recomputeRents();
   renderProjectCards();
   renderApp();
+  if(typeof renderAnalytics==='function') renderAnalytics();
 }
 
 // Build and inject the project cards row
@@ -183,16 +201,74 @@ const INV_TYPES={
   passive:{label:'Passive/Syndication',short:'PASS',color:'#9CA3AF'}
 };
 
+const PROJECT_TEMPLATES=[
+  {name:'DFW Cash Flow Starter',desc:'SFR under $250K in Fort Worth suburbs, buy & hold, 25% down',icon:'💰',
+   investment_type:'buyhold',prop_types:['SFR'],max_price:250000,down_pct:0.25,
+   cities:['Fort Worth','Arlington','Crowley','Burleson','Mansfield']},
+  {name:'DFW Flip Finder',desc:'Distressed/needswork SFR under $200K for fix-and-flip',icon:'🏗️',
+   investment_type:'flipper',prop_types:['SFR'],max_price:200000,
+   cities:['Fort Worth','Dallas','Hurst','Euless','Bedford']},
+  {name:'Multi-Family Builder',desc:'Duplexes, triplexes, quads — commercial cap rate analysis',icon:'🏘️',
+   investment_type:'commercial',prop_types:['DUPLEX','TRIPLEX','QUAD'],max_price:400000,
+   strategy_params:{comm_units:4,comm_rpu:900,comm_vac:0.05},cities:[]},
+  {name:'BRRRR Strategy',desc:'Underpriced SFR for buy-rehab-rent-refi-repeat',icon:'🔁',
+   investment_type:'brrrr',prop_types:['SFR'],max_price:180000,cities:[]},
+  {name:'STR / Airbnb Play',desc:'Short-term rental candidates, RevPAR + gross revenue focus',icon:'🏖️',
+   investment_type:'str',prop_types:['SFR','CONDO'],max_price:350000,
+   strategy_params:{str_adr:175,str_occ:0.65,str_clean:85,str_plat:0.03},cities:[]},
+];
+
 function openProjMod(id){
   _editProj=id
     ?{...projects.find(p=>p.id===id)}
     :{id:null,name:'',investment_type:'buyhold',cities:[],prop_types:[],min_beds:null,max_beds:null,
       min_baths:null,max_baths:null,max_price:null,down_pct:null,rate:null,hold_yrs:null,
-      participation:'active',cost_seg_pct:0.20,sec179:0};
-  _buildProjModal();
+      participation:'active',cost_seg_pct:0.20,sec179:0,strategy_params:{}};
+  if(!id){
+    _buildTemplatePicker();
+  } else {
+    _buildProjModal();
+  }
   document.getElementById('pov').classList.add('open');
-  // Init map AFTER modal is visible (display:flex) + animation settles (0.2s)
   setTimeout(()=>_initModalMap(),350);
+}
+
+function _buildTemplatePicker(){
+  document.getElementById('pm-title').textContent='New Project';
+  document.getElementById('pm-body').innerHTML=`
+    <div style="margin-bottom:1rem">
+      <div style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem">Start from a template or build from scratch</div>
+      <div class="tmpl-grid">
+        ${PROJECT_TEMPLATES.map((t,i)=>`<div class="tmpl-card" onclick="_useTemplate(${i})">
+          <div class="tmpl-icon">${t.icon}</div>
+          <div class="tmpl-name">${esc(t.name)}</div>
+          <div class="tmpl-desc">${esc(t.desc)}</div>
+          <div class="tmpl-meta"><span class="inv-badge" style="background:${(INV_TYPES[t.investment_type]||INV_TYPES.buyhold).color}22;color:${(INV_TYPES[t.investment_type]||INV_TYPES.buyhold).color}">${(INV_TYPES[t.investment_type]||INV_TYPES.buyhold).short}</span>${t.max_price?'≤$'+Math.round(t.max_price/1000)+'k':''}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <button class="psave-btn" style="background:var(--card);color:var(--text2);border:1px solid var(--border2)" onclick="_editProj={id:null,name:'',investment_type:'buyhold',cities:[],prop_types:[],min_beds:null,max_beds:null,min_baths:null,max_baths:null,max_price:null,down_pct:null,rate:null,hold_yrs:null,participation:'active',cost_seg_pct:0.20,sec179:0,strategy_params:{}};_buildProjModal();setTimeout(()=>_initModalMap(),100)">Start from Scratch →</button>`;
+}
+
+function _useTemplate(idx){
+  const t=PROJECT_TEMPLATES[idx];
+  if(!t) return;
+  _editProj={
+    id:null,name:t.name,investment_type:t.investment_type,
+    cities:[...(t.cities||[])],prop_types:[...(t.prop_types||[])],
+    min_beds:t.min_beds||null,max_beds:t.max_beds||null,
+    min_baths:t.min_baths||null,max_baths:t.max_baths||null,
+    max_price:t.max_price||null,
+    down_pct:t.down_pct||null,rate:t.rate||null,hold_yrs:t.hold_yrs||null,
+    participation:t.participation||'active',cost_seg_pct:t.cost_seg_pct||0.20,sec179:t.sec179||0,
+    strategy_params:t.strategy_params||{},
+  };
+  // Hydrate underscore-prefixed fields from strategy_params for modal inputs
+  if(t.strategy_params){
+    Object.entries(t.strategy_params).forEach(([k,v])=>{_editProj['_'+k]=v;});
+  }
+  _buildProjModal();
+  setTimeout(()=>_initModalMap(),100);
 }
 
 function closeProjMod(e){
@@ -408,7 +484,22 @@ async function saveProject(){
     hold_yrs: holdRaw?+holdRaw:null,
     participation: document.getElementById('pf-participation')?.value||'active',
     cost_seg_pct: (()=>{const v=document.getElementById('pf-costseg')?.value;return v!==''&&v!=null?+v/100:0.20;})(),
-    sec179: n(document.getElementById('pf-sec179')?.value)||0
+    sec179: n(document.getElementById('pf-sec179')?.value)||0,
+    strategy_params: {
+      str_adr: _editProj._str_adr ?? _editProj.strategy_params?.str_adr,
+      str_occ: _editProj._str_occ ?? _editProj.strategy_params?.str_occ,
+      str_clean: _editProj._str_clean ?? _editProj.strategy_params?.str_clean,
+      str_plat: _editProj._str_plat ?? _editProj.strategy_params?.str_plat,
+      ws_assign: _editProj._ws_assign ?? _editProj.strategy_params?.ws_assign,
+      ws_rehab: _editProj._ws_rehab ?? _editProj.strategy_params?.ws_rehab,
+      comm_units: _editProj._comm_units ?? _editProj.strategy_params?.comm_units,
+      comm_rpu: _editProj._comm_rpu ?? _editProj.strategy_params?.comm_rpu,
+      comm_vac: _editProj._comm_vac ?? _editProj.strategy_params?.comm_vac,
+      pass_invest: _editProj._pass_invest ?? _editProj.strategy_params?.pass_invest,
+      pass_pref: _editProj._pass_pref ?? _editProj.strategy_params?.pass_pref,
+      pass_hold: _editProj._pass_hold ?? _editProj.strategy_params?.pass_hold,
+      pass_eqm: _editProj._pass_eqm ?? _editProj.strategy_params?.pass_eqm,
+    }
   };
   let saved;
   if(_editProj.id){
@@ -438,5 +529,29 @@ async function deleteProject(id){
   else renderProjectCards();
   document.getElementById('pov').classList.remove('open');
   _editProj=null;
+}
+
+let _spTimer = null;
+function _saveStrategyParams() {
+  if (!activeProject || !activeProject.id) return;
+  clearTimeout(_spTimer);
+  _spTimer = setTimeout(async () => {
+    const sp = {
+      str_adr: activeProject._str_adr, str_occ: activeProject._str_occ,
+      str_clean: activeProject._str_clean, str_plat: activeProject._str_plat,
+      ws_assign: activeProject._ws_assign, ws_rehab: activeProject._ws_rehab,
+      comm_units: activeProject._comm_units, comm_rpu: activeProject._comm_rpu,
+      comm_vac: activeProject._comm_vac,
+      pass_invest: activeProject._pass_invest, pass_pref: activeProject._pass_pref,
+      pass_hold: activeProject._pass_hold, pass_eqm: activeProject._pass_eqm,
+    };
+    // Remove undefined values
+    Object.keys(sp).forEach(k => { if (sp[k] === undefined) delete sp[k]; });
+    const { error } = await sb.from('projects').update({ strategy_params: sp }).eq('id', activeProject.id);
+    if (error) console.error('_saveStrategyParams:', error);
+    // Update local project cache
+    const idx = projects.findIndex(x => x.id === activeProject.id);
+    if (idx >= 0) projects[idx].strategy_params = sp;
+  }, 500);
 }
 
