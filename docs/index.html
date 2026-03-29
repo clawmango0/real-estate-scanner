@@ -94,7 +94,7 @@
   <div class="sbar">
     <div class="sc"><div class="sl">Properties</div><div class="sv" id="s-tot">—</div></div>
     <div class="sc"><div class="sl">Pass Criteria</div><div class="sv g" id="s-pass">—</div></div>
-    <div class="sc"><div class="sl">Shortlist</div><div class="sv a" id="s-favs">—</div></div>
+    <div class="sc"><div class="sl">Favorites</div><div class="sv a" id="s-favs">—</div></div>
     <div class="sc"><div class="sl">New / Drops</div><div class="sv" id="s-new">—</div></div>
     <div class="sc"><div class="sl">Avg CF (Pass)</div><div class="sv" id="s-cf">—</div></div>
   </div>
@@ -127,15 +127,10 @@
   </div>
 
   <div class="tbar">
-    <div class="tabs" id="stage-tabs">
+    <div class="tabs">
       <button class="tab on" onclick="setView('all',this)">All <span class="n" id="tc-a">0</span></button>
-      <button class="tab" onclick="setView('inbox',this)">📥 Inbox <span class="n" id="tc-inbox">0</span></button>
-      <button class="tab" onclick="setView('shortlist',this)">⭐ Shortlist <span class="n" id="tc-shortlist">0</span></button>
-      <button class="tab" onclick="setView('diligence',this)">🔍 Diligence <span class="n" id="tc-diligence">0</span></button>
-      <button class="tab" onclick="setView('offer',this)">📝 Offer <span class="n" id="tc-offer">0</span></button>
-      <button class="tab" onclick="setView('contract',this)">📋 Contract <span class="n" id="tc-contract">0</span></button>
-      <button class="tab" onclick="setView('closed',this)">✅ Closed <span class="n" id="tc-closed">0</span></button>
-      <button class="tab" onclick="setView('archived',this)">📦 Archive <span class="n" id="tc-archived">0</span></button>
+      <button class="tab" onclick="setView('favs',this)">⭐ Favs <span class="n" id="tc-f">0</span></button>
+      <button class="tab" onclick="setView('ni',this)">👎 Skip <span class="n" id="tc-n">0</span></button>
     </div>
     <div class="fchips">
       <button class="fc on" onclick="setFil('all',this)">All</button>
@@ -144,10 +139,8 @@
       <button class="fc" onclick="setFil('duplex',this)">🏘 Multi</button>
       <button class="fc" onclick="setFil('new',this)">🆕 New</button>
       <button class="fc" onclick="setFil('drop',this)">📉 Drop</button>
-      <button class="fc" onclick="setFil('resurface',this)" style="display:none">🔄 Revisit</button>
       <button class="an-toggle" id="analytics-btn" onclick="toggleAnalytics()">📊 Analytics</button>
     </div>
-    <button class="exp-btn" onclick="exportCSV()" title="Export current view as CSV">⬇ Export</button>
     <div class="rent-mode-row">
       <span class="rm-lbl">Rent assumption:</span>
       <button class="rm" data-m="low" onclick="setRentMode('low')">Low</button>
@@ -223,6 +216,5 @@
 <script src="js/curation.js?v=26"></script>
 <script src="js/modal.js?v=26"></script>
 <script src="js/analytics.js?v=26"></script>
-<script src="js/export.js?v=26"></script>
 </body>
 </html>
