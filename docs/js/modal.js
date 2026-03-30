@@ -710,10 +710,30 @@ function printMod(){
   window.addEventListener('afterprint',cleanup,{once:true});
   window.print();
 }
+let _prevFocus=null;
+function _trapFocus(modal){
+  modal._focusTrap=function(e){
+    if(e.key!=='Tab')return;
+    const focusable=modal.querySelectorAll('button,a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+    if(!focusable.length)return;
+    const first=focusable[0],last=focusable[focusable.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  };
+  modal.addEventListener('keydown',modal._focusTrap);
+}
+function _releaseFocus(modal){
+  if(modal._focusTrap){modal.removeEventListener('keydown',modal._focusTrap);delete modal._focusTrap;}
+}
 function openM(id){
+  _prevFocus=document.activeElement;
   openId=id;buildMod(id);
-  document.getElementById('ov').classList.add('open');
-  document.getElementById('ov').scrollTop=0;
+  const ov=document.getElementById('ov');
+  ov.classList.add('open');
+  ov.scrollTop=0;
+  _trapFocus(ov);
+  const closeBtn=ov.querySelector('.xcl');
+  if(closeBtn) setTimeout(()=>closeBtn.focus(),100);
   // Mark as viewed — clear "New" badge
   const p=props.find(x=>x.id===id);
   if(p&&p.isNew){
@@ -722,7 +742,7 @@ function openM(id){
     renderApp();
   }
 }
-function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;document.getElementById('ov').classList.remove('open');openId=null;}
+function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;const ov=document.getElementById('ov');_releaseFocus(ov);ov.classList.remove('open');openId=null;if(_prevFocus)_prevFocus.focus();}
 function srt(col){if(sCol===col)sDir*=-1;else{sCol=col;sDir=-1;}renderApp();}
 function setView(v,el){if(typeof trackFilterChange==='function')trackFilterChange('tab',v);aV=v;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderApp();}
 function setFil(f,el){if(typeof trackFilterChange==='function')trackFilterChange('chip',f);aF=f;document.querySelectorAll('.fc').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderApp();}
