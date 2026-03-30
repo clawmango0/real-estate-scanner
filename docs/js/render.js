@@ -296,7 +296,8 @@ function renderApp(){
   expandedId = null; // collapse on re-render
   list.forEach((p,i)=>{
     const tr=document.createElement('tr');
-    tr.style.animationDelay=(i*0.02)+'s';
+    tr.dataset.pid=p.id;
+    if(!window._tableRendered) tr.style.animationDelay=(i*0.02)+'s';
     if(p.stage==='shortlist')tr.classList.add('fav');
     if(p.stage==='archived')tr.classList.add('ni');
     tr.innerHTML=_tableRow(p,_it);
@@ -307,6 +308,24 @@ function renderApp(){
     exr.id='exr-'+p.id;
     tbody.appendChild(exr);
   });
+  window._tableRendered=true;
+  updateStats();
+}
+
+// Targeted update of a single row without re-rendering the entire table.
+// Falls back to full renderApp() if the row isn't in the current view.
+function updateRow(id){
+  const tbody=document.getElementById('tbody');
+  if(!tbody){renderApp();return;}
+  const tr=tbody.querySelector(`tr[data-pid="${id}"]`);
+  if(!tr){renderApp();return;}
+  const p=props.find(x=>x.id===id);
+  if(!p) return;
+  const _it=activeProject?.investment_type||'buyhold';
+  tr.innerHTML=_tableRow(p,_it);
+  tr.className='';
+  if(p.stage==='shortlist')tr.classList.add('fav');
+  if(p.stage==='archived')tr.classList.add('ni');
   updateStats();
 }
 

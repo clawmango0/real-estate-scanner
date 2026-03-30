@@ -97,8 +97,8 @@ async function saveProperty(id, updates){
       const p=props[idx];
       maybeReEstimate(id);
       recomputeOne(p);
-      renderApp();
-      if(typeof renderProjectCards==='function') renderProjectCards();
+      if(typeof updateRow==='function') updateRow(id);
+      else renderApp();
     }
     return true;
   }catch(e){
