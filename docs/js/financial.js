@@ -393,3 +393,5 @@ const M=n=>'$'+Math.abs(Math.round(n)).toLocaleString();
 const MS=n=>(n>=0?'+':'')+M(n);
 const PCT=n=>(n*100).toFixed(1)+'%';
 
+if(typeof module!=='undefined') module.exports={GP,GP_DEFAULTS,COND,IMPR,TAX25,pmt,balAt,intInYr,cocCalc,maxPrice,getTiers,classify,passAllow,nbScore,nbLabel,schedE,exitAt,flipCalc,brrrrCalc,strCalc,wholesaleCalc,commercialCalc,passiveCalc,localRentEstimate,agiToRates,M,MS,PCT};
+
