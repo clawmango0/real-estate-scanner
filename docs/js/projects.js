@@ -76,8 +76,8 @@ function setProject(proj){
   if(proj) _applyProjectGP(proj);
   recomputeRents();
   renderProjectCards();
-  renderApp();
-  if(typeof renderAnalytics==='function') renderAnalytics();
+  if(typeof Bus!=='undefined') Bus.emit('stateChanged');
+  else renderApp();
 }
 
 // Build and inject the project cards row
@@ -558,4 +558,6 @@ function _saveStrategyParams() {
     if (idx >= 0) projects[idx].strategy_params = sp;
   }, 500);
 }
+
+if(typeof Bus!=='undefined') Bus.on('stateChanged',renderProjectCards);
 

@@ -6,7 +6,8 @@ async function loadProperties(){
       _showPropsError('Not signed in. Please reload and sign in.');
       return;
     }
-    let res=await fetch(`${EDGE_BASE}/properties`,{
+    const backfill=sessionStorage.getItem('lbiq_backfilled')?'':'?backfill=1';
+    let res=await fetch(`${EDGE_BASE}/properties${backfill}`,{
       headers:{'Authorization':`Bearer ${token}`}
     });
     // On 401, try ONE refresh then retry — never auto-signout
@@ -44,6 +45,7 @@ async function loadProperties(){
     autoEstimateAll();
     refreshAll();
     if(typeof autoStageAll==='function') autoStageAll();
+    sessionStorage.setItem('lbiq_backfilled','1');
   } catch(e) {
     console.error('loadProperties exception:', e);
     _showPropsError(e.message||String(e));

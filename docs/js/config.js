@@ -12,6 +12,9 @@ function safeHTML(strings, ...vals) {
   return strings.reduce((out, str, i) => out + str + (i < vals.length ? esc(String(vals[i] ?? '')) : ''), '');
 }
 
+// Minimal pub/sub event bus — decouples state changes from rendering
+const Bus={_:{},on(e,fn){(this._[e]=this._[e]||[]).push(fn);},off(e,fn){this._[e]=(this._[e]||[]).filter(f=>f!==fn);},emit(e,d){(this._[e]||[]).forEach(fn=>{try{fn(d);}catch(err){console.error('Bus error:',e,err);}});}};
+
 // Source badge HTML — single source of truth for source→badge mapping
 function sourceBadge(src){
   if(src==='auction')return'<span class="bdg ba">Auction</span>';

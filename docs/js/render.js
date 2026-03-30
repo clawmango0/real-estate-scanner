@@ -393,3 +393,6 @@ function updateStats(){
   }
 }
 
+// Register for state change events
+if(typeof Bus!=='undefined') Bus.on('stateChanged',renderApp);
+

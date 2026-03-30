@@ -739,7 +739,7 @@ function openM(id){
   if(p&&p.isNew){
     p.isNew=false;
     saveProperty(id,{is_new:false});
-    renderApp();
+    if(typeof updateRow==='function') updateRow(id);
   }
 }
 function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;const ov=document.getElementById('ov');_releaseFocus(ov);ov.classList.remove('open');openId=null;if(_prevFocus)_prevFocus.focus();}
