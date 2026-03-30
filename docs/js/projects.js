@@ -70,6 +70,7 @@ function _projStats(list){
 
 // Switch active project — applies GP overrides and re-renders everything
 function setProject(proj){
+  if(typeof trackProjectSwitch==='function') trackProjectSwitch(proj);
   _restoreGP();
   activeProject=proj;
   if(proj) _applyProjectGP(proj);

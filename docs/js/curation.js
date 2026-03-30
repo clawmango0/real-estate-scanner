@@ -11,6 +11,7 @@ async function curate(id, val){
 async function setStage(id, stage){
   const p=props.find(x=>x.id===id);
   if(!p) return;
+  if(typeof trackStageChange==='function') trackStageChange(id,p.stage||'inbox',stage,false);
   // Map stage to legacy curated for backwards compat
   const curatedMap={shortlist:'fav',archived:'ni'};
   const updates={pipeline_stage:stage,curated:curatedMap[stage]||null};

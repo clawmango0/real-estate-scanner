@@ -91,6 +91,7 @@ async function saveProperty(id, updates){
       if(idx>=0&&snapshot) Object.assign(props[idx],snapshot);
       return false;
     }
+    if(typeof trackPropertyEdit==='function'&&_CORE_FIELDS.some(f=>f in updates)) trackPropertyEdit(id,updates);
     // If any core financial field changed, re-estimate rent and recompute metrics
     if(idx>=0 && _CORE_FIELDS.some(f=>f in updates)){
       const p=props[idx];
