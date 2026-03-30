@@ -1,3 +1,20 @@
+// ═══════════════════════════════════════════════════════════
+// GLOBAL APPLICATION STATE
+// All state lives here. Other modules read/write these directly.
+// Future: migrate to AppState object with event-driven updates.
+// ═══════════════════════════════════════════════════════════
+// props[]          — all properties from DB (source of truth)
+// aV / currentView — active tab view ('all'|stage name)
+// aF / currentFilter — active filter chip ('all'|'pass'|'fail'|etc.)
+// sCol / sortColumn — current sort column (null = default)
+// sDir / sortDirection — sort direction (1 asc, -1 desc)
+// openId           — ID of property with open modal (null = closed)
+// expandedId       — ID of expanded inline row (null = none)
+// gRentMode        — rent assumption mode ('low'|'mid'|'high'|'mid+5')
+// projects[]       — user's projects from DB
+// activeProject    — currently selected project (null = all)
+// mCond/mImpr/mTax/mRent/mEdit — per-property modal overrides
+// ═══════════════════════════════════════════════════════════
 let currentUser=null, userMailbox=null;
 let props=[], aV='all', aF='all', sCol=null, sDir=-1, openId=null;
 let mCond={}, mImpr={}, mTax={}, mRent={}, mEdit={};
@@ -6,6 +23,11 @@ const STAGES=['inbox','shortlist','diligence','offer','contract','closed','archi
 const STAGE_LABELS={inbox:'Inbox',shortlist:'Shortlist',diligence:'Due Diligence',offer:'Offer',contract:'Contract',closed:'Closed',archived:'Archived'};
 const STAGE_ICONS={inbox:'📥',shortlist:'⭐',diligence:'🔍',offer:'📝',contract:'📋',closed:'✅',archived:'📦'};
 let gRentMode='mid'; // global rent assumption: 'low' | 'mid' | 'high' | 'mid+5'
+// Readable aliases for cryptic state vars (backwards-compat via property descriptors)
+Object.defineProperty(window,'currentView',{get:()=>aV,set:v=>{aV=v;}});
+Object.defineProperty(window,'currentFilter',{get:()=>aF,set:v=>{aF=v;}});
+Object.defineProperty(window,'sortColumn',{get:()=>sCol,set:v=>{sCol=v;}});
+Object.defineProperty(window,'sortDirection',{get:()=>sDir,set:v=>{sDir=v;}});
 
 // ── PROJECTS STATE ──────────────────────────────────────
 let projects=[];       // loaded from DB
