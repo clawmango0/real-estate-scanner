@@ -94,6 +94,8 @@ function _expandHtml(p) {
         ${nbHtml}
       </div>
     </div>
+    ${p._riskFlags&&p._riskFlags.length?`<div style="margin-top:.5rem;display:flex;gap:.4rem;flex-wrap:wrap">${p._riskFlags.map(f=>`<span class="risk-flag risk-${f.severity}">${f.severity==='alert'?'🔴':f.severity==='warn'?'🟡':'🔵'} ${esc(f.label)}</span>`).join('')}</div>`:''}
+    ${p._autoStaged?`<div style="margin-top:.3rem;font-size:.6rem;color:var(--amber)">⚡ Auto-staged: ${esc(p._autoStageReason||'')}</div>`:''}
     <div style="margin-top:.5rem"><button class="ex-open" onclick="event.stopPropagation();openM('${p.id}')">Open Full Details →</button></div>
   </td>`;
 }
@@ -134,7 +136,10 @@ function _addrCell(p){
   if(p.isNew)badges+=`<span class="bdg bn">🆕</span>`;
   if(p.priceDrop)badges+=`<span class="bdg bd">📉</span>`;
   if(p._resurface)badges+=`<span class="bdg brf">🔄</span>`;
-  return `<td><div style="display:flex;gap:6px;align-items:flex-start"><button class="ex-chev" onclick="toggleExpand('${p.id}',event)" title="Quick view">▸</button><div onclick="openM('${p.id}')" style="cursor:pointer;flex:1"><div style="margin-bottom:2px">${badges}</div><div class="am">${esc(p.address)}</div><div class="as">${esc(p.city)}</div></div></div></td>`;
+  if(p._autoStaged)badges+=`<span class="bdg bau" title="${esc(p._autoStageReason||'')}">⚡</span>`;
+  let riskHtml='';
+  if(p._riskFlags&&p._riskFlags.length){const w=p._riskFlags.find(f=>f.severity==='alert')||p._riskFlags.find(f=>f.severity==='warn')||p._riskFlags[0];const icon=w.severity==='alert'?'🔴':w.severity==='warn'?'🟡':'🔵';riskHtml=`<span class="risk-flag risk-${w.severity}" title="${esc(p._riskFlags.map(f=>f.label).join('\n'))}">${icon} ${p._riskFlags.length}</span>`;}
+  return `<td><div style="display:flex;gap:6px;align-items:flex-start"><button class="ex-chev" onclick="toggleExpand('${p.id}',event)" title="Quick view">▸</button><div onclick="openM('${p.id}')" style="cursor:pointer;flex:1"><div style="margin-bottom:2px">${badges}${riskHtml}</div><div class="am">${esc(p.address)}</div><div class="as">${esc(p.city)}</div></div></div></td>`;
 }
 function _listedCell(p){return `<td class="hs" onclick="openM('${p.id}')"><span class="mn">${M(p.listed)}</span></td>`;}
 function _starCell(p){
@@ -255,6 +260,7 @@ function vis(){
   if(aF==='new')l=l.filter(p=>p.isNew);
   if(aF==='drop')l=l.filter(p=>p.priceDrop);
   if(aF==='resurface')l=l.filter(p=>p._resurface);
+  if(aF==='risk')l=l.filter(p=>p._riskFlags&&p._riskFlags.some(f=>f.severity==='alert'||f.severity==='warn'));
   if(sCol)l.sort((a,b)=>sDir*((a[sCol]??-9e9)>(b[sCol]??-9e9)?1:(a[sCol]??-9e9)<(b[sCol]??-9e9)?-1:0));
   return l;
 }

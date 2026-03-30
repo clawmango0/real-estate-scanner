@@ -43,6 +43,7 @@ async function loadProperties(){
     // Auto-estimate rent for properties that have no monthly_rent set
     autoEstimateAll();
     refreshAll();
+    if(typeof autoStageAll==='function') autoStageAll();
   } catch(e) {
     console.error('loadProperties exception:', e);
     _showPropsError(e.message||String(e));
