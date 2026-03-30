@@ -893,6 +893,17 @@ async function updateRealtorRepo(agents: AgentInfo[]): Promise<void> {
   } catch (e) { console.error("updateRealtorRepo error:", e); }
 }
 
+function normalizeAddress(addr: string): string {
+  return addr.trim()
+    .replace(/\bstreet\b/gi, 'St').replace(/\bdrive\b/gi, 'Dr')
+    .replace(/\blane\b/gi, 'Ln').replace(/\bboulevard\b/gi, 'Blvd')
+    .replace(/\bavenue\b/gi, 'Ave').replace(/\bcourt\b/gi, 'Ct')
+    .replace(/\bplace\b/gi, 'Pl').replace(/\broad\b/gi, 'Rd')
+    .replace(/\bcircle\b/gi, 'Cir').replace(/\btrail\b/gi, 'Trl')
+    .replace(/\bparkway\b/gi, 'Pkwy').replace(/\bway\b/gi, 'Way')
+    .replace(/\s+/g, ' ').replace(/,\s*$/, '').trim();
+}
+
 // ══════════════════════════════════════════════════════════
 //  MAIN WEBHOOK HANDLER
 // ══════════════════════════════════════════════════════════
@@ -1147,7 +1158,7 @@ serve(async(req)=>{
 
     const record: Record<string, unknown> = {
       user_id:mb.user_id, mailbox_id:mb.id, email_log_id:logId,
-      address:String(p.address||'').trim(), city:String(p.city||'').trim(), state:String(p.state||'TX').trim(), zip:p.zip?String(p.zip).trim():null,
+      address:normalizeAddress(String(p.address||'')), city:String(p.city||'').trim(), state:String(p.state||'TX').trim(), zip:p.zip?String(p.zip).trim():null,
       listed_price:newPrice,
       beds:p.beds?Number(p.beds):null, baths:p.baths?Number(p.baths):null,
       sqft:p.sqft?Number(p.sqft):null,

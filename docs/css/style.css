@@ -448,7 +448,12 @@ tbody tr{animation:fi .18s ease both}
   .mc-stat{text-align:center}
   .mc-label{font-size:.5rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block}
   .mc-val{font-size:.78rem;font-weight:600;display:block}
+  .menu-toggle{display:flex;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:7px;width:32px;height:32px;font-size:1.1rem;cursor:pointer}
+  .hdr-right{display:none;flex-direction:column;position:absolute;top:60px;right:1rem;background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:.75rem;gap:.5rem;z-index:100;box-shadow:var(--shadow)}
+  .hdr-right.open{display:flex}
 }
+
+@media(min-width:769px){.menu-toggle{display:none}}
 
 /* Add Property — loading dots animation */
 .ap-loading{color:var(--amber);font-style:italic}
