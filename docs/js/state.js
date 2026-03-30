@@ -77,9 +77,8 @@ function recomputeRents(){ props.forEach(recomputeOne); }
 function refreshAll(){
   Object.keys(mTax).forEach(k=>delete mTax[k]);
   recomputeRents();
-  renderApp();
-  if(typeof renderProjectCards==='function') renderProjectCards();
-  if(typeof renderAnalytics==='function') renderAnalytics();
+  if(typeof Bus!=='undefined') Bus.emit('stateChanged');
+  else { renderApp(); if(typeof renderProjectCards==='function') renderProjectCards(); }
 }
 
 function setRentMode(mode){
@@ -88,8 +87,7 @@ function setRentMode(mode){
   document.querySelectorAll('.rm').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll(`.rm[data-m="${mode}"]`).forEach(b=>b.classList.add('on'));
   recomputeRents();
-  renderApp();
-  if(typeof renderProjectCards==='function') renderProjectCards();
-  if(typeof renderAnalytics==='function') renderAnalytics();
+  if(typeof Bus!=='undefined') Bus.emit('stateChanged');
+  else { renderApp(); if(typeof renderProjectCards==='function') renderProjectCards(); }
 }
 

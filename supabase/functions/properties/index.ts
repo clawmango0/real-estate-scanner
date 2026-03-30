@@ -96,8 +96,10 @@ serve(async (req) => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       // Fire-and-forget: backfill any properties with null zip/city
-      backfillMissingGeo(supabase).catch(e => console.error("Backfill launch error:", e));
-      backfillMissingUrls(supabase).catch(e => console.error("URL backfill launch error:", e));
+      if (url.searchParams.get('backfill') === '1') {
+        backfillMissingGeo(supabase).catch(e => console.error("Backfill launch error:", e));
+        backfillMissingUrls(supabase).catch(e => console.error("URL backfill launch error:", e));
+      }
       return new Response(JSON.stringify((data || []).map(shapeProperty)), { headers: { ...cors, "Content-Type": "application/json" } });
     }
     if (req.method === "POST" && isCollection) {

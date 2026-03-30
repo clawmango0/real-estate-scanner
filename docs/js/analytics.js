@@ -374,3 +374,5 @@ function renderAnalytics(){
       </div>
     </div>`;
 }
+
+if(typeof Bus!=='undefined') Bus.on('stateChanged',function(){if(_analyticsOpen)renderAnalytics();});
