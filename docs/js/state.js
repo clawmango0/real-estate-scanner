@@ -40,6 +40,34 @@ function recomputeOne(p){
     p._resurface=true;
     p._resurfaceReason='Now passes criteria with current settings';
   }
+  computeRiskFlags(p);
+}
+
+function computeRiskFlags(p){
+  const flags=[];
+  if(!p.beds&&!p.baths&&!p.sqft) flags.push({key:'incomplete',label:'Missing beds/baths/sqft',severity:'warn'});
+  else if(!p.beds||!p.baths) flags.push({key:'partial',label:'Missing '+(p.beds?'':'beds ')+(p.baths?'':'baths'),severity:'info'});
+  if(!p.sqft) flags.push({key:'nosqft',label:'No sqft data',severity:'info'});
+  if(p._cocL!==null&&p._cocL<0) flags.push({key:'negative',label:'Negative cash flow',severity:'alert'});
+  if(p.rentRange&&!p.monthlyRent) flags.push({key:'unconfirmed',label:'Rent is estimated, not confirmed',severity:'info'});
+  if(!p._hood) flags.push({key:'nohood',label:'No neighborhood data for this ZIP',severity:'warn'});
+  if(!p.listed) flags.push({key:'noprice',label:'No listing price',severity:'alert'});
+  if(p.createdAt){const days=(Date.now()-new Date(p.createdAt).getTime())/(1000*60*60*24);if(days>60&&!p.priceDrop) flags.push({key:'stale',label:'Listing is '+Math.round(days)+' days old',severity:'warn'});}
+  p._riskFlags=flags;
+}
+
+function autoAssignStage(p){
+  if((p.stage||'inbox')!=='inbox') return;
+  if(p._cocL===null) return;
+  const coc=p._cocL,nb=p._nbScore;
+  if(coc>=GP.cocStrong&&nb!==null&&nb>=60){p.stage='shortlist';p._autoStaged=true;p._autoStageReason='Strong returns ('+PCT(coc)+') in quality area (NB '+nb+')';return;}
+  if(coc<0||(coc<0.02&&nb!==null&&nb<40)){p.stage='archived';p._autoStaged=true;p._autoStageReason=coc<0?'Negative cash flow':'Very weak returns in poor area';return;}
+}
+
+function autoStageAll(){
+  let s=0,a=0;
+  for(const p of props){const b=p.stage||'inbox';autoAssignStage(p);if(p.stage!==b){if(p.stage==='shortlist')s++;if(p.stage==='archived')a++;const cm={shortlist:'fav',archived:'ni'};saveProperty(p.id,{pipeline_stage:p.stage,curated:cm[p.stage]||null});}}
+  if(s||a) console.log(`Auto-staged: ${s} shortlisted, ${a} archived`);
 }
 
 // Recompute _tiers / _cocL / _cfL / status for all props.

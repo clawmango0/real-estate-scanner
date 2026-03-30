@@ -193,6 +193,11 @@ td{padding:.75rem 1rem;vertical-align:middle}
 .ba{background:rgba(255,159,53,.12);color:var(--amber);border:1px solid rgba(255,159,53,.2)}
 .bt{background:rgba(239,68,68,.12);color:#F87171;border:1px solid rgba(239,68,68,.2)}
 .brf{background:rgba(167,139,250,.18);color:#C4B5FD;border:1px solid rgba(167,139,250,.3)}
+.bau{background:rgba(250,204,21,.15);color:#FBBF24;border:1px solid rgba(250,204,21,.3)}
+.risk-flag{display:inline-flex;align-items:center;gap:2px;font-size:.52rem;padding:.1rem .3rem;border-radius:3px;margin-left:3px;cursor:help;vertical-align:middle}
+.risk-alert{background:rgba(239,68,68,.12);color:#F87171}
+.risk-warn{background:rgba(250,204,21,.12);color:#FBBF24}
+.risk-info{background:rgba(96,165,250,.1);color:#60A5FA}
 .om{font-size:.66rem;font-weight:500}
 .om.g{color:var(--green)}.om.a{color:var(--amber)}.om.r{color:var(--red)}
 .ts{color:var(--green)}.tc{color:var(--amber)}.tx{color:var(--orange)}.tw2{color:var(--red)}
