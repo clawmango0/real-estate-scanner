@@ -2,6 +2,7 @@ function _invType(){return activeProject?.investment_type||'buyhold';}
 
 function buildMod(id){
   const p=props.find(x=>x.id===id); if(!p) return;
+  if(typeof trackPropertyView==='function') trackPropertyView(p);
   // Clear resurface flag when user reviews property
   const _rp=props.find(x=>x.id===id);
   if(_rp&&_rp._resurface){_rp._resurface=false;_rp._resurfaceReason=null;}
@@ -723,8 +724,8 @@ function openM(id){
 }
 function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;document.getElementById('ov').classList.remove('open');openId=null;}
 function srt(col){if(sCol===col)sDir*=-1;else{sCol=col;sDir=-1;}renderApp();}
-function setView(v,el){aV=v;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderApp();}
-function setFil(f,el){aF=f;document.querySelectorAll('.fc').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderApp();}
+function setView(v,el){if(typeof trackFilterChange==='function')trackFilterChange('tab',v);aV=v;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderApp();}
+function setFil(f,el){if(typeof trackFilterChange==='function')trackFilterChange('chip',f);aF=f;document.querySelectorAll('.fc').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderApp();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('ov').classList.remove('open');document.getElementById('sov').classList.remove('open');document.getElementById('aov').classList.remove('open');openId=null;}});
 document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
 document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});

@@ -1,6 +1,7 @@
 // ── Data Sources Page ────────────────────────────────────────────────────────
 
 function openDataSources(){
+  if(typeof trackDataSources==='function') trackDataSources();
   document.getElementById('ds-body').innerHTML=_buildDataSourcesHTML();
   document.getElementById('dsov').classList.add('open');
 }

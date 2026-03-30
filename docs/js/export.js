@@ -2,6 +2,7 @@
 function exportCSV(){
   const list=vis();
   if(!list.length){alert('No properties to export');return;}
+  if(typeof trackExport==='function') trackExport('csv',list.length);
   const it=activeProject?.investment_type||'buyhold';
   // Build headers + rows based on investment type
   let headers,rowFn;

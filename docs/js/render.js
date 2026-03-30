@@ -108,6 +108,7 @@ function toggleExpand(id, event) {
   if (prev) prev.classList.remove('open');
   if (wasOpen) { expandedId = null; return; }
   // Expand new row
+  if(typeof trackExpandRow==='function') trackExpandRow(id);
   expandedId = id;
   const row = document.getElementById('exr-' + id);
   if (row) {

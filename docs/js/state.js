@@ -60,8 +60,8 @@ function autoAssignStage(p){
   if((p.stage||'inbox')!=='inbox') return;
   if(p._cocL===null) return;
   const coc=p._cocL,nb=p._nbScore;
-  if(coc>=GP.cocStrong&&nb!==null&&nb>=60){p.stage='shortlist';p._autoStaged=true;p._autoStageReason='Strong returns ('+PCT(coc)+') in quality area (NB '+nb+')';return;}
-  if(coc<0||(coc<0.02&&nb!==null&&nb<40)){p.stage='archived';p._autoStaged=true;p._autoStageReason=coc<0?'Negative cash flow':'Very weak returns in poor area';return;}
+  if(coc>=GP.cocStrong&&nb!==null&&nb>=60){if(typeof trackStageChange==='function')trackStageChange(p.id,'inbox','shortlist',true);p.stage='shortlist';p._autoStaged=true;p._autoStageReason='Strong returns ('+PCT(coc)+') in quality area (NB '+nb+')';return;}
+  if(coc<0||(coc<0.02&&nb!==null&&nb<40)){if(typeof trackStageChange==='function')trackStageChange(p.id,'inbox','archived',true);p.stage='archived';p._autoStaged=true;p._autoStageReason=coc<0?'Negative cash flow':'Very weak returns in poor area';return;}
 }
 
 function autoStageAll(){
@@ -84,6 +84,7 @@ function refreshAll(){
 
 function setRentMode(mode){
   gRentMode=mode;
+  if(typeof trackRentModeChange==='function') trackRentModeChange(mode);
   document.querySelectorAll('.rm').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll(`.rm[data-m="${mode}"]`).forEach(b=>b.classList.add('on'));
   recomputeRents();

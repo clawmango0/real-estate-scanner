@@ -42,6 +42,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   try { localStorage.setItem('lbiq_token', _accessToken); } catch(_){}
   const firstLogin = !currentUser;
   currentUser = session.user;
+  if(typeof trackIdentify==='function') trackIdentify(currentUser);
   document.getElementById('user-email-btn').textContent = currentUser.email;
   showApp(); // idempotent — always ensure app is visible
   if(firstLogin){

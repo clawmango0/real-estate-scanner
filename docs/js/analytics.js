@@ -297,6 +297,7 @@ let _analyticsProj=null; // project object or null for "All Properties"
 // Called from project card "📊" button or "All Properties" card
 function openAnalytics(projId){
   _analyticsProj=projId?projects.find(p=>p.id===projId)||null:null;
+  if(typeof trackProjectAnalytics==='function') trackProjectAnalytics(_analyticsProj);
   _analyticsOpen=true;
   let ov=document.getElementById('analytics-ov');
   if(!ov){
