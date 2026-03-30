@@ -435,6 +435,19 @@ tbody tr{animation:fi .18s ease both}
   .k3,.nbhd-grid{grid-template-columns:repeat(2,1fr)}
   .g4{grid-template-columns:repeat(2,1fr)}
   .curbar{flex-direction:column}
+  .card-list{display:flex;flex-direction:column;gap:.5rem;padding:.75rem 1rem 2rem}
+  .prop-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:.75rem;cursor:pointer;transition:background .12s}
+  .prop-card:active{background:rgba(255,255,255,.04)}
+  .prop-card.fav{border-color:var(--amber);background:var(--favbg)}
+  .mc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem}
+  .mc-badges{display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+  .mc-stage{font-size:.6rem;padding:.2rem .25rem;min-width:75px}
+  .mc-addr{font-weight:600;font-size:.82rem;margin-bottom:2px}
+  .mc-city{font-size:.65rem;color:var(--text2);margin-bottom:.5rem}
+  .mc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+  .mc-stat{text-align:center}
+  .mc-label{font-size:.5rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block}
+  .mc-val{font-size:.78rem;font-weight:600;display:block}
 }
 
 /* Add Property — loading dots animation */

@@ -288,6 +288,40 @@ function renderApp(){
     return;
   }
 
+  // Mobile card view — replaces table on narrow screens
+  if(window.innerWidth<768){
+    container.innerHTML='<div class="card-list" id="card-list"></div>';
+    const cl=document.getElementById('card-list');
+    list.forEach(p=>{
+      const rent=effectiveRent(p);
+      const card=document.createElement('div');
+      card.className='prop-card'+(p.stage==='shortlist'?' fav':'');
+      card.dataset.pid=p.id;
+      card.onclick=()=>openM(p.id);
+      let badges=sourceBadge(p.source);
+      if(p.isNew)badges+='<span class="bdg bn">New</span>';
+      if(p.priceDrop)badges+='<span class="bdg bd">Drop</span>';
+      let riskHtml='';
+      if(p._riskFlags&&p._riskFlags.length){const w=p._riskFlags.find(f=>f.severity==='alert')||p._riskFlags.find(f=>f.severity==='warn')||p._riskFlags[0];riskHtml=`<span class="risk-flag risk-${w.severity}" title="${esc(p._riskFlags.map(f=>f.label).join('\n'))}">${w.severity==='alert'?'🔴':w.severity==='warn'?'🟡':'🔵'} ${p._riskFlags.length}</span>`;}
+      card.innerHTML=`
+        <div class="mc-top"><div class="mc-badges">${badges}${riskHtml}</div>
+          <select class="stg-sel mc-stage" onclick="event.stopPropagation()" onchange="event.stopPropagation();setStage('${p.id}',this.value)">${STAGES.map(st=>`<option value="${st}"${(p.stage||'inbox')===st?' selected':''}>${STAGE_LABELS[st]}</option>`).join('')}</select>
+        </div>
+        <div class="mc-addr">${esc(p.address)}</div>
+        <div class="mc-city">${esc(p.city)}</div>
+        <div class="mc-stats">
+          <div class="mc-stat"><span class="mc-label">Price</span><span class="mc-val">${p.listed?M(p.listed):'—'}</span></div>
+          <div class="mc-stat"><span class="mc-label">CoC</span><span class="mc-val" style="color:${p._cocL!==null&&p._cocL>=GP.cocMin?'var(--green)':'var(--red)'}">${p._cocL!==null?PCT(p._cocL):'—'}</span></div>
+          <div class="mc-stat"><span class="mc-label">Rent</span><span class="mc-val">${rent?M(rent)+'/mo':'—'}</span></div>
+          <div class="mc-stat"><span class="mc-label">NB</span><span class="mc-val">${p._nbScore!==null?p._nbScore+'/100':'—'}</span></div>
+        </div>`;
+      cl.appendChild(card);
+    });
+    window._tableRendered=true;
+    updateStats();
+    return;
+  }
+
   const _it=activeProject?.investment_type||'buyhold';
   const thead=_tableHead(_it);
   container.innerHTML=`<div class="tw"><table><thead><tr>${thead}</tr></thead><tbody id="tbody"></tbody></table></div>`;
