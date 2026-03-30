@@ -39,7 +39,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   // Always cache the latest access-token so API calls use a fresh one.
   _accessToken = session.access_token;
   // Save token for bookmarklet use
-  try { localStorage.setItem('lbiq_token', _accessToken); } catch(_){}
+  try { sessionStorage.setItem('lbiq_token', _accessToken); } catch(_){}
   const firstLogin = !currentUser;
   currentUser = session.user;
   if(typeof trackIdentify==='function') trackIdentify(currentUser);
@@ -185,21 +185,6 @@ async function loadMailbox(){
     if(mb) userMailbox=mb;
     showApp();
   }
-}
-
-async function createMailbox(){
-  const token = await getAccessToken();
-  if(!token) return;
-  const res=await fetch(`${EDGE_BASE}/create-mailbox`,{
-    method:'POST',
-    headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
-    body:JSON.stringify({display_name:'My Alerts'})
-  });
-  const mb=await res.json();
-  userMailbox={slug:mb.slug,domain:'alerts.LockBoxIQ.com',full_address:mb.full_address};
-  document.getElementById('setup-email').textContent=mb.full_address;
-  document.getElementById('auth-screen').style.display='none';
-  document.getElementById('setup-screen').style.display='flex';
 }
 
 function copyEmail(){

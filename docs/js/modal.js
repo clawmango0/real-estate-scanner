@@ -749,3 +749,15 @@ function setFil(f,el){if(typeof trackFilterChange==='function')trackFilterChange
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('ov').classList.remove('open');document.getElementById('sov').classList.remove('open');document.getElementById('aov').classList.remove('open');openId=null;}});
 document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
 document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
+// Arrow key navigation for stage tabs
+document.addEventListener('DOMContentLoaded',()=>{
+  const tabs=document.getElementById('stage-tabs');
+  if(tabs)tabs.addEventListener('keydown',e=>{
+    const btns=[...tabs.querySelectorAll('.tab')];
+    const idx=btns.indexOf(document.activeElement);
+    if(idx<0)return;
+    if(e.key==='ArrowRight'){e.preventDefault();btns[(idx+1)%btns.length].focus();}
+    if(e.key==='ArrowLeft'){e.preventDefault();btns[(idx-1+btns.length)%btns.length].focus();}
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();document.activeElement.click();}
+  });
+});
