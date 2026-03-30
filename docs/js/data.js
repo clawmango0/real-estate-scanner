@@ -123,19 +123,22 @@ function estimateRent(id){
 }
 
 // Auto-run rent estimation on all properties missing monthlyRent
-function autoEstimateAll(){
-  let updated=0;
+async function autoEstimateAll(){
+  const batch=[];
   for(const p of props){
-    if(p.monthlyRent) continue; // already has confirmed rent
-    if(p.rentRange) continue; // already has an estimate
+    if(p.monthlyRent) continue;
+    if(p.rentRange) continue;
     const result=localRentEstimate(p);
     if(!result||result.error) continue;
     p.rentRange={low:result.low,high:result.high,source:'local'};
-    // Save estimate to DB but do NOT set monthly_rent — user must confirm
-    saveProperty(p.id,{rent_estimate:result.estimate});
-    updated++;
+    batch.push({id:p.id,rent_estimate:result.estimate});
   }
-  if(updated) console.log(`Auto-estimated rent for ${updated} properties`);
+  if(!batch.length) return;
+  console.log(`Auto-estimated rent for ${batch.length} properties, saving in chunks...`);
+  for(let i=0;i<batch.length;i+=20){
+    const chunk=batch.slice(i,i+20);
+    await Promise.all(chunk.map(u=>saveProperty(u.id,{rent_estimate:u.rent_estimate})));
+  }
 }
 
 function maybeReEstimate(id){

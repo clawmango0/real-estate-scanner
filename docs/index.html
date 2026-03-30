@@ -90,7 +90,8 @@
         <p>Texas Property Analyst</p>
       </div>
     </div>
-    <div class="hdr-right">
+    <div class="hdr-right" id="hdr-right">
+      <button class="menu-toggle" onclick="document.getElementById('hdr-right').classList.toggle('open')" aria-label="Toggle menu">☰</button>
       <button class="add-btn" onclick="openAddProp()" title="Add property manually">＋</button>
       <button class="inbox-btn" onclick="showInbox()">📧 My Inbox Address</button>
       <button class="data-btn" onclick="openDataSources()" title="Data sources & methodology">📊 Data Sources</button>
