@@ -44,6 +44,33 @@ async function backfillMissingGeo(supabase: ReturnType<typeof createClient>) {
     }
   } catch (e) { console.error("Backfill error:", e); }
 }
+
+// Backfill missing listing URLs via Zillow autocomplete (non-blocking)
+async function backfillMissingUrls(supabase: ReturnType<typeof createClient>) {
+  try {
+    const { data: rows } = await supabase.from("properties").select("id, address, city, state, zip, listing_url").or("listing_url.is.null,listing_url.eq.").limit(10);
+    if (!rows?.length) return;
+    console.log(`URL backfill: ${rows.length} properties missing listing URLs`);
+    for (const row of rows) {
+      const addr = [row.address, row.city, row.state || 'TX', row.zip].filter(Boolean).join(' ');
+      if (addr.length < 5) continue;
+      try {
+        const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 5000);
+        const q = encodeURIComponent(addr);
+        const r = await fetch(`https://www.zillowstatic.com/autocomplete/v3/suggestions?q=${q}&abKey=6pmtfwMkHe-ZvWGZJ6EtoQ`, { signal: ac.signal, headers: { "User-Agent": UA } });
+        clearTimeout(t);
+        if (!r.ok) continue;
+        const data = await r.json();
+        const zpid = data?.results?.find((x: Record<string, unknown>) => (x.metaData as Record<string, unknown>)?.zpid)?.metaData?.zpid;
+        if (zpid) {
+          const url = `https://www.zillow.com/homedetails/${zpid}_zpid/`;
+          await supabase.from("properties").update({ listing_url: url }).eq("id", row.id);
+          console.log(`URL backfill: ${row.address} → ${url}`);
+        }
+      } catch { /* skip */ }
+    }
+  } catch (e) { console.error("URL backfill error:", e); }
+}
 const cors = {
   "Access-Control-Allow-Origin": "https://lockboxiq.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -70,6 +97,7 @@ serve(async (req) => {
       if (error) throw error;
       // Fire-and-forget: backfill any properties with null zip/city
       backfillMissingGeo(supabase).catch(e => console.error("Backfill launch error:", e));
+      backfillMissingUrls(supabase).catch(e => console.error("URL backfill launch error:", e));
       return new Response(JSON.stringify((data || []).map(shapeProperty)), { headers: { ...cors, "Content-Type": "application/json" } });
     }
     if (req.method === "POST" && isCollection) {
