@@ -120,22 +120,20 @@ function estimateRent(id){
   return result;
 }
 
-// Auto-run rent estimation on all properties missing monthlyRent, set to mid+10%
+// Auto-run rent estimation on all properties missing monthlyRent
 function autoEstimateAll(){
   let updated=0;
   for(const p of props){
     if(p.monthlyRent) continue; // already has confirmed rent
+    if(p.rentRange) continue; // already has an estimate
     const result=localRentEstimate(p);
     if(!result||result.error) continue;
     p.rentRange={low:result.low,high:result.high,source:'local'};
-    const mid5=Math.round(result.estimate*1.05/25)*25; // midpoint + 5%
-    p.monthlyRent=mid5;
-    mRent[p.id]=mid5;
-    // Fire-and-forget DB save
-    saveProperty(p.id,{rent_estimate:result.estimate,monthly_rent:mid5});
+    // Save estimate to DB but do NOT set monthly_rent — user must confirm
+    saveProperty(p.id,{rent_estimate:result.estimate});
     updated++;
   }
-  if(updated) console.log(`Auto-estimated rent for ${updated} properties (mid+5%)`);
+  if(updated) console.log(`Auto-estimated rent for ${updated} properties`);
 }
 
 function maybeReEstimate(id){
