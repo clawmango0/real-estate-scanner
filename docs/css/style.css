@@ -4,7 +4,7 @@
   --amber:#1CCEBB;--adim:rgba(28,206,187,.10);
   --green:#34D9A8;--red:#DC2626;
   --blue:#2563EB;--purple:#7C3AED;--teal:#1CCEBB;--orange:#FF9F35;
-  --text:#E8EEF8;--text2:#64748B;--text3:#4A5E7A;
+  --text:#E8EEF8;--text2:#8899AD;--text3:#6B7D94;
   --favbg:rgba(255,159,53,.07);
   --shadow:0 4px 24px rgba(0,0,0,.4);
 }
@@ -496,6 +496,11 @@ tbody tr{animation:fi .18s ease both}
   .an-bar-lbl{min-width:60px;font-size:.56rem}
 }
 /* ── Data Sources Page ───────────────────────────────── */
+.ds-hero{background:linear-gradient(135deg,rgba(28,206,187,.12),rgba(52,217,168,.06));border:2px solid var(--amber);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.25rem;text-align:center}
+.ds-hero-title{font-size:1.1rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.6rem;color:var(--text)}
+.ds-hero-points{display:flex;flex-direction:column;gap:.35rem}
+.ds-hero-item{font-size:.75rem;color:var(--text);line-height:1.5;padding:.3rem .6rem;background:rgba(28,206,187,.08);border-radius:6px;display:flex;align-items:center;gap:.5rem}
+.ds-hero-item::before{content:'✓';color:var(--green);font-weight:700;font-size:.8rem;flex-shrink:0}
 .data-btn{background:var(--adim);border:1px solid var(--amber);color:var(--amber);border-radius:7px;padding:.35rem .75rem;font-size:.7rem;cursor:pointer;font-family:Poppins,sans-serif;transition:all .15s}
 .data-btn:hover{background:rgba(255,159,53,.22)}
 .ds-intro{font-size:.78rem;color:var(--text2);line-height:1.7;margin-bottom:1.25rem;padding:.75rem;background:linear-gradient(135deg,rgba(28,206,187,.06),rgba(52,217,168,.03));border:1px solid var(--amber);border-radius:8px}

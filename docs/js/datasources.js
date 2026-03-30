@@ -11,6 +11,14 @@ function closeDataSources(e){
 
 function _buildDataSourcesHTML(){
   return `
+  <div class="ds-hero">
+    <div class="ds-hero-title">LockBoxIQ — Texas Property Analyst</div>
+    <div class="ds-hero-points">
+      <div class="ds-hero-item">All financial calculations run in your browser — nothing is sent to external servers</div>
+      <div class="ds-hero-item">Your property data is stored securely in Supabase with row-level security</div>
+      <div class="ds-hero-item">No data is shared with third parties</div>
+    </div>
+  </div>
   <div class="ds-intro">
     LockBoxIQ combines data from <strong>7 independent sources</strong> to give you a comprehensive view of every property and market.
     No single source tells the whole story — our power comes from layering property listings, neighborhood intelligence,
@@ -279,7 +287,6 @@ function _buildDataSourcesHTML(){
   </div>
 
   <div class="ds-footer">
-    <strong>LockBoxIQ</strong> — Texas Property Analyst<br>
-    <span style="color:var(--text3)">All financial calculations run in your browser. Your property data is stored securely in Supabase with row-level security. No data is shared with third parties.</span>
+    Built for Texas real estate investors
   </div>`;
 }
