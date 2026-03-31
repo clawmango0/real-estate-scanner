@@ -19,6 +19,7 @@ let currentUser=null, userMailbox=null;
 let props=[], aV='all', aF='all', sCol=null, sDir=-1, openId=null;
 let mCond={}, mImpr={}, mTax={}, mRent={}, mEdit={};
 let expandedId = null;
+let currentPage=0, pageSize=25;
 const STAGES=['inbox','shortlist','diligence','offer','contract','closed','archived'];
 const STAGE_LABELS={inbox:'Inbox',shortlist:'Shortlist',diligence:'Due Diligence',offer:'Offer',contract:'Contract',closed:'Closed',archived:'Archived'};
 const STAGE_ICONS={inbox:'📥',shortlist:'⭐',diligence:'🔍',offer:'📝',contract:'📋',closed:'✅',archived:'📦'};
