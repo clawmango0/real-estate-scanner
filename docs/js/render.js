@@ -288,11 +288,24 @@ function renderApp(){
     return;
   }
 
+  // Pagination — slice the sorted/filtered list to current page
+  const totalPages=Math.ceil(list.length/pageSize);
+  if(currentPage>=totalPages) currentPage=Math.max(0,totalPages-1);
+  const pageStart=currentPage*pageSize;
+  const pageList=list.slice(pageStart,pageStart+pageSize);
+  const pageCtrl=`<div class="page-controls">
+    <button class="page-btn" onclick="goPage(0)" ${currentPage===0?'disabled':''}>«</button>
+    <button class="page-btn" onclick="goPage(currentPage-1)" ${currentPage===0?'disabled':''}>‹</button>
+    <span class="page-info">${pageStart+1}–${Math.min(pageStart+pageSize,list.length)} of ${list.length}</span>
+    <button class="page-btn" onclick="goPage(currentPage+1)" ${currentPage>=totalPages-1?'disabled':''}>›</button>
+    <button class="page-btn" onclick="goPage(${totalPages-1})" ${currentPage>=totalPages-1?'disabled':''}>»</button>
+  </div>`;
+
   // Mobile card view — replaces table on narrow screens
   if(window.innerWidth<768){
-    container.innerHTML='<div class="card-list" id="card-list"></div>';
+    container.innerHTML='<div class="card-list" id="card-list"></div>'+pageCtrl;
     const cl=document.getElementById('card-list');
-    list.forEach(p=>{
+    pageList.forEach(p=>{
       const rent=effectiveRent(p);
       const card=document.createElement('div');
       card.className='prop-card'+(p.stage==='shortlist'?' fav':'');
@@ -324,11 +337,11 @@ function renderApp(){
 
   const _it=activeProject?.investment_type||'buyhold';
   const thead=_tableHead(_it);
-  container.innerHTML=`<div class="tw"><table><thead><tr>${thead}</tr></thead><tbody id="tbody"></tbody></table></div>`;
+  container.innerHTML=`<div class="tw"><table><thead><tr>${thead}</tr></thead><tbody id="tbody"></tbody></table></div>`+pageCtrl;
 
   const tbody=document.getElementById('tbody');
   expandedId = null; // collapse on re-render
-  list.forEach((p,i)=>{
+  pageList.forEach((p,i)=>{
     const tr=document.createElement('tr');
     tr.dataset.pid=p.id;
     if(!window._tableRendered) tr.style.animationDelay=(i*0.02)+'s';
@@ -426,6 +439,8 @@ function updateStats(){
     }
   }
 }
+
+function goPage(n){currentPage=Math.max(0,n);renderApp();window.scrollTo({top:document.querySelector('.tw,.card-list')?.offsetTop-80||0,behavior:'smooth'});}
 
 // Register for state change events
 if(typeof Bus!=='undefined') Bus.on('stateChanged',renderApp);
