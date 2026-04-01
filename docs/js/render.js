@@ -1,8 +1,127 @@
 // ── Table head/row generators per investment type ────────────────────────────
+function _verdict(p) {
+  const coc = p._cocL, nb = p._nbScore, cf = p._cfL;
+  const cocOk = coc !== null && coc >= GP.cocMin;
+  const cocStrong = coc !== null && coc >= GP.cocStrong;
+  const nbGood = nb !== null && nb >= 68;
+  const nbOk = nb !== null && nb >= 50;
+  if (cocStrong && nbGood) return { text: 'Strong buy — excellent cash flow in a top neighborhood', color: 'var(--green)' };
+  if (cocStrong && nbOk) return { text: 'Strong cash flow, solid neighborhood', color: 'var(--green)' };
+  if (cocStrong) return { text: 'Great returns but weaker area — verify neighborhood', color: 'var(--amber)' };
+  if (cocOk && nbGood) return { text: 'Passing deal in a great area — worth a closer look', color: 'var(--green)' };
+  if (cocOk && nbOk) return { text: 'Solid returns, decent neighborhood', color: 'var(--amber)' };
+  if (cocOk) return { text: 'Passes CoC but weak neighborhood — verify area', color: 'var(--amber)' };
+  if (p._tiers && p.listed <= p._tiers.consider) return { text: 'Near target price — needs rent verification', color: 'var(--amber)' };
+  if (p._tiers && p.listed > p._tiers.stretch) {
+    const over = p.listed - p._tiers.consider;
+    return { text: `Overpriced by ~${M(over)} — would need to drop to ${M(p._tiers.consider)}`, color: 'var(--red)' };
+  }
+  if (coc !== null && coc < 0) return { text: 'Negative returns at current price/rent', color: 'var(--red)' };
+  return { text: 'Insufficient data for verdict', color: 'var(--text3)' };
+}
+
+function _expandHtml(p) {
+  const v = _verdict(p);
+  const rent = effectiveRent(p);
+  const _rentLabels = { low: 'Low est.', mid: 'Mid est.', high: 'High est.', 'mid+5': 'Mid+5% est.' };
+  const rentSrc = p.monthlyRent ? 'Confirmed' : (p.rentRange ? (_rentLabels[gRentMode] || 'Estimated') : 'None');
+  const rentConf = p.monthlyRent ? 'confirmed' : (p.rentRange ? `±12% (${M(p.rentRange.low)}–${M(p.rentRange.high)})` : 'no estimate');
+
+  // Neighborhood mini breakdown
+  let nbHtml = '<span style="color:var(--text3)">No neighborhood data</span>';
+  if (p._hood) {
+    const h = p._hood;
+    const bar = (val, max, color) => `<div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:4px;background:var(--border2);border-radius:2px;overflow:hidden"><div style="width:${Math.min(val/max*100,100)}%;height:100%;background:${color};border-radius:2px"></div></div><span style="font-size:.6rem;color:var(--text2)">${val}/${max}</span></div>`;
+    nbHtml = `<div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <div><span style="font-size:.58rem;color:var(--text3)">Schools</span>${bar(h.schools||0, 10, 'var(--green)')}</div>
+      <div><span style="font-size:.58rem;color:var(--text3)">Safety</span>${bar(h.crime||0, 10, 'var(--blue)')}</div>
+      <div><span style="font-size:.58rem;color:var(--text3)">Rent Growth</span>${bar(Math.min(h.rentGrowth||0, 5), 5, 'var(--amber)')}</div>
+    </div>`;
+  }
+
+  // Key metrics (strategy-aware)
+  const it = activeProject?.investment_type || 'buyhold';
+  let metricsHtml = '';
+  if (it === 'buyhold' || !activeProject) {
+    const tc = p._tiers ? classify(p.listed, p._tiers) : null;
+    metricsHtml = `
+      <div class="ex-metric"><span class="ex-ml">CoC Return</span><span class="ex-mv" style="color:${p._cocL>=GP.cocMin?'var(--green)':'var(--red)'}">${p._cocL!==null?PCT(p._cocL):'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">Cash Flow</span><span class="ex-mv" style="color:${(p._cfL||0)>=0?'var(--green)':'var(--red)'}">${p._cfL!==null?MS(p._cfL)+'/mo':'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">Offer Tier</span><span class="ex-mv ${tc?tc.cls:''}">${tc?tc.label:'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">NB Score</span><span class="ex-mv">${p._nbScore!==null?p._nbScore+'/100':'—'}</span></div>`;
+  } else if (it === 'flipper') {
+    const f = flipCalc(p.listed, mCond[p.id]||p.condition||'good', mImpr[p.id]||p.improvement||'asis');
+    metricsHtml = `
+      <div class="ex-metric"><span class="ex-ml">ARV</span><span class="ex-mv">${f?M(f.arv):'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">MAO</span><span class="ex-mv" style="color:${f&&p.listed<=f.mao?'var(--green)':'var(--red)'}">${f?M(f.mao):'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">Profit</span><span class="ex-mv" style="color:${f&&f.netProfit>=0?'var(--green)':'var(--red)'}">${f?MS(f.netProfit):'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">ROI</span><span class="ex-mv" style="color:${f&&f.roi>=0.15?'var(--green)':'var(--amber)'}">${f?PCT(f.roi):'—'}</span></div>`;
+  } else if (it === 'brrrr') {
+    const b = brrrrCalc(p.listed, rent, mCond[p.id]||p.condition||'good', mImpr[p.id]||p.improvement||'asis');
+    metricsHtml = `
+      <div class="ex-metric"><span class="ex-ml">ARV</span><span class="ex-mv">${b?M(b.arv):'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">CoC</span><span class="ex-mv">${p._cocL!==null?PCT(p._cocL):'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">Refi Amt</span><span class="ex-mv">${b?M(b.refiAmount):'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">Cash Left</span><span class="ex-mv">${b?(b.infinite?'∞':M(b.cashLeftIn)):'—'}</span></div>`;
+  } else if (it === 'str') {
+    const pp = activeProject || {};
+    const sc = strCalc(p.listed, pp._str_adr||150, pp._str_occ||0.70, pp._str_clean||75, pp._str_plat||0.03);
+    metricsHtml = `
+      <div class="ex-metric"><span class="ex-ml">RevPAR</span><span class="ex-mv">${sc?M(sc.revPAR):'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">Gross Rev</span><span class="ex-mv">${sc?M(sc.grossRev)+'/yr':'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">Net CF</span><span class="ex-mv">${sc?MS(sc.cf/12)+'/mo':'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">CoC</span><span class="ex-mv">${sc?PCT(sc.coc):'—'}</span></div>`;
+  } else {
+    // Generic fallback for wholesaler, commercial, passive
+    metricsHtml = `
+      <div class="ex-metric"><span class="ex-ml">CoC Return</span><span class="ex-mv">${p._cocL!==null?PCT(p._cocL):'—'}</span></div>
+      <div class="ex-metric"><span class="ex-ml">Listed</span><span class="ex-mv">${M(p.listed)}</span></div>
+      <div class="ex-metric"><span class="ex-ml">NB Score</span><span class="ex-mv">${p._nbScore!==null?p._nbScore+'/100':'—'}</span></div>`;
+  }
+
+  return `<td colspan="20" class="ex-td">
+    <div class="ex-verdict" style="color:${v.color}">${v.text}</div>
+    <div class="ex-grid">
+      <div class="ex-section">
+        <div class="ex-slabel">Key Metrics</div>
+        <div class="ex-metrics">${metricsHtml}</div>
+      </div>
+      <div class="ex-section">
+        <div class="ex-slabel">Rent: ${rent ? M(rent)+'/mo' : '—'} <span style="font-size:.58rem;color:var(--text3)">(${rentSrc}, ${rentConf})</span></div>
+      </div>
+      <div class="ex-section">
+        <div class="ex-slabel">Neighborhood</div>
+        ${nbHtml}
+      </div>
+    </div>
+    ${p._riskFlags&&p._riskFlags.length?`<div style="margin-top:.5rem;display:flex;gap:.4rem;flex-wrap:wrap">${p._riskFlags.map(f=>`<span class="risk-flag risk-${f.severity}">${f.severity==='alert'?'🔴':f.severity==='warn'?'🟡':'🔵'} ${esc(f.label)}</span>`).join('')}</div>`:''}
+    ${p._autoStaged?`<div style="margin-top:.3rem;font-size:.6rem;color:var(--amber)">⚡ Auto-staged: ${esc(p._autoStageReason||'')}</div>`:''}
+    <div style="margin-top:.5rem"><button class="ex-open" onclick="event.stopPropagation();openM('${p.id}')">Open Full Details →</button></div>
+  </td>`;
+}
+
+function toggleExpand(id, event) {
+  if (event) event.stopPropagation();
+  const wasOpen = expandedId === id;
+  // Collapse any open row
+  const prev = document.querySelector('.expand-row.open');
+  if (prev) prev.classList.remove('open');
+  if (wasOpen) { expandedId = null; return; }
+  // Expand new row
+  if(typeof trackExpandRow==='function') trackExpandRow(id);
+  expandedId = id;
+  const row = document.getElementById('exr-' + id);
+  if (row) {
+    const p = props.find(x => x.id === id);
+    if (p) row.innerHTML = _expandHtml(p);
+    row.classList.add('open');
+  }
+}
+
 function _tableHead(it){
   const addr='<th onclick="srt(\'address\')">Address</th>';
   const listed='<th onclick="srt(\'listed\')" class="hs">Listed</th>';
-  const star='<th>⭐</th>';
+  const star='<th onclick="srt(\'stage\')">Stage</th>';
   if(it==='flipper') return `${addr}${listed}<th>ARV</th><th>MAO</th><th class="hs">Rehab</th><th>Profit</th><th>ROI</th>${star}`;
   if(it==='brrrr')   return `${addr}${listed}<th>ARV</th><th onclick="srt('monthlyRent')">Rent</th><th onclick="srt('_cocL')">CoC</th><th>Refi</th><th class="hs">Cash Left</th>${star}`;
   if(it==='str')     return `${addr}${listed}<th>RevPAR</th><th>Gross Rev</th><th>Net CF</th><th onclick="srt('_cocL')">CoC</th>${star}`;
@@ -17,15 +136,56 @@ function _addrCell(p){
   let badges=sourceBadge(p.source);
   if(p.isNew)badges+=`<span class="bdg bn">🆕</span>`;
   if(p.priceDrop)badges+=`<span class="bdg bd">📉</span>`;
-  return `<td onclick="openM('${p.id}')"><div style="margin-bottom:2px">${badges}</div><div class="am">${esc(p.address)}</div><div class="as">${esc(p.city)}</div></td>`;
+  if(p._resurface)badges+=`<span class="bdg brf">🔄</span>`;
+  if(p._autoStaged)badges+=`<span class="bdg bau" title="${esc(p._autoStageReason||'')}">⚡</span>`;
+  let riskHtml='';
+  if(p._riskFlags&&p._riskFlags.length){const w=p._riskFlags.find(f=>f.severity==='alert')||p._riskFlags.find(f=>f.severity==='warn')||p._riskFlags[0];const icon=w.severity==='alert'?'🔴':w.severity==='warn'?'🟡':'🔵';riskHtml=`<span class="risk-flag risk-${w.severity}" title="${esc(p._riskFlags.map(f=>f.label).join('\n'))}">${icon} ${p._riskFlags.length}</span>`;}
+  return `<td><div style="display:flex;gap:6px;align-items:flex-start"><button class="ex-chev" onclick="toggleExpand('${p.id}',event)" title="Quick view">▸</button><div onclick="openM('${p.id}')" style="cursor:pointer;flex:1"><div style="margin-bottom:2px">${badges}${riskHtml}</div><div class="am">${esc(p.address)}</div><div class="as">${esc(p.city)}</div></div></div></td>`;
 }
 function _listedCell(p){return `<td class="hs" onclick="openM('${p.id}')"><span class="mn">${M(p.listed)}</span></td>`;}
+let _compareIds=[];
+function toggleCompare(id,event){
+  if(event)event.stopPropagation();
+  const idx=_compareIds.indexOf(id);
+  if(idx>=0)_compareIds.splice(idx,1);
+  else if(_compareIds.length<3)_compareIds.push(id);
+  renderApp();
+}
+function openComparison(){
+  if(_compareIds.length<2){alert('Select 2-3 properties to compare');return;}
+  const ps=_compareIds.map(id=>props.find(p=>p.id===id)).filter(Boolean);
+  if(ps.length<2)return;
+  let ov=document.getElementById('compare-ov');
+  if(!ov){
+    ov=document.createElement('div');ov.id='compare-ov';ov.className='ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
+    ov.onclick=function(e){if(e.target===ov){ov.classList.remove('open');_compareIds=[];renderApp();}};
+    ov.innerHTML='<div class="modal" style="max-width:800px"><div class="mhd"><div><div class="madr">Deal Comparison</div></div><button class="xcl" onclick="document.getElementById(\'compare-ov\').classList.remove(\'open\');_compareIds=[];renderApp();">✕</button></div><div class="mb" id="compare-body" style="max-height:80vh;overflow-y:auto"></div></div>';
+    document.getElementById('app').appendChild(ov);
+  }
+  const metrics=[
+    {label:'Listed Price',fn:p=>M(p.listed)},
+    {label:'Beds / Baths',fn:p=>`${p.beds||'—'} / ${p.baths||'—'}`},
+    {label:'Sqft',fn:p=>p.sqft?p.sqft.toLocaleString():'—'},
+    {label:'Est. Rent',fn:p=>{const r=effectiveRent(p);return r?M(r)+'/mo':'—';}},
+    {label:'CoC Return',fn:p=>p._cocL!==null?PCT(p._cocL):'—',color:p=>p._cocL>=GP.cocMin?'var(--green)':'var(--red)'},
+    {label:'Cash Flow/mo',fn:p=>p._cfL!==null?MS(p._cfL):'—',color:p=>(p._cfL||0)>=0?'var(--green)':'var(--red)'},
+    {label:'NB Score',fn:p=>p._nbScore!==null?p._nbScore+'/100':'—'},
+    {label:'Offer Tier',fn:p=>{const t=p._tiers?classify(p.listed,p._tiers):null;return t?t.label:'—';}},
+    {label:'Capital Needed',fn:p=>M(p.listed*(GP.downPct+GP.closingPct))},
+    {label:'Type',fn:p=>p.type||'SFR'},
+    {label:'Stage',fn:p=>STAGE_LABELS[p.stage||'inbox']||'Inbox'},
+    {label:'Source',fn:p=>p.source||'—'},
+  ];
+  const thead=`<th style="text-align:left">Metric</th>`+ps.map(p=>`<th>${esc(p.address)}<br><span style="font-size:.55rem;color:var(--text3)">${esc(p.city)}</span></th>`).join('');
+  const tbody=metrics.map(m=>`<tr><td class="tl">${m.label}</td>${ps.map(p=>`<td style="color:${m.color?m.color(p):''}">${m.fn(p)}</td>`).join('')}</tr>`).join('');
+  document.getElementById('compare-body').innerHTML=`<table class="ot"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
+  ov.classList.add('open');
+}
 function _starCell(p){
-  return `<td><div class="cc">
-    <button class="cb ${p.curated==='fav'?'af':''}" onclick="event.stopPropagation();curate('${p.id}','fav')">⭐</button>
-    <button class="cb ${p.curated==='ni'?'ani':''}" onclick="event.stopPropagation();curate('${p.id}','ni')">👎</button>
-    <button class="cb ${p.curated==='blk'?'abl':''}" onclick="event.stopPropagation();curate('${p.id}','blk')">🚫</button>
-  </div></td>`;
+  const s=p.stage||'inbox';
+  const opts=STAGES.map(st=>`<option value="${st}"${s===st?' selected':''}>${STAGE_LABELS[st]}</option>`).join('');
+  const cmp=_compareIds.includes(p.id);
+  return `<td><div style="display:flex;gap:4px;align-items:center"><select class="stg-sel" onchange="event.stopPropagation();setStage('${p.id}',this.value)">${opts}</select><input type="checkbox" class="cmp-chk" title="Compare" ${cmp?'checked':''} onclick="toggleCompare('${p.id}',event)"></div></td>`;
 }
 
 function _tableRow(p,it){
@@ -132,14 +292,15 @@ function _tableRow(p,it){
 function vis(){
   let l=[...props];
   if(activeProject) l=l.filter(p=>projectFilter(p,activeProject)); // project primary filter
-  if(aV==='favs')l=l.filter(p=>p.curated==='fav');
-  else if(aV==='ni')l=l.filter(p=>p.curated==='ni');
-  else l=l.filter(p=>p.curated!=='blk');
+  if(STAGES.includes(aV))l=l.filter(p=>(p.stage||'inbox')===aV);
+  else l=l.filter(p=>(p.stage||'inbox')!=='archived');
   if(aF==='pass')l=l.filter(p=>p.status==='pass');
   if(aF==='fail')l=l.filter(p=>p.status==='fail');
   if(aF==='duplex')l=l.filter(p=>p.type==='DUPLEX'||p.type==='TRIPLEX'||p.type==='QUAD');
   if(aF==='new')l=l.filter(p=>p.isNew);
   if(aF==='drop')l=l.filter(p=>p.priceDrop);
+  if(aF==='resurface')l=l.filter(p=>p._resurface);
+  if(aF==='risk')l=l.filter(p=>p._riskFlags&&p._riskFlags.some(f=>f.severity==='alert'||f.severity==='warn'));
   if(sCol)l.sort((a,b)=>sDir*((a[sCol]??-9e9)>(b[sCol]??-9e9)?1:(a[sCol]??-9e9)<(b[sCol]??-9e9)?-1:0));
   return l;
 }
@@ -166,29 +327,111 @@ function renderApp(){
     return;
   }
 
+  // Pagination — slice the sorted/filtered list to current page
+  const totalPages=Math.ceil(list.length/pageSize);
+  if(currentPage>=totalPages) currentPage=Math.max(0,totalPages-1);
+  const pageStart=currentPage*pageSize;
+  const pageList=list.slice(pageStart,pageStart+pageSize);
+  const pageCtrl=`<div class="page-controls">
+    <button class="page-btn" onclick="goPage(0)" ${currentPage===0?'disabled':''}>«</button>
+    <button class="page-btn" onclick="goPage(currentPage-1)" ${currentPage===0?'disabled':''}>‹</button>
+    <span class="page-info">${pageStart+1}–${Math.min(pageStart+pageSize,list.length)} of ${list.length}</span>
+    <button class="page-btn" onclick="goPage(currentPage+1)" ${currentPage>=totalPages-1?'disabled':''}>›</button>
+    <button class="page-btn" onclick="goPage(${totalPages-1})" ${currentPage>=totalPages-1?'disabled':''}>»</button>
+  </div>`;
+
+  // Mobile card view — replaces table on narrow screens
+  if(window.innerWidth<768){
+    container.innerHTML='<div class="card-list" id="card-list"></div>'+pageCtrl;
+    const cl=document.getElementById('card-list');
+    pageList.forEach(p=>{
+      const rent=effectiveRent(p);
+      const card=document.createElement('div');
+      card.className='prop-card'+(p.stage==='shortlist'?' fav':'');
+      card.dataset.pid=p.id;
+      card.onclick=()=>openM(p.id);
+      let badges=sourceBadge(p.source);
+      if(p.isNew)badges+='<span class="bdg bn">New</span>';
+      if(p.priceDrop)badges+='<span class="bdg bd">Drop</span>';
+      let riskHtml='';
+      if(p._riskFlags&&p._riskFlags.length){const w=p._riskFlags.find(f=>f.severity==='alert')||p._riskFlags.find(f=>f.severity==='warn')||p._riskFlags[0];riskHtml=`<span class="risk-flag risk-${w.severity}" title="${esc(p._riskFlags.map(f=>f.label).join('\n'))}">${w.severity==='alert'?'🔴':w.severity==='warn'?'🟡':'🔵'} ${p._riskFlags.length}</span>`;}
+      card.innerHTML=`
+        <div class="mc-top"><div class="mc-badges">${badges}${riskHtml}</div>
+          <select class="stg-sel mc-stage" onclick="event.stopPropagation()" onchange="event.stopPropagation();setStage('${p.id}',this.value)">${STAGES.map(st=>`<option value="${st}"${(p.stage||'inbox')===st?' selected':''}>${STAGE_LABELS[st]}</option>`).join('')}</select>
+        </div>
+        <div class="mc-addr">${esc(p.address)}</div>
+        <div class="mc-city">${esc(p.city)}</div>
+        <div class="mc-stats">
+          <div class="mc-stat"><span class="mc-label">Price</span><span class="mc-val">${p.listed?M(p.listed):'—'}</span></div>
+          <div class="mc-stat"><span class="mc-label">CoC</span><span class="mc-val" style="color:${p._cocL!==null&&p._cocL>=GP.cocMin?'var(--green)':'var(--red)'}">${p._cocL!==null?PCT(p._cocL):'—'}</span></div>
+          <div class="mc-stat"><span class="mc-label">Rent</span><span class="mc-val">${rent?M(rent)+'/mo':'—'}</span></div>
+          <div class="mc-stat"><span class="mc-label">NB</span><span class="mc-val">${p._nbScore!==null?p._nbScore+'/100':'—'}</span></div>
+        </div>`;
+      cl.appendChild(card);
+    });
+    window._tableRendered=true;
+    updateStats();
+    return;
+  }
+
   const _it=activeProject?.investment_type||'buyhold';
   const thead=_tableHead(_it);
-  container.innerHTML=`<div class="tw"><table><thead><tr>${thead}</tr></thead><tbody id="tbody"></tbody></table></div>`;
+  container.innerHTML=`<div class="tw"><table><thead><tr>${thead}</tr></thead><tbody id="tbody"></tbody></table></div>`+pageCtrl;
 
   const tbody=document.getElementById('tbody');
-  list.forEach((p,i)=>{
+  expandedId = null; // collapse on re-render
+  pageList.forEach((p,i)=>{
     const tr=document.createElement('tr');
-    tr.style.animationDelay=(i*0.02)+'s';
-    if(p.curated==='fav')tr.classList.add('fav');
-    if(p.curated==='ni')tr.classList.add('ni');
+    tr.dataset.pid=p.id;
+    if(!window._tableRendered) tr.style.animationDelay=(i*0.02)+'s';
+    if(p.stage==='shortlist')tr.classList.add('fav');
+    if(p.stage==='archived')tr.classList.add('ni');
     tr.innerHTML=_tableRow(p,_it);
     tbody.appendChild(tr);
+    // Expand row (hidden by default)
+    const exr=document.createElement('tr');
+    exr.className='expand-row';
+    exr.id='exr-'+p.id;
+    tbody.appendChild(exr);
   });
+  window._tableRendered=true;
+  // Show compare button if 2+ selected
+  if(_compareIds.length>=2){
+    const cmpBtn=document.createElement('div');
+    cmpBtn.className='cmp-bar';
+    cmpBtn.innerHTML=`<button class="cmp-btn" onclick="openComparison()">Compare ${_compareIds.length} Properties</button>`;
+    container.appendChild(cmpBtn);
+  }
+  updateStats();
+}
+
+// Targeted update of a single row without re-rendering the entire table.
+// Falls back to full renderApp() if the row isn't in the current view.
+function updateRow(id){
+  const tbody=document.getElementById('tbody');
+  if(!tbody){renderApp();return;}
+  const tr=tbody.querySelector(`tr[data-pid="${id}"]`);
+  if(!tr){renderApp();return;}
+  const p=props.find(x=>x.id===id);
+  if(!p) return;
+  const _it=activeProject?.investment_type||'buyhold';
+  tr.innerHTML=_tableRow(p,_it);
+  tr.className='';
+  if(p.stage==='shortlist')tr.classList.add('fav');
+  if(p.stage==='archived')tr.classList.add('ni');
   updateStats();
 }
 
 function updateStats(){
   // When a project is active, scope all stats + Top Deal to that project's filtered set
   const base=activeProject?props.filter(p=>projectFilter(p,activeProject)):props;
-  const visible=base.filter(p=>p.curated!=='blk');
+  const visible=base.filter(p=>(p.stage||'inbox')!=='archived');
   const pass=visible.filter(p=>p.status==='pass');
-  const favs=base.filter(p=>p.curated==='fav');
+  const favs=base.filter(p=>(p.stage||'inbox')==='shortlist');
   const news=visible.filter(p=>p.isNew||p.priceDrop).length;
+  const resurface=visible.filter(p=>p._resurface).length;
+  const rfChip=document.querySelector('.fc[onclick*="resurface"]');
+  if(rfChip){rfChip.style.display=resurface?'':'none';if(resurface)rfChip.innerHTML=`🔄 Revisit <span class="n">${resurface}</span>`;}
   const cfs=pass.filter(p=>p._cfL>0).map(p=>p._cfL);
   const avgCf=cfs.length?Math.round(cfs.reduce((a,b)=>a+b,0)/cfs.length):0;
   document.getElementById('s-tot').textContent=visible.length;
@@ -197,15 +440,15 @@ function updateStats(){
   document.getElementById('s-new').textContent=news;
   document.getElementById('s-cf').textContent=(avgCf>=0?'+':'')+M(avgCf)+'/mo';
   // Tab counts always use full props list (not project-scoped)
-  document.getElementById('tc-a').textContent=props.filter(p=>p.curated!=='blk').length;
-  document.getElementById('tc-f').textContent=props.filter(p=>p.curated==='fav').length;
-  document.getElementById('tc-n').textContent=props.filter(p=>p.curated==='ni').length;
+  document.getElementById('tc-a').textContent=props.filter(p=>(p.stage||'inbox')!=='archived').length;
+  STAGES.forEach(s=>{const el=document.getElementById('tc-'+s);if(el)el.textContent=props.filter(p=>(p.stage||'inbox')===s).length;});
   // Top Deal: when project active → best available in scope (visible, regardless of pass/fail)
   //           when no project → pass-only (global view keeps quality bar high)
   const topPool=activeProject?visible:pass;
   const topDeal=topPool.filter(p=>p._tiers&&effectiveRent(p)).sort((a,b)=>(b._cocL||0)-(a._cocL||0))[0];
   if(topDeal){
-    document.getElementById('td-name').textContent=`${topDeal.address} — ${topDeal.type}`;
+    const tdName=document.getElementById('td-name');
+    tdName.innerHTML=`<a href="#" onclick="event.preventDefault();openM('${topDeal.id}')" style="color:var(--text);text-decoration:none;border-bottom:1px dashed var(--amber)">${esc(topDeal.address)} — ${esc(topDeal.type)}</a>`;
     document.getElementById('td-list').textContent=M(topDeal.listed);
     document.getElementById('td-s').textContent=topDeal._tiers?M(topDeal._tiers.strong):'—';
     const er=effectiveRent(topDeal);
@@ -242,4 +485,9 @@ function updateStats(){
     }
   }
 }
+
+function goPage(n){currentPage=Math.max(0,n);renderApp();window.scrollTo({top:document.querySelector('.tw,.card-list')?.offsetTop-80||0,behavior:'smooth'});}
+
+// Register for state change events
+if(typeof Bus!=='undefined') Bus.on('stateChanged',renderApp);
 

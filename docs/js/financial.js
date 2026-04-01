@@ -1,3 +1,9 @@
+// Named constants for magic numbers used throughout financial calculations
+const RENT_EST_LOW=0.88, RENT_EST_HIGH=1.12, RENT_ROUND=25;
+const FLIP_MAO_PCT=0.70, FLIP_HOLD_MO=6, HARD_MONEY_RATE=0.12;
+const REFI_LTV_DEFAULT=0.75, SEASON_MO_DEFAULT=6;
+const DFW_RENT_SQFT_FLOOR=0.80, DFW_RENT_SQFT_CAP=1.40;
+const STR_MGMT_RATE=0.20, STR_DEFAULT_OCC=0.70, STR_DEFAULT_PLAT=0.03;
 const GP={rate:0.0525,termYrs:30,downPct:0.20,closingPct:0.03,pointsPct:0.01,landPct:0.20,deprecYrs:27.5,appreci:0.03,propTaxRate:0.019,insurRate:0.006,mgmtRate:0.08,repairRate:0.01,vacancyRate:0.05,sellCostPct:0.06,cocMin:0.08,cocStrong:0.12,margRate:0.32,ltcgRate:0.15,recapRate:0.25,agi:120000,filingStatus:'single',costSegPct:0.20,bonusDepPct:1.00,sec179:0,participation:'active',showWalkScore:false};
 const GP_DEFAULTS={...GP};
 const EXIT_YRS=[5,10,15];
@@ -100,9 +106,9 @@ function flipCalc(price,condKey,imprKey){
   const cond=COND[condKey]||COND.good,imprObj=IMPR[imprKey]||IMPR.asis;
   const rehabCost=price*imprObj.costPct;
   const arv=price*(1+cond.adj)+price*imprObj.upliftPct;
-  const mao=arv*0.70-rehabCost; // 70% rule
-  const holdMo=6; // assume 6 month project
-  const hmRate=0.12; // hard money ~12% annual
+  const mao=arv*FLIP_MAO_PCT-rehabCost; // 70% rule
+  const holdMo=FLIP_HOLD_MO; // assume 6 month project
+  const hmRate=HARD_MONEY_RATE; // hard money ~12% annual
   const loan=price*(1-GP.downPct);
   const holdInt=loan*hmRate*(holdMo/12);
   const holdTax=price*GP.propTaxRate*(holdMo/12);
@@ -120,7 +126,7 @@ function flipCalc(price,condKey,imprKey){
 // ── BRRRR ─────────────────────────────────────────────────────────────────────
 function brrrrCalc(price,rent,condKey,imprKey,refiLTV,seasonMo){
   if(!price)return null;
-  refiLTV=refiLTV||0.75; seasonMo=seasonMo||6;
+  refiLTV=refiLTV||REFI_LTV_DEFAULT; seasonMo=seasonMo||SEASON_MO_DEFAULT;
   const cond=COND[condKey]||COND.good,imprObj=IMPR[imprKey]||IMPR.asis;
   const rehabCost=price*imprObj.costPct;
   const arv=price*(1+cond.adj)+price*imprObj.upliftPct;
@@ -146,14 +152,14 @@ function brrrrCalc(price,rent,condKey,imprKey,refiLTV,seasonMo){
 // ── STR (Airbnb) ──────────────────────────────────────────────────────────────
 function strCalc(price,adr,occupancy,cleaningFee,platformFeePct){
   if(!price||!adr)return null;
-  occupancy=occupancy||0.70; cleaningFee=cleaningFee||0; platformFeePct=platformFeePct||0.03;
+  occupancy=occupancy||STR_DEFAULT_OCC; cleaningFee=cleaningFee||0; platformFeePct=platformFeePct||STR_DEFAULT_PLAT;
   const nights=365*occupancy;
   const grossRev=adr*nights+cleaningFee*nights;
   const platformFees=grossRev*platformFeePct;
   const netRev=grossRev-platformFees;
   // Expenses (STR uses 20% mgmt, no vacancy since occupancy is explicit)
   const pt=price*GP.propTaxRate,ins=price*GP.insurRate;
-  const mgmt=netRev*0.20,rep=price*GP.repairRate;
+  const mgmt=netRev*STR_MGMT_RATE,rep=price*GP.repairRate;
   const noi=netRev-pt-ins-mgmt-rep;
   const loan=price*(1-GP.downPct),annMort=pmt(loan,GP.rate,GP.termYrs)*12;
   const cf=noi-annMort;
@@ -342,8 +348,8 @@ function localRentEstimate(p){
 
   // E. Sqft reasonableness check ($0.80-$1.40/sqft for DFW)
   let rentPerSqft=baseRent/sqft;
-  if(rentPerSqft<0.80){baseRent=sqft*0.80; parts.push(`floor at $0.80/sqft`);}
-  else if(rentPerSqft>1.40){baseRent=sqft*1.40; parts.push(`cap at $1.40/sqft`);}
+  if(rentPerSqft<DFW_RENT_SQFT_FLOOR){baseRent=sqft*DFW_RENT_SQFT_FLOOR; parts.push(`floor at $${DFW_RENT_SQFT_FLOOR}/sqft`);}
+  else if(rentPerSqft>DFW_RENT_SQFT_CAP){baseRent=sqft*DFW_RENT_SQFT_CAP; parts.push(`cap at $${DFW_RENT_SQFT_CAP}/sqft`);}
   rentPerSqft=baseRent/sqft;
 
   // F. Condition adjustment
@@ -373,10 +379,21 @@ function localRentEstimate(p){
     parts.push(`weak schools ${schools}/10 -5%`);
   }
 
+  // J. ZORI calibration — blend toward actual market rent data when available
+  const zoriRent=hood.zori;
+  if(zoriRent&&zoriRent>0){
+    const divergence=Math.abs(baseRent-zoriRent)/baseRent;
+    if(divergence>0.15){
+      // Blend 35% toward ZORI when our estimate diverges >15% from market data
+      baseRent=baseRent*0.65+zoriRent*0.35;
+      parts.push(`ZORI blend: ${M(zoriRent)} (${divergence>0.3?'large':'moderate'} divergence)`);
+    }
+  }
+
   // Round to nearest $25
-  const estimate=Math.round(baseRent/25)*25;
-  const low=Math.round(estimate*0.88/25)*25;
-  const high=Math.round(estimate*1.12/25)*25;
+  const estimate=Math.round(baseRent/RENT_ROUND)*RENT_ROUND;
+  const low=Math.round(estimate*RENT_EST_LOW/RENT_ROUND)*RENT_ROUND;
+  const high=Math.round(estimate*RENT_EST_HIGH/RENT_ROUND)*RENT_ROUND;
 
   // Build reasoning string
   const zip=p.zip||hood.zip||'';
@@ -392,4 +409,6 @@ function localRentEstimate(p){
 const M=n=>'$'+Math.abs(Math.round(n)).toLocaleString();
 const MS=n=>(n>=0?'+':'')+M(n);
 const PCT=n=>(n*100).toFixed(1)+'%';
+
+if(typeof module!=='undefined') module.exports={GP,GP_DEFAULTS,COND,IMPR,TAX25,RENT_EST_LOW,RENT_EST_HIGH,RENT_ROUND,FLIP_MAO_PCT,FLIP_HOLD_MO,HARD_MONEY_RATE,REFI_LTV_DEFAULT,SEASON_MO_DEFAULT,DFW_RENT_SQFT_FLOOR,DFW_RENT_SQFT_CAP,STR_MGMT_RATE,STR_DEFAULT_OCC,STR_DEFAULT_PLAT,pmt,balAt,intInYr,cocCalc,maxPrice,getTiers,classify,passAllow,nbScore,nbLabel,schedE,exitAt,flipCalc,brrrrCalc,strCalc,wholesaleCalc,commercialCalc,passiveCalc,localRentEstimate,agiToRates,M,MS,PCT};
 

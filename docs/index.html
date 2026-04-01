@@ -9,9 +9,19 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.99.2/dist/umd/supabase.min.js" integrity="sha384-zETTH+6IXxKQ6zbGcT6H6EDdnGaae9uhI8uO7doTJoNEmPGeTKVOe5S6/XybS9JH" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<link rel="stylesheet" href="css/style.css?v=25">
+<link rel="stylesheet" href="css/style.css?v=26">
+<script>
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getExternalId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  posthog.init('phc_RrMtIDqqwfCrKuG1EXluDOKLQUGITrbbIARg5VJXbBU',{
+    api_host:'https://us.i.posthog.com',
+    person_profiles:'identified_only',
+    capture_pageview:'history_change',
+    autocapture:true
+  });
+</script>
 </head>
 <body>
+<a href="#props-container" class="skip-link">Skip to properties</a>
 
 <!-- ══ AUTH SCREEN ══════════════════════════════════════ -->
 <div id="auth-screen">
@@ -78,12 +88,14 @@
       <div class="logo" style="width:38px;height:38px;border-radius:10px;overflow:hidden;flex-shrink:0;background:none;border:none;padding:0;"><img src="img/logo.png" style="width:100%;height:100%;object-fit:cover;" /></div>
       <div class="ttl">
         <h1><span class="brand-text">LockBox<span class="iq">IQ</span></span></h1>
-        <p>Investment Analyzer · TX Schedule E · 5/10/15-Year Exit</p>
+        <p>Texas Property Analyst</p>
       </div>
     </div>
-    <div class="hdr-right">
+    <div class="hdr-right" id="hdr-right">
+      <button class="menu-toggle" onclick="document.getElementById('hdr-right').classList.toggle('open')" aria-label="Toggle menu">☰</button>
       <button class="add-btn" onclick="openAddProp()" title="Add property manually">＋</button>
       <button class="inbox-btn" onclick="showInbox()">📧 My Inbox Address</button>
+      <button class="data-btn" onclick="openDataSources()" title="Data sources & methodology">📊 Data Sources</button>
       <button class="user-btn" onclick="openSettings()" id="user-email-btn">Sign Out</button>
     </div>
   </header>
@@ -94,7 +106,7 @@
   <div class="sbar">
     <div class="sc"><div class="sl">Properties</div><div class="sv" id="s-tot">—</div></div>
     <div class="sc"><div class="sl">Pass Criteria</div><div class="sv g" id="s-pass">—</div></div>
-    <div class="sc"><div class="sl">Favorites</div><div class="sv a" id="s-favs">—</div></div>
+    <div class="sc"><div class="sl">Shortlist</div><div class="sv a" id="s-favs">—</div></div>
     <div class="sc"><div class="sl">New / Drops</div><div class="sv" id="s-new">—</div></div>
     <div class="sc"><div class="sl">Avg CF (Pass)</div><div class="sv" id="s-cf">—</div></div>
   </div>
@@ -127,10 +139,15 @@
   </div>
 
   <div class="tbar">
-    <div class="tabs">
+    <div class="tabs" id="stage-tabs">
       <button class="tab on" onclick="setView('all',this)">All <span class="n" id="tc-a">0</span></button>
-      <button class="tab" onclick="setView('favs',this)">⭐ Favs <span class="n" id="tc-f">0</span></button>
-      <button class="tab" onclick="setView('ni',this)">👎 Skip <span class="n" id="tc-n">0</span></button>
+      <button class="tab" onclick="setView('inbox',this)">📥 Inbox <span class="n" id="tc-inbox">0</span></button>
+      <button class="tab" onclick="setView('shortlist',this)">⭐ Shortlist <span class="n" id="tc-shortlist">0</span></button>
+      <button class="tab" onclick="setView('diligence',this)">🔍 Diligence <span class="n" id="tc-diligence">0</span></button>
+      <button class="tab" onclick="setView('offer',this)">📝 Offer <span class="n" id="tc-offer">0</span></button>
+      <button class="tab" onclick="setView('contract',this)">📋 Contract <span class="n" id="tc-contract">0</span></button>
+      <button class="tab" onclick="setView('closed',this)">✅ Closed <span class="n" id="tc-closed">0</span></button>
+      <button class="tab" onclick="setView('archived',this)">📦 Archive <span class="n" id="tc-archived">0</span></button>
     </div>
     <div class="fchips">
       <button class="fc on" onclick="setFil('all',this)">All</button>
@@ -139,7 +156,10 @@
       <button class="fc" onclick="setFil('duplex',this)">🏘 Multi</button>
       <button class="fc" onclick="setFil('new',this)">🆕 New</button>
       <button class="fc" onclick="setFil('drop',this)">📉 Drop</button>
+      <button class="fc" onclick="setFil('resurface',this)" style="display:none">🔄 Revisit</button>
+      <button class="fc" onclick="setFil('risk',this)">⚠️ Risk</button>
     </div>
+    <button class="exp-btn" onclick="exportCSV()" title="Export current view as CSV">⬇ Export</button>
     <div class="rent-mode-row">
       <span class="rm-lbl">Rent assumption:</span>
       <button class="rm" data-m="low" onclick="setRentMode('low')">Low</button>
@@ -158,6 +178,7 @@
       <div class="mhd">
         <div><div class="madr" id="m-adr"></div><div id="m-bdg" style="display:flex;gap:4px;flex-wrap:wrap"></div></div>
         <div style="display:flex;gap:.4rem;align-items:center">
+          <button onclick="dealBrief(openId)" style="background:var(--adim);border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:.3rem .65rem;font-size:.72rem;cursor:pointer">📄 Brief</button>
           <button onclick="printMod()" style="background:var(--adim);border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:.3rem .65rem;font-size:.72rem;cursor:pointer">🖨️ Print</button>
           <button id="m-edit-btn" onclick="toggleEdit()" style="background:var(--adim);border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:.3rem .65rem;font-size:.72rem;cursor:pointer">✏️ Edit</button>
           <button class="xcl" onclick="closeMod()">✕</button>
@@ -189,6 +210,17 @@
     </div>
   </div>
 
+  <!-- Data Sources modal -->
+  <div class="ov" id="dsov" onclick="closeDataSources(event)">
+    <div class="modal" style="max-width:720px">
+      <div class="mhd">
+        <div><div class="madr">Data Sources & Methodology</div><div style="font-size:.68rem;color:var(--text2)">How LockBoxIQ powers your investment analysis</div></div>
+        <button class="xcl" onclick="closeDataSources()">✕</button>
+      </div>
+      <div class="mb" id="ds-body" style="max-height:80vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
   <!-- Settings modal -->
   <div class="ov" id="sov" onclick="closeSettings(event)">
     <div class="modal" style="max-width:580px">
@@ -202,15 +234,19 @@
 </div>
 
 
-<script src="js/config.js?v=25"></script>
-<script src="js/financial.js?v=25"></script>
-<script src="js/state.js?v=25"></script>
-<script src="js/projects.js?v=25"></script>
-<script src="js/auth.js?v=25"></script>
-<script src="js/session.js?v=25"></script>
-<script src="js/data.js?v=25"></script>
-<script src="js/render.js?v=25"></script>
-<script src="js/curation.js?v=25"></script>
-<script src="js/modal.js?v=25"></script>
+<script src="js/config.js?v=27"></script>
+<script src="js/tracking.js?v=27"></script>
+<script src="js/financial.js?v=27"></script>
+<script src="js/state.js?v=27"></script>
+<script src="js/projects.js?v=27"></script>
+<script src="js/auth.js?v=27"></script>
+<script src="js/session.js?v=27"></script>
+<script src="js/data.js?v=27"></script>
+<script src="js/render.js?v=27"></script>
+<script src="js/curation.js?v=27"></script>
+<script src="js/modal.js?v=27"></script>
+<script src="js/analytics.js?v=27" defer></script>
+<script src="js/export.js?v=27" defer></script>
+<script src="js/datasources.js?v=27" defer></script>
 </body>
 </html>

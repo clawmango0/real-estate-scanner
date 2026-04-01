@@ -2,6 +2,10 @@ function _invType(){return activeProject?.investment_type||'buyhold';}
 
 function buildMod(id){
   const p=props.find(x=>x.id===id); if(!p) return;
+  if(typeof trackPropertyView==='function') trackPropertyView(p);
+  // Clear resurface flag when user reviews property
+  const _rp=props.find(x=>x.id===id);
+  if(_rp&&_rp._resurface){_rp._resurface=false;_rp._resurfaceReason=null;}
   const cond=mCond[id]||p.condition||'good';
   const impr=mImpr[id]||p.improvement||'asis';
   // Seed tax state from project or global defaults on first open
@@ -19,7 +23,8 @@ function buildMod(id){
   const nbs=p._nbScore;
   const zipAppr=h?Number(h.appreci5??h.appreci3??h.appreci1??null):null;
   const apprUsed=zipAppr!=null&&!isNaN(zipAppr)?zipAppr:GP.appreci;
-  // Apply cost seg / sec179 from modal tax state to GP for this calc
+  // Temporarily apply cost seg / sec179 from modal tax state for this calc, then restore
+  const _gpSave={costSegPct:GP.costSegPct,sec179:GP.sec179,participation:GP.participation};
   GP.costSegPct=mTax[id].costSegPct||0;
   GP.sec179=mTax[id].sec179||0;
   GP.participation=mTax[id].participation||'active';
@@ -27,6 +32,8 @@ function buildMod(id){
   // 5-year Schedule E calculations
   const yrs=[];
   if(rent){let carry=0;for(let yr=1;yr<=5;yr++){const se=schedE(ofPrc,rent,cond,impr,yr,taxP,carry);carry=se.passCarry;yrs.push(se);}}
+  // Restore GP to prevent leaking per-property tax params into global calculations
+  GP.costSegPct=_gpSave.costSegPct;GP.sec179=_gpSave.sec179;GP.participation=_gpSave.participation;
   const y1=yrs[0]||null,y2=yrs[1]||null;
 
   let badges=sourceBadge(p.source);
@@ -66,7 +73,7 @@ function buildMod(id){
       <div><label ${_ls}>Sqft</label><input id="ep-sqft" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.sqft||''}" ${_is} class="no-spin"></div>
       <div><label ${_ls}>Lot Size (sqft)</label><input id="ep-lot" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.lotSize||''}" ${_is} class="no-spin"></div>
       <div><label ${_ls}>Property Type</label><select id="ep-type" ${_is}>${['SFR','DUPLEX','TRIPLEX','QUAD','CONDO','LOT'].map(t=>`<option value="${t}"${p.type===t?' selected':''}>${t}</option>`).join('')}</select></div>
-      <div><label ${_ls}>Rent Estimate ($/mo)</label><input id="ep-rent-est" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.rentRange?.mid||''}" ${_is} class="no-spin"></div>
+      <div><label ${_ls}>Rent Estimate ($/mo)</label><input id="ep-rent-est" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.rentRange?Math.round((p.rentRange.low+p.rentRange.high)/2):''}" ${_is} class="no-spin"></div>
       <div><label ${_ls}>Monthly Rent (confirmed)</label><input id="ep-rent" type="text" inputmode="numeric" pattern="[0-9]*" value="${p.monthlyRent||''}" ${_is} class="no-spin"></div>
     </div>
     <div style="display:flex;gap:.5rem">
@@ -216,13 +223,7 @@ function buildMod(id){
       </tbody>
     </table>`:''}
 
-    <div class="sec">Curate</div>
-    <div class="curbar">
-      <button class="${p.curated==='fav'?'af':''}" onclick="curate('${id}','fav')">⭐ ${p.curated==='fav'?'Favorited':'Favorite'}</button>
-      <button class="${p.curated==='ni'?'ani':''}" onclick="curate('${id}','ni')">👎 ${p.curated==='ni'?'Marked':'Not Interested'}</button>
-      <button class="${p.curated==='blk'?'abl':''}" onclick="curate('${id}','blk')">🚫 Block Forever</button>
-    </div>
-    ${p.listingUrl?`<a class="el" href="${p.listingUrl}" target="_blank">↗ View Listing</a>`:''}
+    ${_stageHtml(id,p)}
   `;
 }
 
@@ -280,11 +281,16 @@ function _condImprHtml(id,cond,impr){
 
 // ── Curation buttons shared across typed modals ──────────────────────────────
 function _curateHtml(id,p){
-  return `<div class="sec">Curate</div>
+  return _stageHtml(id,p);
+}
+
+function _stageHtml(id,p){
+  const s=p.stage||'inbox';
+  const active=STAGES.filter(x=>x!=='archived');
+  return `<div class="sec">Pipeline Stage</div>
   <div class="curbar">
-    <button class="${p.curated==='fav'?'af':''}" onclick="curate('${id}','fav')">⭐ ${p.curated==='fav'?'Favorited':'Favorite'}</button>
-    <button class="${p.curated==='ni'?'ani':''}" onclick="curate('${id}','ni')">👎 ${p.curated==='ni'?'Marked':'Not Interested'}</button>
-    <button class="${p.curated==='blk'?'abl':''}" onclick="curate('${id}','blk')">🚫 Block Forever</button>
+    ${active.map(st=>`<button class="${s===st?'af':''}" onclick="setStage('${id}','${st}')">${STAGE_ICONS[st]} ${STAGE_LABELS[st]}</button>`).join('')}
+    <button class="${s==='archived'?'abl':''}" onclick="setStage('${id}','archived')">📦 Archive</button>
   </div>
   ${p.listingUrl?`<a class="el" href="${p.listingUrl}" target="_blank">↗ View Listing</a>`:''}`;
 }
@@ -391,10 +397,10 @@ function _modSTR(id,p,cond,impr,taxP){
   return _propDetailsHtml(p)+
   `<div class="sec">🏖️ STR Revenue Inputs</div>
   <div class="txs">
-    <div class="tr2"><label>Avg Daily Rate</label><input type="text" value="${adr}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_adr=+this.value||150;buildMod('${id}')"></div>
-    <div class="tr2"><label>Occupancy %</label><input type="text" value="${Math.round(occ*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_occ=(+this.value||70)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
-    <div class="tr2"><label>Cleaning Fee</label><input type="text" value="${clean}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_clean=+this.value||0;buildMod('${id}')"></div>
-    <div class="tr2"><label>Platform Fee</label><input type="text" value="${Math.round(plat*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_plat=(+this.value||3)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Avg Daily Rate</label><input type="text" value="${adr}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_adr=+this.value||150;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Occupancy %</label><input type="text" value="${Math.round(occ*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_occ=(+this.value||70)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Cleaning Fee</label><input type="text" value="${clean}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_clean=+this.value||0;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Platform Fee</label><input type="text" value="${Math.round(plat*100)}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._str_plat=(+this.value||3)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
   </div>`+
   (s?`
   <div class="sec">💰 STR Analysis</div>
@@ -434,8 +440,8 @@ function _modWholesale(id,p,cond,impr){
   (w?`
   <div class="sec">📋 Wholesale Analysis</div>
   <div class="txs" style="margin-bottom:.5rem">
-    <div class="tr2"><label>Assignment Fee %</label><input type="text" value="${Math.round(assignPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_assign=(+this.value||7)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
-    <div class="tr2"><label>Est. Rehab %</label><input type="text" value="${Math.round(rehabPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_rehab=(+this.value||10)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Assignment Fee %</label><input type="text" value="${Math.round(assignPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_assign=(+this.value||7)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Est. Rehab %</label><input type="text" value="${Math.round(rehabPct*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._ws_rehab=(+this.value||10)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
   </div>
   <div class="k3" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi"><div class="kl">ARV</div><div class="kv" style="color:var(--green)">${M(w.arv)}</div></div>
@@ -460,9 +466,9 @@ function _modCommercial(id,p,cond,impr,taxP){
   return _propDetailsHtml(p)+
   `<div class="sec">🏢 Commercial Inputs</div>
   <div class="txs">
-    <div class="tr2"><label>Units</label><input type="text" value="${units}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_units=+this.value||2;buildMod('${id}')"></div>
-    <div class="tr2"><label>Rent/Unit/mo</label><input type="text" value="${rpu}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._comm_rpu=+this.value||800;buildMod('${id}')"></div>
-    <div class="tr2"><label>Vacancy %</label><input type="text" value="${Math.round(vac*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_vac=(+this.value||5)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Units</label><input type="text" value="${units}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_units=+this.value||2;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Rent/Unit/mo</label><input type="text" value="${rpu}" inputmode="numeric" class="no-spin" style="width:80px" onblur="if(activeProject)activeProject._comm_rpu=+this.value||800;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Vacancy %</label><input type="text" value="${Math.round(vac*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._comm_vac=(+this.value||5)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
   </div>`+
   (c?`
   <div class="sec">📊 Commercial Analysis</div>
@@ -496,10 +502,10 @@ function _modPassive(id,p,cond,impr){
   return _propDetailsHtml(p)+
   `<div class="sec">💼 Syndication Inputs</div>
   <div class="txs">
-    <div class="tr2"><label>Investment Amount</label><input type="text" value="${invest}" inputmode="numeric" class="no-spin" style="width:100px" onblur="if(activeProject)activeProject._pass_invest=+this.value||50000;buildMod('${id}')"></div>
-    <div class="tr2"><label>Pref Return %</label><input type="text" value="${Math.round(pref*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_pref=(+this.value||8)/100;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
-    <div class="tr2"><label>Hold Years</label><input type="text" value="${hold}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_hold=+this.value||5;buildMod('${id}')"></div>
-    <div class="tr2"><label>Equity Multiple</label><input type="text" value="${eqm}" inputmode="decimal" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_eqm=+this.value||2.0;buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">×</span></div>
+    <div class="tr2"><label>Investment Amount</label><input type="text" value="${invest}" inputmode="numeric" class="no-spin" style="width:100px" onblur="if(activeProject)activeProject._pass_invest=+this.value||50000;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Pref Return %</label><input type="text" value="${Math.round(pref*100)}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_pref=(+this.value||8)/100;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">%</span></div>
+    <div class="tr2"><label>Hold Years</label><input type="text" value="${hold}" inputmode="numeric" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_hold=+this.value||5;_saveStrategyParams();buildMod('${id}')"></div>
+    <div class="tr2"><label>Equity Multiple</label><input type="text" value="${eqm}" inputmode="decimal" class="no-spin" style="width:60px" onblur="if(activeProject)activeProject._pass_eqm=+this.value||2.0;_saveStrategyParams();buildMod('${id}')"><span style="font-size:.65rem;color:var(--text3)">×</span></div>
   </div>`+
   (ps?`
   <div class="sec">📈 Syndication Returns</div>
@@ -697,6 +703,68 @@ function uTaxAgi(id,val){
   if(ls)ls.value=Math.round(r.ltcg*100);
   if(ll)ll.textContent=Math.round(r.ltcg*100)+'%';
 }
+function dealBrief(id){
+  const p=props.find(x=>x.id===id);if(!p)return;
+  const rent=effectiveRent(p);
+  const cc=rent?cocCalc(p.listed,rent):null;
+  const tiers=rent?getTiers(rent):null;
+  const tc=tiers?classify(p.listed,tiers):null;
+  const h=p._hood;
+  const capital=p.listed*(GP.downPct+GP.closingPct);
+  const tp={filing:GP.filingStatus||'single',marginal:agiToRates(GP.agi,GP.filingStatus||'single').marg,ltcg:agiToRates(GP.agi,GP.filingStatus||'single').ltcg,recap:GP.recapRate,agi:GP.agi,participation:GP.participation||'active'};
+  const se1=rent?schedE(p.listed,rent,p.condition||'good',p.improvement||'asis',1,tp,0):null;
+  const exit5=rent?exitAt(p.listed,rent,p.condition||'good',p.improvement||'asis',5,tp,h?.appreci5||GP.appreci):null;
+  const w=window.open('','_blank','width=800,height=1000');
+  w.document.write(`<!DOCTYPE html><html><head><title>Deal Brief - ${esc(p.address)}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;padding:40px;max-width:750px;margin:0 auto;color:#111;font-size:14px;line-height:1.6}
+    h1{font-size:20px;margin-bottom:4px}h2{font-size:14px;text-transform:uppercase;letter-spacing:1px;color:#666;border-bottom:2px solid #111;padding-bottom:4px;margin:24px 0 12px}
+    .subtitle{color:#666;font-size:13px;margin-bottom:20px}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+    .kpi{background:#f8f8f8;border-radius:8px;padding:12px}.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#888}.kpi-val{font-size:22px;font-weight:700}
+    .kpi-sub{font-size:11px;color:#666}table{width:100%;border-collapse:collapse;margin-bottom:16px}th,td{padding:6px 10px;text-align:left;border-bottom:1px solid #eee;font-size:13px}
+    th{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#888;font-weight:600}.pass{color:#16a34a}.fail{color:#dc2626}.warn{color:#d97706}
+    .footer{margin-top:30px;padding-top:12px;border-top:1px solid #ddd;font-size:11px;color:#888;text-align:center}
+    @media print{body{padding:20px}@page{margin:0.5in}}
+  </style></head><body>
+  <h1>${esc(p.address)}</h1>
+  <div class="subtitle">${esc(p.city)} | ${esc(p.type)} | ${esc(p.source)} | ${new Date().toLocaleDateString()}</div>
+  <h2>Deal Metrics</h2>
+  <div class="grid">
+    <div class="kpi"><div class="kpi-label">Listed Price</div><div class="kpi-val">${M(p.listed)}</div></div>
+    <div class="kpi"><div class="kpi-label">Est. Rent</div><div class="kpi-val">${rent?M(rent)+'/mo':'—'}</div></div>
+    <div class="kpi"><div class="kpi-label">CoC Return</div><div class="kpi-val ${cc&&cc.coc>=GP.cocMin?'pass':'fail'}">${cc?PCT(cc.coc):'—'}</div><div class="kpi-sub">${tc?tc.label:'—'}</div></div>
+  </div>
+  <div class="grid">
+    <div class="kpi"><div class="kpi-label">Monthly Cash Flow</div><div class="kpi-val ${cc&&cc.cfMo>=0?'pass':'fail'}">${cc?MS(Math.round(cc.cfMo)):'—'}</div></div>
+    <div class="kpi"><div class="kpi-label">Total Capital</div><div class="kpi-val">${M(Math.round(capital))}</div><div class="kpi-sub">${Math.round(GP.downPct*100)}% down + ${Math.round(GP.closingPct*100)}% closing</div></div>
+    <div class="kpi"><div class="kpi-label">NB Score</div><div class="kpi-val">${p._nbScore!==null?p._nbScore+'/100':'—'}</div></div>
+  </div>
+  ${h?`<h2>Market Position</h2>
+  <table><tr><td>Neighborhood</td><td><strong>${esc(h.area||'')}</strong></td></tr>
+  <tr><td>Schools</td><td>${h.schools||'—'}/10</td></tr>
+  <tr><td>Safety</td><td>${h.crime||'—'}/10</td></tr>
+  <tr><td>ZHVI (Home Value Index)</td><td>${h.zhvi?M(h.zhvi):'—'}</td></tr>
+  <tr><td>1-Year Appreciation</td><td>${h.appreci1!=null?h.appreci1+'%':'—'}</td></tr>
+  <tr><td>Market Score</td><td>${h.marketScore!=null?h.marketScore+'/100':'—'}</td></tr>
+  <tr><td>Median Income</td><td>${h.medianIncome?M(h.medianIncome):'—'}</td></tr>
+  <tr><td>Affordability Ratio</td><td>${h.affordability?h.affordability+'x':'—'}</td></tr></table>`:''}
+  ${se1?`<h2>Year 1 Tax Impact</h2>
+  <table><tr><td>Gross Rent</td><td>${M(se1.gr)}</td></tr>
+  <tr><td>Total Deductions</td><td>${M(Math.round(se1.totalDeduct))}</td></tr>
+  <tr><td>Depreciation</td><td>${M(Math.round(se1.annDepr))}</td></tr>
+  <tr><td>Net Income (Loss)</td><td class="${se1.netInc<0?'pass':'warn'}">${MS(Math.round(se1.netInc))}</td></tr>
+  <tr><td><strong>Tax Savings</strong></td><td class="pass"><strong>${MS(Math.round(se1.taxSav))}</strong></td></tr></table>`:''}
+  ${exit5?`<h2>5-Year Exit Analysis</h2>
+  <table><tr><td>Exit Value (at ${((h?.appreci5||GP.appreci)*1).toFixed(1)}%/yr)</td><td>${M(Math.round(exit5.exitVal))}</td></tr>
+  <tr><td>Cumulative Cash Flow</td><td class="${exit5.cumCF>=0?'pass':'fail'}">${MS(Math.round(exit5.cumCF))}</td></tr>
+  <tr><td>Cumulative Tax Savings</td><td class="pass">${MS(Math.round(exit5.cumTaxSav))}</td></tr>
+  <tr><td>Total Profit (after tax)</td><td class="${exit5.totalProfit>=0?'pass':'fail'}"><strong>${MS(Math.round(exit5.totalProfit))}</strong></td></tr>
+  <tr><td>5-Year Annualized ROI</td><td class="${exit5.annROI>=0.08?'pass':'warn'}"><strong>${PCT(exit5.annROI)}/yr</strong></td></tr></table>`:''}
+  <div class="footer">Generated by LockBoxIQ — Texas Property Analyst<br>${new Date().toLocaleDateString()} | ${esc(p.address)}</div>
+  </body></html>`);
+  w.document.close();
+  w.print();
+}
 function printMod(){
   const modal=document.querySelector('#ov .modal');if(!modal)return;
   document.body.classList.add('printing-modal');
@@ -704,22 +772,54 @@ function printMod(){
   window.addEventListener('afterprint',cleanup,{once:true});
   window.print();
 }
+let _prevFocus=null;
+function _trapFocus(modal){
+  modal._focusTrap=function(e){
+    if(e.key!=='Tab')return;
+    const focusable=modal.querySelectorAll('button,a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+    if(!focusable.length)return;
+    const first=focusable[0],last=focusable[focusable.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  };
+  modal.addEventListener('keydown',modal._focusTrap);
+}
+function _releaseFocus(modal){
+  if(modal._focusTrap){modal.removeEventListener('keydown',modal._focusTrap);delete modal._focusTrap;}
+}
 function openM(id){
+  _prevFocus=document.activeElement;
   openId=id;buildMod(id);
-  document.getElementById('ov').classList.add('open');
-  document.getElementById('ov').scrollTop=0;
+  const ov=document.getElementById('ov');
+  ov.classList.add('open');
+  ov.scrollTop=0;
+  _trapFocus(ov);
+  const closeBtn=ov.querySelector('.xcl');
+  if(closeBtn) setTimeout(()=>closeBtn.focus(),100);
   // Mark as viewed — clear "New" badge
   const p=props.find(x=>x.id===id);
   if(p&&p.isNew){
     p.isNew=false;
     saveProperty(id,{is_new:false});
-    renderApp();
+    if(typeof updateRow==='function') updateRow(id);
   }
 }
-function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;document.getElementById('ov').classList.remove('open');openId=null;}
-function srt(col){if(sCol===col)sDir*=-1;else{sCol=col;sDir=-1;}renderApp();}
-function setView(v,el){aV=v;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderApp();}
-function setFil(f,el){aF=f;document.querySelectorAll('.fc').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderApp();}
+function closeMod(e){if(e&&e.target!==document.getElementById('ov'))return;const ov=document.getElementById('ov');_releaseFocus(ov);ov.classList.remove('open');openId=null;if(_prevFocus)_prevFocus.focus();}
+function srt(col){if(sCol===col)sDir*=-1;else{sCol=col;sDir=-1;}currentPage=0;renderApp();}
+function setView(v,el){if(typeof trackFilterChange==='function')trackFilterChange('tab',v);aV=v;currentPage=0;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderApp();}
+function setFil(f,el){if(typeof trackFilterChange==='function')trackFilterChange('chip',f);aF=f;currentPage=0;document.querySelectorAll('.fc').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderApp();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('ov').classList.remove('open');document.getElementById('sov').classList.remove('open');document.getElementById('aov').classList.remove('open');openId=null;}});
 document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
 document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
+// Arrow key navigation for stage tabs
+document.addEventListener('DOMContentLoaded',()=>{
+  const tabs=document.getElementById('stage-tabs');
+  if(tabs)tabs.addEventListener('keydown',e=>{
+    const btns=[...tabs.querySelectorAll('.tab')];
+    const idx=btns.indexOf(document.activeElement);
+    if(idx<0)return;
+    if(e.key==='ArrowRight'){e.preventDefault();btns[(idx+1)%btns.length].focus();}
+    if(e.key==='ArrowLeft'){e.preventDefault();btns[(idx-1+btns.length)%btns.length].focus();}
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();document.activeElement.click();}
+  });
+});

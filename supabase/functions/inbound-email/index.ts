@@ -246,6 +246,54 @@ async function scrapeRedfin(listingUrl: string): Promise<ScrapeResult> {
 }
 
 // ══════════════════════════════════════════════════════════
+//  ADDRESS GEOCODING — US Census Bureau Geocoder (free, no key)
+// ══════════════════════════════════════════════════════════
+interface GeoResult { city?: string; state?: string; zip?: string; lat?: number; lng?: number; }
+
+async function geocodeAddress(address: string, city?: string, state?: string, zip?: string): Promise<GeoResult | null> {
+  // Build the best query string from available parts
+  const parts = [address];
+  if (city) parts.push(city);
+  parts.push(state || 'TX');
+  if (zip) parts.push(zip);
+  const query = parts.join(', ').replace(/,\s*,/g, ',').trim();
+  if (query.length < 5) return null;
+
+  try {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 8000);
+    const url = `https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(query)}&benchmark=Public_AR_Current&vintage=Current_Current&format=json`;
+    const r = await fetch(url, { signal: ac.signal, headers: { "User-Agent": UA } });
+    clearTimeout(timer);
+    if (!r.ok) { console.log(`Census geocoder: status=${r.status}`); return null; }
+    const data = await r.json();
+    const match = data?.result?.addressMatches?.[0];
+    if (!match) { console.log(`Census geocoder: no match for "${query}"`); return null; }
+
+    const addr = match.addressComponents || {};
+    const geo = match.coordinates || {};
+    const geographies = match.geographies || {};
+    // Extract zip from address components
+    const matchedZip = addr.zip || null;
+    const matchedCity = addr.city || null;
+    const matchedState = addr.state || null;
+
+    console.log(`Census geocoder: "${query}" → ${matchedCity}, ${matchedState} ${matchedZip}`);
+    return {
+      city: matchedCity,
+      state: matchedState,
+      zip: matchedZip,
+      lat: geo.y ? Number(geo.y) : undefined,
+      lng: geo.x ? Number(geo.x) : undefined,
+    };
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') console.log('Census geocoder: timeout');
+    else console.error('Census geocoder error:', e);
+    return null;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
 //  CLAUDE PARSER
 // ══════════════════════════════════════════════════════════
 // Strip zero-width Unicode junk that Zillow/Realtor emails use for tracking.
@@ -438,45 +486,50 @@ async function resolveZillowUrl(
   address: string,
   city: string,
   state: string,
-  zip: string
+  zip: string,
+  isSinglePropertyEmail: boolean = false
 ): Promise<string | null> {
-  // 1. Direct homedetails URL from email
-  if (urlScan.homedetails.length > 0) {
-    console.log("URL source: direct homedetails in email");
-    return urlScan.homedetails[0];
-  }
-
-  // 2. ZPID found in email URLs
-  if (urlScan.zpids.length > 0) {
-    const url = `https://www.zillow.com/homedetails/${urlScan.zpids[0]}_zpid/`;
-    console.log("URL source: ZPID from email →", url);
-    return url;
-  }
-
-  // 3. Follow tracking link redirects (fresh at processing time)
-  // Pick the first non-homepage tracking target that looks property-specific
-  const propertyTargets = trackingTargets.filter(t =>
-    !t.includes("utm_content=headerzillowlogo") &&
-    !t.includes("utm_content=footer") &&
-    !t.includes("unsubscribe") &&
-    t.includes("zillow.com")
-  );
-  for (const target of propertyTargets.slice(0, 3)) {
-    if (target.includes("rtoken") || target.includes("homedetails")) {
-      const resolved = await followTrackingRedirect(target.startsWith("http") ? target : `https://${target}`);
-      if (resolved) {
-        console.log("URL source: tracking redirect →", resolved.slice(0, 120));
-        return resolved;
-      }
-    }
-  }
-
-  // 4. Autocomplete address lookup (free, no key needed)
+  // 1. Autocomplete address lookup FIRST — most reliable because it matches
+  // the specific property by address, not a generic email ZPID.
+  // Email ZPIDs in multi-property digests belong to only one listing and
+  // get misapplied to all properties if used indiscriminately.
   if (address) {
     const searchAddr = [address, city, state || "TX", zip].filter(Boolean).join(" ");
     console.log("URL source: autocomplete lookup for:", searchAddr);
     const url = await findZillowUrl(searchAddr);
     if (url) return url;
+  }
+
+  // 2. Direct homedetails URL — ONLY for single-property emails
+  if (isSinglePropertyEmail && urlScan.homedetails.length > 0) {
+    console.log("URL source: direct homedetails in single-property email");
+    return urlScan.homedetails[0];
+  }
+
+  // 3. ZPID from email — ONLY for single-property emails
+  if (isSinglePropertyEmail && urlScan.zpids.length > 0) {
+    const url = `https://www.zillow.com/homedetails/${urlScan.zpids[0]}_zpid/`;
+    console.log("URL source: ZPID from single-property email →", url);
+    return url;
+  }
+
+  // 4. Follow tracking link redirects — ONLY for single-property emails
+  if (isSinglePropertyEmail) {
+    const propertyTargets = trackingTargets.filter(t =>
+      !t.includes("utm_content=headerzillowlogo") &&
+      !t.includes("utm_content=footer") &&
+      !t.includes("unsubscribe") &&
+      t.includes("zillow.com")
+    );
+    for (const target of propertyTargets.slice(0, 3)) {
+      if (target.includes("rtoken") || target.includes("homedetails")) {
+        const resolved = await followTrackingRedirect(target.startsWith("http") ? target : `https://${target}`);
+        if (resolved) {
+          console.log("URL source: tracking redirect →", resolved.slice(0, 120));
+          return resolved;
+        }
+      }
+    }
   }
 
   return null;
@@ -840,6 +893,17 @@ async function updateRealtorRepo(agents: AgentInfo[]): Promise<void> {
   } catch (e) { console.error("updateRealtorRepo error:", e); }
 }
 
+function normalizeAddress(addr: string): string {
+  return addr.trim()
+    .replace(/\bstreet\b/gi, 'St').replace(/\bdrive\b/gi, 'Dr')
+    .replace(/\blane\b/gi, 'Ln').replace(/\bboulevard\b/gi, 'Blvd')
+    .replace(/\bavenue\b/gi, 'Ave').replace(/\bcourt\b/gi, 'Ct')
+    .replace(/\bplace\b/gi, 'Pl').replace(/\broad\b/gi, 'Rd')
+    .replace(/\bcircle\b/gi, 'Cir').replace(/\btrail\b/gi, 'Trl')
+    .replace(/\bparkway\b/gi, 'Pkwy').replace(/\bway\b/gi, 'Way')
+    .replace(/\s+/g, ' ').replace(/,\s*$/, '').trim();
+}
+
 // ══════════════════════════════════════════════════════════
 //  MAIN WEBHOOK HANDLER
 // ══════════════════════════════════════════════════════════
@@ -1076,15 +1140,25 @@ serve(async(req)=>{
   let n=0;
   for(const p of props){
     if(!p.address)continue;
+
+    // Geocode to fill missing city/zip — never store null values
+    if (!p.zip || !p.city) {
+      const geo = await geocodeAddress(p.address, p.city, p.state, p.zip);
+      if (geo) {
+        if (!p.city && geo.city) p.city = geo.city;
+        if (!p.zip && geo.zip) p.zip = geo.zip;
+        if (!p.state && geo.state) p.state = geo.state;
+        if (!p.latitude && geo.lat) p.latitude = geo.lat;
+        if (!p.longitude && geo.lng) p.longitude = geo.lng;
+      }
+    }
+
     const newPrice = p.listed_price?Number(p.listed_price):null;
     const isPriceDrop = Boolean(p.price_drop);
 
-    // Build record with ONLY data fields — NOT user-curated fields
-    // (condition, improvement, curated, notes, monthly_rent get DB defaults on insert
-    // and are preserved on conflict-update since they're not in this record)
     const record: Record<string, unknown> = {
       user_id:mb.user_id, mailbox_id:mb.id, email_log_id:logId,
-      address:p.address, city:p.city??"", state:p.state??"TX", zip:p.zip||null,
+      address:normalizeAddress(String(p.address||'')), city:String(p.city||'').trim(), state:String(p.state||'TX').trim(), zip:p.zip?String(p.zip).trim():null,
       listed_price:newPrice,
       beds:p.beds?Number(p.beds):null, baths:p.baths?Number(p.baths):null,
       sqft:p.sqft?Number(p.sqft):null,
@@ -1152,9 +1226,11 @@ serve(async(req)=>{
       if (p.source === "redfin") { console.log(`Skipping Zillow scrape for Redfin property: ${p.address}`); continue; }
 
       console.log(`── Resolving URL for: ${p.address}`);
+      const isSingle = props.filter(x => x.address).length === 1;
       const scrapeUrl = await resolveZillowUrl(
         urlScan, urlScan.trackingTargets,
-        p.address, p.city || "", p.state || "TX", p.zip || ""
+        p.address, p.city || "", p.state || "TX", p.zip || "",
+        isSingle
       );
 
       if (!scrapeUrl) {

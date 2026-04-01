@@ -3,6 +3,74 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL  = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+const UA = "Mozilla/5.0 (compatible; LockBoxIQ/1.0)";
+
+// ── Address Geocoding — US Census Bureau (free, no key) ──
+async function geocodeAddress(address: string, city?: string, state?: string): Promise<{city?:string;state?:string;zip?:string;lat?:number;lng?:number}|null> {
+  const parts = [address]; if (city) parts.push(city); parts.push(state || 'TX');
+  const query = parts.join(', ').replace(/,\s*,/g, ',').trim();
+  if (query.length < 5) return null;
+  try {
+    const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 8000);
+    const r = await fetch(`https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(query)}&benchmark=Public_AR_Current&vintage=Current_Current&format=json`, { signal: ac.signal, headers: { "User-Agent": UA } });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const data = await r.json();
+    const match = data?.result?.addressMatches?.[0];
+    if (!match) return null;
+    const addr = match.addressComponents || {}; const geo = match.coordinates || {};
+    return { city: addr.city, state: addr.state, zip: addr.zip, lat: geo.y ? Number(geo.y) : undefined, lng: geo.x ? Number(geo.x) : undefined };
+  } catch { return null; }
+}
+
+// Backfill null zip/city on properties (non-blocking, runs after GET response)
+async function backfillMissingGeo(supabase: ReturnType<typeof createClient>) {
+  try {
+    const { data: rows } = await supabase.from("properties").select("id, address, city, state, zip").or("zip.is.null,city.is.null,city.eq.").limit(20);
+    if (!rows?.length) return;
+    console.log(`Backfill: ${rows.length} properties with missing zip/city`);
+    for (const row of rows) {
+      const geo = await geocodeAddress(String(row.address || ''), String(row.city || ''), String(row.state || 'TX'));
+      if (!geo) continue;
+      const updates: Record<string, unknown> = {};
+      if ((!row.zip || row.zip === '') && geo.zip) updates.zip = geo.zip;
+      if ((!row.city || row.city === '') && geo.city) updates.city = geo.city;
+      if (geo.lat) updates.latitude = geo.lat;
+      if (geo.lng) updates.longitude = geo.lng;
+      if (Object.keys(updates).length) {
+        await supabase.from("properties").update(updates).eq("id", row.id);
+        console.log(`Backfill: ${row.address} → ${geo.city}, ${geo.state} ${geo.zip}`);
+      }
+    }
+  } catch (e) { console.error("Backfill error:", e); }
+}
+
+// Backfill missing listing URLs via Zillow autocomplete (non-blocking)
+async function backfillMissingUrls(supabase: ReturnType<typeof createClient>) {
+  try {
+    const { data: rows } = await supabase.from("properties").select("id, address, city, state, zip, listing_url").or("listing_url.is.null,listing_url.eq.").limit(10);
+    if (!rows?.length) return;
+    console.log(`URL backfill: ${rows.length} properties missing listing URLs`);
+    for (const row of rows) {
+      const addr = [row.address, row.city, row.state || 'TX', row.zip].filter(Boolean).join(' ');
+      if (addr.length < 5) continue;
+      try {
+        const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 5000);
+        const q = encodeURIComponent(addr);
+        const r = await fetch(`https://www.zillowstatic.com/autocomplete/v3/suggestions?q=${q}&abKey=6pmtfwMkHe-ZvWGZJ6EtoQ`, { signal: ac.signal, headers: { "User-Agent": UA } });
+        clearTimeout(t);
+        if (!r.ok) continue;
+        const data = await r.json();
+        const zpid = data?.results?.find((x: Record<string, unknown>) => (x.metaData as Record<string, unknown>)?.zpid)?.metaData?.zpid;
+        if (zpid) {
+          const url = `https://www.zillow.com/homedetails/${zpid}_zpid/`;
+          await supabase.from("properties").update({ listing_url: url }).eq("id", row.id);
+          console.log(`URL backfill: ${row.address} → ${url}`);
+        }
+      } catch { /* skip */ }
+    }
+  } catch (e) { console.error("URL backfill error:", e); }
+}
 const cors = {
   "Access-Control-Allow-Origin": "https://lockboxiq.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -24,9 +92,14 @@ serve(async (req) => {
     if (req.method === "GET" && isCollection) {
       const { data, error } = await supabase
         .from("properties")
-        .select("*, neighborhoods(area_name, schools, crime_safety, walk_score, rent_growth, appreci_1yr, appreci_3yr, appreci_5yr, zhvi_current)")
+        .select("*, neighborhoods(area_name, schools, crime_safety, walk_score, rent_growth, appreci_1yr, appreci_3yr, appreci_5yr, zhvi_current, zori_current, zori_12mo_change, median_income, population, active_inventory, days_on_market, price_cut_pct, median_sale_price, market_score, affordability_ratio)")
         .order("created_at", { ascending: false });
       if (error) throw error;
+      // Fire-and-forget: backfill any properties with null zip/city
+      if (url.searchParams.get('backfill') === '1') {
+        backfillMissingGeo(supabase).catch(e => console.error("Backfill launch error:", e));
+        backfillMissingUrls(supabase).catch(e => console.error("URL backfill launch error:", e));
+      }
       return new Response(JSON.stringify((data || []).map(shapeProperty)), { headers: { ...cors, "Content-Type": "application/json" } });
     }
     if (req.method === "POST" && isCollection) {
@@ -46,10 +119,25 @@ serve(async (req) => {
       const body = await req.json();
       const allowed = ["monthly_rent", "condition", "improvement", "status", "curated", "notes", "price_drop", "price_drop_amt",
                        "rent_estimate", "beds", "baths", "sqft", "lot_size", "listed_price", "address", "latitude", "longitude",
-                       "property_type", "is_new", "city", "state", "zip", "listing_url"];
+                       "property_type", "is_new", "city", "state", "zip", "listing_url", "pipeline_stage"];
       const updates: Record<string, unknown> = {};
       for (const k of allowed) if (k in body) updates[k] = body[k];
-      const { data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single();
+      // Append to price_history if listed_price changed
+      if (updates.listed_price !== undefined) {
+        const { data: existing } = await supabase.from("properties").select("listed_price, price_history").eq("id", propertyId).single();
+        if (existing && existing.listed_price !== updates.listed_price) {
+          const history = Array.isArray(existing.price_history) ? existing.price_history : [];
+          history.push({ date: new Date().toISOString(), price: updates.listed_price, source: 'manual_edit' });
+          updates.price_history = history;
+        }
+      }
+
+      let { data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single();
+      // If pipeline_stage column doesn't exist yet, retry without it
+      if (error && updates.pipeline_stage !== undefined && String(error.message).includes("pipeline_stage")) {
+        delete updates.pipeline_stage;
+        ({ data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single());
+      }
       if (error) throw error;
       return new Response(JSON.stringify(shapeProperty(data)), { headers: { ...cors, "Content-Type": "application/json" } });
     }
@@ -60,7 +148,8 @@ serve(async (req) => {
     }
     return new Response("Not found", { status: 404, headers: cors });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+    const errMsg = err instanceof Error ? err.message : (typeof err === 'object' && err !== null ? JSON.stringify(err) : String(err));
+    return new Response(JSON.stringify({ error: errMsg }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
   }
 });
 
@@ -75,16 +164,19 @@ function shapeProperty(row: Record<string, unknown>) {
     if (u.includes("CONDO"))   return "CONDO";
     return "SFR";
   };
-  const cityDisplay = row.city
-    ? `${row.city}, ${row.state} ${row.zip}`
-    : (hood ? String(hood.area_name || `${row.state} ${row.zip}`) : `${row.state} ${row.zip}`);
+  const _city = String(row.city || '').trim();
+  const _state = String(row.state || 'TX').trim();
+  const _zip = row.zip ? String(row.zip).trim() : '';
+  const cityDisplay = _city
+    ? `${_city}, ${_state}${_zip ? ' ' + _zip : ''}`
+    : (hood ? String(hood.area_name || `${_state}${_zip ? ' ' + _zip : ''}`) : `${_state}${_zip ? ' ' + _zip : ''}`);
 
   // Strip embedded city/state/zip from address to produce a clean street address.
   // DB address field often contains full "123 Main St, City, TX 76XXX".
   let streetAddr = String(row.address || '').trim();
-  const stateStr = String(row.state || 'TX');
-  const zipStr   = String(row.zip   || '');
-  const cityStr  = String(row.city  || '');
+  const stateStr = _state;
+  const zipStr   = _zip;
+  const cityStr  = _city;
   if (zipStr) {
     streetAddr = streetAddr.replace(new RegExp(',?\\s+' + stateStr + '\\s+' + zipStr + '$'), '').trim();
   }
@@ -116,15 +208,23 @@ function shapeProperty(row: Record<string, unknown>) {
     priceDrop: row.price_drop,
     dropAmt: row.price_drop_amt || 0,
     curated: row.curated,
+    stage: row.pipeline_stage || (row.curated === 'fav' ? 'shortlist' : row.curated === 'ni' ? 'archived' : row.curated === 'blk' ? 'archived' : 'inbox'),
     notes: row.notes,
     lat: row.latitude, lng: row.longitude,
     createdAt: row.created_at,
+    priceHistory: row.price_history || [],
+    listingDate: row.listing_date || row.created_at,
     hood: hood ? {
       area: hood.area_name, schools: hood.schools,
       crime: hood.crime_safety, walkScore: hood.walk_score,
       rentGrowth: hood.rent_growth,
       appreci1: hood.appreci_1yr, appreci3: hood.appreci_3yr,
       appreci5: hood.appreci_5yr, zhvi: hood.zhvi_current,
+      zori: hood.zori_current, zoriChange: hood.zori_12mo_change,
+      medianIncome: hood.median_income, population: hood.population,
+      inventory: hood.active_inventory, dom: hood.days_on_market,
+      priceCutPct: hood.price_cut_pct, medianSalePrice: hood.median_sale_price,
+      marketScore: hood.market_score, affordability: hood.affordability_ratio,
       zip: row.zip
     } : null,
   };

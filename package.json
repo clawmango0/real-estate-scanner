@@ -1,5 +1,15 @@
 {
   "dependencies": {
     "scrapingbee": "^1.8.2"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0",
+    "eslint": "^9.0.0",
+    "@eslint/js": "^9.0.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint docs/js/"
   }
 }

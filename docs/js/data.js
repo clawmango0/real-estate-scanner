@@ -6,7 +6,8 @@ async function loadProperties(){
       _showPropsError('Not signed in. Please reload and sign in.');
       return;
     }
-    let res=await fetch(`${EDGE_BASE}/properties`,{
+    const backfill=sessionStorage.getItem('lbiq_backfilled')?'':'?backfill=1';
+    let res=await fetch(`${EDGE_BASE}/properties${backfill}`,{
       headers:{'Authorization':`Bearer ${token}`}
     });
     // On 401, try ONE refresh then retry — never auto-signout
@@ -33,14 +34,19 @@ async function loadProperties(){
       const h=p.hood;
       return{
         ...p,
+        _priceHistory:p.price_history||[],
         _tiers:null, _cocL:null, _cfL:null, // filled by recomputeRents()
         _hood:h||null,
         _nbScore:h?nbScore({schools:h.schools,crime:h.crime,rentGrowth:h.rentGrowth}):null,
+        _resurface:p.priceDrop&&(p.stage||'inbox')==='archived',
+        _resurfaceReason:p.priceDrop&&(p.stage||'inbox')==='archived'?'Price dropped since you skipped this':null,
       };
     });
     // Auto-estimate rent for properties that have no monthly_rent set
     autoEstimateAll();
     refreshAll();
+    if(typeof autoStageAll==='function') autoStageAll();
+    sessionStorage.setItem('lbiq_backfilled','1');
   } catch(e) {
     console.error('loadProperties exception:', e);
     _showPropsError(e.message||String(e));
@@ -53,21 +59,34 @@ function _showPropsError(msg){
   c.innerHTML=`<div class="empty-state">
     <div class="e-icon">⚠️</div>
     <h3>Could not load properties</h3>
-    <p style="font-family:monospace;font-size:.8rem;word-break:break-all">${msg}</p>
+    <p style="font-family:monospace;font-size:.8rem;word-break:break-all">${esc(msg)}</p>
     <button onclick="loadProperties()" style="margin-top:1.2rem;padding:.55rem 1.4rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.9rem">↺ Retry</button>
   </div>`;
 }
+
+// Fields that affect financial calculations — changes trigger re-estimation + recomputation
+const _CORE_FIELDS=['listed_price','beds','baths','sqft','lot_size','zip','city','property_type','condition','improvement','monthly_rent','rent_estimate'];
 
 async function saveProperty(id, updates){
   const token = await getAccessToken();
   if(!token) return false;
   const idx=props.findIndex(p=>p.id===id);
-  // Snapshot for rollback
   const snapshot=idx>=0?{...props[idx]}:null;
   // Optimistic local update
   if(idx>=0){
     Object.assign(props[idx],updates);
     if('monthly_rent' in updates) props[idx].monthlyRent=updates.monthly_rent;
+    if('listed_price' in updates) props[idx].listed=updates.listed_price;
+    // Track price history
+    if('listed_price' in updates && updates.listed_price !== snapshot?.listed){
+      if(!props[idx]._priceHistory) props[idx]._priceHistory=[];
+      props[idx]._priceHistory.push({date:new Date().toISOString().slice(0,10),price:updates.listed_price});
+    }
+    if('beds' in updates) props[idx].beds=updates.beds;
+    if('baths' in updates) props[idx].baths=updates.baths;
+    if('sqft' in updates) props[idx].sqft=updates.sqft;
+    if('lot_size' in updates) props[idx].lotSize=updates.lot_size;
+    if('property_type' in updates) props[idx].type=updates.property_type;
   }
   try{
     const res=await fetch(`${EDGE_BASE}/properties/${id}`,{
@@ -77,9 +96,17 @@ async function saveProperty(id, updates){
     });
     if(!res.ok){
       console.error(`saveProperty failed: ${res.status}`);
-      // Rollback local state
       if(idx>=0&&snapshot) Object.assign(props[idx],snapshot);
       return false;
+    }
+    if(typeof trackPropertyEdit==='function'&&_CORE_FIELDS.some(f=>f in updates)) trackPropertyEdit(id,updates);
+    // If any core financial field changed, re-estimate rent and recompute metrics
+    if(idx>=0 && _CORE_FIELDS.some(f=>f in updates)){
+      const p=props[idx];
+      maybeReEstimate(id);
+      recomputeOne(p);
+      if(typeof updateRow==='function') updateRow(id);
+      else renderApp();
     }
     return true;
   }catch(e){
@@ -101,22 +128,23 @@ function estimateRent(id){
   return result;
 }
 
-// Auto-run rent estimation on all properties missing monthlyRent, set to mid+10%
-function autoEstimateAll(){
-  let updated=0;
+// Auto-run rent estimation on all properties missing monthlyRent
+async function autoEstimateAll(){
+  const batch=[];
   for(const p of props){
-    if(p.monthlyRent) continue; // already has confirmed rent
+    if(p.monthlyRent) continue;
+    if(p.rentRange) continue;
     const result=localRentEstimate(p);
     if(!result||result.error) continue;
     p.rentRange={low:result.low,high:result.high,source:'local'};
-    const mid5=Math.round(result.estimate*1.05/25)*25; // midpoint + 5%
-    p.monthlyRent=mid5;
-    mRent[p.id]=mid5;
-    // Fire-and-forget DB save
-    saveProperty(p.id,{rent_estimate:result.estimate,monthly_rent:mid5});
-    updated++;
+    batch.push({id:p.id,rent_estimate:result.estimate});
   }
-  if(updated) console.log(`Auto-estimated rent for ${updated} properties (mid+5%)`);
+  if(!batch.length) return;
+  console.log(`Auto-estimated rent for ${batch.length} properties, saving in chunks...`);
+  for(let i=0;i<batch.length;i+=20){
+    const chunk=batch.slice(i,i+20);
+    await Promise.all(chunk.map(u=>saveProperty(u.id,{rent_estimate:u.rent_estimate})));
+  }
 }
 
 function maybeReEstimate(id){
@@ -150,27 +178,17 @@ async function savePropertyEdit(id){
   if(!Object.keys(updates).length)return;
   const btn=g('m-edit-btn');if(btn)btn.disabled=true;
   await saveProperty(id,updates);
-  // Rebuild derived fields on local prop
+  // saveProperty handles core field sync + recomputation automatically.
+  // Handle display-only fields not covered by saveProperty:
   const p=props.find(x=>x.id===id);
   if(p){
     if(updates.address)p.address=updates.address;
     if('city' in updates){p.rawCity=updates.city; p.city=updates.city?(updates.city+', TX'+(updates.zip?' '+updates.zip:p.zip?' '+p.zip:'')):(p.city);}
-    if(updates.zip)p.zip=updates.zip;
     if(updates.listing_url)p.listingUrl=updates.listing_url;
-    if(updates.listed_price)p.listed=updates.listed_price;
-    if(updates.beds)p.beds=updates.beds;
-    if(updates.baths)p.baths=updates.baths;
-    if(updates.sqft)p.sqft=updates.sqft;
-    if(updates.lot_size)p.lotSize=updates.lot_size;
-    if(updates.property_type)p.type=updates.property_type;
     if(updates.rent_estimate){const re=updates.rent_estimate;p.rentRange={low:Math.round(re*0.88/25)*25,high:Math.round(re*1.12/25)*25,source:'manual'};}
-    if(updates.monthly_rent) p.monthlyRent=updates.monthly_rent;
-    maybeReEstimate(id);
-    recomputeOne(p);
   }
   mEdit[id]=false;
   buildMod(id);
-  renderApp();
 }
 
 /* ── Add Property from URL ─────────────────────────────── */
