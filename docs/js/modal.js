@@ -239,7 +239,7 @@ function _taxYearsHtml(id,price,rent,cond,impr,taxP){
     <thead><tr><th class="rh" style="width:auto"></th>${yrs.map((_,i)=>`<th class="yrh" style="min-width:70px">Yr ${i+1}</th>`).join('')}</tr></thead>
     <tbody>
       <tr><td>Rental Income</td>${yrs.map(y=>`<td class="c" style="color:var(--green)">${M(y.gr)}</td>`).join('')}</tr>
-      <tr><td>− Expenses</td>${yrs.map(y=>`<td class="c" style="color:var(--red)">−${M(y.mortInt+y.pt+y.ins+y.mgmt+y.rep+y.oth)}</td>`).join('')}</tr>
+      <tr><td>− Expenses</td>${yrs.map(y=>`<td class="c" style="color:var(--red)">−${M(y.mortInt+y.pt+y.ins+y.mgmt+y.rep+y.oth+y.cleanMaint+y.utilities+y.hoa+y.legalProf+y.travel+y.supplies+y.advertising)}</td>`).join('')}</tr>
       <tr><td>− Depreciation</td>${yrs.map(y=>`<td class="c" style="color:var(--purple)">−${M(y.annDepr)}</td>`).join('')}</tr>
       ${yrs[0].bonusDep>0?`<tr><td style="font-size:.62rem;color:var(--text3);padding-left:.5rem">↳ Bonus Dep (${Math.round((mTax[id]?.costSegPct||GP.costSegPct)*100)}%)</td>${yrs.map(y=>`<td class="c" style="font-size:.62rem;color:var(--purple)">${y.bonusDep>0?'−'+M(y.bonusDep):'—'}</td>`).join('')}</tr>`:''}
       <tr style="border-top:2px solid var(--border2)"><td style="font-weight:600">Net Taxable</td>${yrs.map(y=>`<td class="c" style="color:${y.netInc>=0?'var(--red)':'var(--green)'}"><strong>${MS(y.netInc)}</strong></td>`).join('')}</tr>
