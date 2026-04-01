@@ -143,10 +143,49 @@ function _addrCell(p){
   return `<td><div style="display:flex;gap:6px;align-items:flex-start"><button class="ex-chev" onclick="toggleExpand('${p.id}',event)" title="Quick view">▸</button><div onclick="openM('${p.id}')" style="cursor:pointer;flex:1"><div style="margin-bottom:2px">${badges}${riskHtml}</div><div class="am">${esc(p.address)}</div><div class="as">${esc(p.city)}</div></div></div></td>`;
 }
 function _listedCell(p){return `<td class="hs" onclick="openM('${p.id}')"><span class="mn">${M(p.listed)}</span></td>`;}
+let _compareIds=[];
+function toggleCompare(id,event){
+  if(event)event.stopPropagation();
+  const idx=_compareIds.indexOf(id);
+  if(idx>=0)_compareIds.splice(idx,1);
+  else if(_compareIds.length<3)_compareIds.push(id);
+  renderApp();
+}
+function openComparison(){
+  if(_compareIds.length<2){alert('Select 2-3 properties to compare');return;}
+  const ps=_compareIds.map(id=>props.find(p=>p.id===id)).filter(Boolean);
+  if(ps.length<2)return;
+  let ov=document.getElementById('compare-ov');
+  if(!ov){
+    ov=document.createElement('div');ov.id='compare-ov';ov.className='ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
+    ov.onclick=function(e){if(e.target===ov){ov.classList.remove('open');_compareIds=[];renderApp();}};
+    ov.innerHTML='<div class="modal" style="max-width:800px"><div class="mhd"><div><div class="madr">Deal Comparison</div></div><button class="xcl" onclick="document.getElementById(\'compare-ov\').classList.remove(\'open\');_compareIds=[];renderApp();">✕</button></div><div class="mb" id="compare-body" style="max-height:80vh;overflow-y:auto"></div></div>';
+    document.getElementById('app').appendChild(ov);
+  }
+  const metrics=[
+    {label:'Listed Price',fn:p=>M(p.listed)},
+    {label:'Beds / Baths',fn:p=>`${p.beds||'—'} / ${p.baths||'—'}`},
+    {label:'Sqft',fn:p=>p.sqft?p.sqft.toLocaleString():'—'},
+    {label:'Est. Rent',fn:p=>{const r=effectiveRent(p);return r?M(r)+'/mo':'—';}},
+    {label:'CoC Return',fn:p=>p._cocL!==null?PCT(p._cocL):'—',color:p=>p._cocL>=GP.cocMin?'var(--green)':'var(--red)'},
+    {label:'Cash Flow/mo',fn:p=>p._cfL!==null?MS(p._cfL):'—',color:p=>(p._cfL||0)>=0?'var(--green)':'var(--red)'},
+    {label:'NB Score',fn:p=>p._nbScore!==null?p._nbScore+'/100':'—'},
+    {label:'Offer Tier',fn:p=>{const t=p._tiers?classify(p.listed,p._tiers):null;return t?t.label:'—';}},
+    {label:'Capital Needed',fn:p=>M(p.listed*(GP.downPct+GP.closingPct))},
+    {label:'Type',fn:p=>p.type||'SFR'},
+    {label:'Stage',fn:p=>STAGE_LABELS[p.stage||'inbox']||'Inbox'},
+    {label:'Source',fn:p=>p.source||'—'},
+  ];
+  const thead=`<th style="text-align:left">Metric</th>`+ps.map(p=>`<th>${esc(p.address)}<br><span style="font-size:.55rem;color:var(--text3)">${esc(p.city)}</span></th>`).join('');
+  const tbody=metrics.map(m=>`<tr><td class="tl">${m.label}</td>${ps.map(p=>`<td style="color:${m.color?m.color(p):''}">${m.fn(p)}</td>`).join('')}</tr>`).join('');
+  document.getElementById('compare-body').innerHTML=`<table class="ot"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
+  ov.classList.add('open');
+}
 function _starCell(p){
   const s=p.stage||'inbox';
   const opts=STAGES.map(st=>`<option value="${st}"${s===st?' selected':''}>${STAGE_LABELS[st]}</option>`).join('');
-  return `<td><select class="stg-sel" onchange="event.stopPropagation();setStage('${p.id}',this.value)">${opts}</select></td>`;
+  const cmp=_compareIds.includes(p.id);
+  return `<td><div style="display:flex;gap:4px;align-items:center"><select class="stg-sel" onchange="event.stopPropagation();setStage('${p.id}',this.value)">${opts}</select><input type="checkbox" class="cmp-chk" title="Compare" ${cmp?'checked':''} onclick="toggleCompare('${p.id}',event)"></div></td>`;
 }
 
 function _tableRow(p,it){
@@ -356,6 +395,13 @@ function renderApp(){
     tbody.appendChild(exr);
   });
   window._tableRendered=true;
+  // Show compare button if 2+ selected
+  if(_compareIds.length>=2){
+    const cmpBtn=document.createElement('div');
+    cmpBtn.className='cmp-bar';
+    cmpBtn.innerHTML=`<button class="cmp-btn" onclick="openComparison()">Compare ${_compareIds.length} Properties</button>`;
+    container.appendChild(cmpBtn);
+  }
   updateStats();
 }
 

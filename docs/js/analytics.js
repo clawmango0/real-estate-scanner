@@ -231,6 +231,50 @@ function _budgetPosition(list){
   </div><div class="an-subtitle">Price distribution — green = within your budget</div>`+_barChart(buckets,{formatVal:v=>v.toString()});
 }
 
+function _marketHeat(list){
+  const withScore=list.filter(p=>p._hood&&p._hood.marketScore!=null);
+  if(!withScore.length) return '<div class="an-empty">No market score data — run data refresh</div>';
+  const byZip=_groupBy(withScore,p=>p._hood.zip||p.zip||'?');
+  const zips=Object.entries(byZip).map(([zip,ps])=>{
+    const score=Math.round(ps.reduce((s,p)=>s+(p._hood.marketScore||50),0)/ps.length);
+    const city=ps[0].rawCity||ps[0].city||'';
+    return {label:`${zip} ${city}`,value:score,color:score>=60?'var(--green)':score>=45?'var(--amber)':'var(--red)'};
+  }).sort((a,b)=>b.value-a.value);
+  return `<div class="an-metric-row">
+    <div class="an-mini"><div class="an-mini-label">Avg Score</div><div class="an-mini-val">${Math.round(zips.reduce((s,z)=>s+z.value,0)/zips.length)}/100</div></div>
+    <div class="an-mini"><div class="an-mini-label">Best ZIP</div><div class="an-mini-val" style="color:var(--green)">${zips[0]?.label||'—'}</div></div>
+  </div><div class="an-subtitle">Market score by ZIP (higher = better for buyers)</div>`+_barChart(zips.slice(0,10),{maxOverride:100,formatVal:v=>Math.round(v)+'/100'});
+}
+
+function _portfolioProjection(list){
+  const shortlisted=list.filter(p=>(p.stage||'inbox')==='shortlist'&&p.listed&&effectiveRent(p));
+  if(shortlisted.length<1) return '<div class="an-empty">Shortlist properties to see 5-year projection</div>';
+  const totalCapital=shortlisted.reduce((s,p)=>s+p.listed*(GP.downPct+GP.closingPct),0);
+  const tp={filing:GP.filingStatus||'single',marginal:agiToRates(GP.agi,GP.filingStatus||'single').marg,ltcg:agiToRates(GP.agi,GP.filingStatus||'single').ltcg,recap:GP.recapRate,agi:GP.agi,participation:GP.participation||'active'};
+  let rows='';
+  let cumCF=0,cumTax=0;
+  for(let yr=1;yr<=5;yr++){
+    let yrCF=0,yrTax=0,yrDepr=0;
+    for(const p of shortlisted){
+      const rent=effectiveRent(p);
+      const cc=cocCalc(p.listed,rent);
+      if(cc) yrCF+=cc.cfAnn;
+      const se=schedE(p.listed,rent,p.condition||'good',p.improvement||'asis',yr,tp,0);
+      if(se){yrTax+=se.taxSav;yrDepr+=se.annDepr;}
+    }
+    cumCF+=yrCF;cumTax+=yrTax;
+    const afterTax=yrCF+yrTax;
+    rows+=`<tr><td>Year ${yr}</td><td style="color:${yrCF>=0?'var(--green)':'var(--red)'}">${MS(Math.round(yrCF))}</td><td>${MS(Math.round(cumCF))}</td><td>${M(Math.round(yrDepr))}</td><td style="color:var(--green)">${MS(Math.round(yrTax))}</td><td style="color:${afterTax>=0?'var(--green)':'var(--red)'}"><strong>${MS(Math.round(afterTax))}</strong></td></tr>`;
+  }
+  const blendedCoC=totalCapital>0?cumCF/(totalCapital*5):0;
+  return `<div class="an-metric-row">
+    <div class="an-mini"><div class="an-mini-label">Properties</div><div class="an-mini-val">${shortlisted.length}</div></div>
+    <div class="an-mini"><div class="an-mini-label">Total Capital</div><div class="an-mini-val">${M(totalCapital)}</div></div>
+    <div class="an-mini"><div class="an-mini-label">5-Yr Blended CoC</div><div class="an-mini-val" style="color:var(--amber)">${PCT(blendedCoC)}</div></div>
+  </div>
+  <table class="ot"><thead><tr><th>Year</th><th>Cash Flow</th><th>Cumulative</th><th>Depreciation</th><th>Tax Benefit</th><th>After-Tax</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
 function _targetVsActual(list){
   const favs=list.filter(p=>(p.stage||'inbox')==='shortlist');
   const pass=list.filter(p=>p.status==='pass');
@@ -285,6 +329,25 @@ function _portfolioComposition(list){
     <div><div class="an-subtitle">By Type</div>${_donutChart(typeSlices,{size:110})}</div>
     <div><div class="an-subtitle">By City</div>${_donutChart(citySlices,{size:110})}</div>
   </div>`;
+}
+
+function _marketHeatIndex(list){
+  const withScore=list.filter(p=>p._hood&&p._hood.marketScore!=null);
+  if(!withScore.length) return '<div class="an-empty">No market score data — run data refresh</div>';
+  const byZip=_groupBy(withScore,p=>p.zip||p._hood.zip||'Unknown');
+  const zips=Object.entries(byZip).map(([zip,ps])=>{
+    const avgScore=Math.round(ps.reduce((s,p)=>s+(p._hood.marketScore||50),0)/ps.length);
+    const avgPrice=Math.round(ps.reduce((s,p)=>s+(p.listed||0),0)/ps.length);
+    const area=ps[0]._hood?.area||zip;
+    return {label:`${area} (${zip})`,value:avgScore,color:avgScore>=60?'var(--green)':avgScore>=45?'var(--amber)':'var(--red)',count:ps.length,avgPrice};
+  }).sort((a,b)=>b.value-a.value);
+  const bestZip=zips[0], worstZip=zips[zips.length-1];
+  return `<div class="an-metric-row">
+    <div class="an-mini"><div class="an-mini-label">Best Market</div><div class="an-mini-val" style="color:var(--green)">${bestZip?bestZip.label:'—'}</div></div>
+    <div class="an-mini"><div class="an-mini-label">Score</div><div class="an-mini-val">${bestZip?bestZip.value+'/100':'—'}</div></div>
+    <div class="an-mini"><div class="an-mini-label">Weakest</div><div class="an-mini-val" style="color:var(--red)">${worstZip?worstZip.label:'—'}</div></div>
+  </div><div class="an-subtitle">Market score by ZIP (higher = better for buyers: inventory, DOM, price cuts, affordability)</div>`
+    +_barChart(zips.slice(0,15),{maxOverride:100,formatVal:v=>Math.round(v)+'/100'});
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -356,6 +419,10 @@ function renderAnalytics(){
         <div class="an-card-title">Neighborhood Performance</div>
         <div class="an-card-body">${_neighborhoodPerformance(list)}</div>
       </div>
+      <div class="an-card">
+        <div class="an-card-title">Market Heat Index</div>
+        <div class="an-card-body">${_marketHeatIndex(list)}</div>
+      </div>
       <div class="an-card an-card-wide">
         <div class="an-card-title">Cash Flow vs. Appreciation</div>
         <div class="an-card-body">${_appreciationVsCashFlow(list)}</div>
@@ -367,6 +434,10 @@ function renderAnalytics(){
       <div class="an-card">
         <div class="an-card-title">Your Picks vs. Market</div>
         <div class="an-card-body">${_targetVsActual(list)}</div>
+      </div>
+      <div class="an-card an-card-wide">
+        <div class="an-card-title">Portfolio 5-Year Projection</div>
+        <div class="an-card-body">${_portfolioProjection(list)}</div>
       </div>
       <div class="an-card an-card-wide">
         <div class="an-card-title">Portfolio Composition (Shortlisted)</div>

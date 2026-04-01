@@ -379,6 +379,17 @@ function localRentEstimate(p){
     parts.push(`weak schools ${schools}/10 -5%`);
   }
 
+  // J. ZORI calibration — blend toward actual market rent data when available
+  const zoriRent=hood.zori;
+  if(zoriRent&&zoriRent>0){
+    const divergence=Math.abs(baseRent-zoriRent)/baseRent;
+    if(divergence>0.15){
+      // Blend 35% toward ZORI when our estimate diverges >15% from market data
+      baseRent=baseRent*0.65+zoriRent*0.35;
+      parts.push(`ZORI blend: ${M(zoriRent)} (${divergence>0.3?'large':'moderate'} divergence)`);
+    }
+  }
+
   // Round to nearest $25
   const estimate=Math.round(baseRent/RENT_ROUND)*RENT_ROUND;
   const low=Math.round(estimate*RENT_EST_LOW/RENT_ROUND)*RENT_ROUND;

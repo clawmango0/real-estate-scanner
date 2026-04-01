@@ -34,6 +34,7 @@ async function loadProperties(){
       const h=p.hood;
       return{
         ...p,
+        _priceHistory:p.price_history||[],
         _tiers:null, _cocL:null, _cfL:null, // filled by recomputeRents()
         _hood:h||null,
         _nbScore:h?nbScore({schools:h.schools,crime:h.crime,rentGrowth:h.rentGrowth}):null,
@@ -76,6 +77,11 @@ async function saveProperty(id, updates){
     Object.assign(props[idx],updates);
     if('monthly_rent' in updates) props[idx].monthlyRent=updates.monthly_rent;
     if('listed_price' in updates) props[idx].listed=updates.listed_price;
+    // Track price history
+    if('listed_price' in updates && updates.listed_price !== snapshot?.listed){
+      if(!props[idx]._priceHistory) props[idx]._priceHistory=[];
+      props[idx]._priceHistory.push({date:new Date().toISOString().slice(0,10),price:updates.listed_price});
+    }
     if('beds' in updates) props[idx].beds=updates.beds;
     if('baths' in updates) props[idx].baths=updates.baths;
     if('sqft' in updates) props[idx].sqft=updates.sqft;

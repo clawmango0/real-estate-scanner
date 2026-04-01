@@ -122,6 +122,16 @@ serve(async (req) => {
                        "property_type", "is_new", "city", "state", "zip", "listing_url", "pipeline_stage"];
       const updates: Record<string, unknown> = {};
       for (const k of allowed) if (k in body) updates[k] = body[k];
+      // Append to price_history if listed_price changed
+      if (updates.listed_price !== undefined) {
+        const { data: existing } = await supabase.from("properties").select("listed_price, price_history").eq("id", propertyId).single();
+        if (existing && existing.listed_price !== updates.listed_price) {
+          const history = Array.isArray(existing.price_history) ? existing.price_history : [];
+          history.push({ date: new Date().toISOString(), price: updates.listed_price, source: 'manual_edit' });
+          updates.price_history = history;
+        }
+      }
+
       let { data, error } = await supabase.from("properties").update(updates).eq("id", propertyId).select().single();
       // If pipeline_stage column doesn't exist yet, retry without it
       if (error && updates.pipeline_stage !== undefined && String(error.message).includes("pipeline_stage")) {
@@ -202,6 +212,8 @@ function shapeProperty(row: Record<string, unknown>) {
     notes: row.notes,
     lat: row.latitude, lng: row.longitude,
     createdAt: row.created_at,
+    priceHistory: row.price_history || [],
+    listingDate: row.listing_date || row.created_at,
     hood: hood ? {
       area: hood.area_name, schools: hood.schools,
       crime: hood.crime_safety, walkScore: hood.walk_score,

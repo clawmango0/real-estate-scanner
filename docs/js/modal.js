@@ -703,6 +703,68 @@ function uTaxAgi(id,val){
   if(ls)ls.value=Math.round(r.ltcg*100);
   if(ll)ll.textContent=Math.round(r.ltcg*100)+'%';
 }
+function dealBrief(id){
+  const p=props.find(x=>x.id===id);if(!p)return;
+  const rent=effectiveRent(p);
+  const cc=rent?cocCalc(p.listed,rent):null;
+  const tiers=rent?getTiers(rent):null;
+  const tc=tiers?classify(p.listed,tiers):null;
+  const h=p._hood;
+  const capital=p.listed*(GP.downPct+GP.closingPct);
+  const tp={filing:GP.filingStatus||'single',marginal:agiToRates(GP.agi,GP.filingStatus||'single').marg,ltcg:agiToRates(GP.agi,GP.filingStatus||'single').ltcg,recap:GP.recapRate,agi:GP.agi,participation:GP.participation||'active'};
+  const se1=rent?schedE(p.listed,rent,p.condition||'good',p.improvement||'asis',1,tp,0):null;
+  const exit5=rent?exitAt(p.listed,rent,p.condition||'good',p.improvement||'asis',5,tp,h?.appreci5||GP.appreci):null;
+  const w=window.open('','_blank','width=800,height=1000');
+  w.document.write(`<!DOCTYPE html><html><head><title>Deal Brief - ${esc(p.address)}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;padding:40px;max-width:750px;margin:0 auto;color:#111;font-size:14px;line-height:1.6}
+    h1{font-size:20px;margin-bottom:4px}h2{font-size:14px;text-transform:uppercase;letter-spacing:1px;color:#666;border-bottom:2px solid #111;padding-bottom:4px;margin:24px 0 12px}
+    .subtitle{color:#666;font-size:13px;margin-bottom:20px}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+    .kpi{background:#f8f8f8;border-radius:8px;padding:12px}.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#888}.kpi-val{font-size:22px;font-weight:700}
+    .kpi-sub{font-size:11px;color:#666}table{width:100%;border-collapse:collapse;margin-bottom:16px}th,td{padding:6px 10px;text-align:left;border-bottom:1px solid #eee;font-size:13px}
+    th{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#888;font-weight:600}.pass{color:#16a34a}.fail{color:#dc2626}.warn{color:#d97706}
+    .footer{margin-top:30px;padding-top:12px;border-top:1px solid #ddd;font-size:11px;color:#888;text-align:center}
+    @media print{body{padding:20px}@page{margin:0.5in}}
+  </style></head><body>
+  <h1>${esc(p.address)}</h1>
+  <div class="subtitle">${esc(p.city)} | ${esc(p.type)} | ${esc(p.source)} | ${new Date().toLocaleDateString()}</div>
+  <h2>Deal Metrics</h2>
+  <div class="grid">
+    <div class="kpi"><div class="kpi-label">Listed Price</div><div class="kpi-val">${M(p.listed)}</div></div>
+    <div class="kpi"><div class="kpi-label">Est. Rent</div><div class="kpi-val">${rent?M(rent)+'/mo':'—'}</div></div>
+    <div class="kpi"><div class="kpi-label">CoC Return</div><div class="kpi-val ${cc&&cc.coc>=GP.cocMin?'pass':'fail'}">${cc?PCT(cc.coc):'—'}</div><div class="kpi-sub">${tc?tc.label:'—'}</div></div>
+  </div>
+  <div class="grid">
+    <div class="kpi"><div class="kpi-label">Monthly Cash Flow</div><div class="kpi-val ${cc&&cc.cfMo>=0?'pass':'fail'}">${cc?MS(Math.round(cc.cfMo)):'—'}</div></div>
+    <div class="kpi"><div class="kpi-label">Total Capital</div><div class="kpi-val">${M(Math.round(capital))}</div><div class="kpi-sub">${Math.round(GP.downPct*100)}% down + ${Math.round(GP.closingPct*100)}% closing</div></div>
+    <div class="kpi"><div class="kpi-label">NB Score</div><div class="kpi-val">${p._nbScore!==null?p._nbScore+'/100':'—'}</div></div>
+  </div>
+  ${h?`<h2>Market Position</h2>
+  <table><tr><td>Neighborhood</td><td><strong>${esc(h.area||'')}</strong></td></tr>
+  <tr><td>Schools</td><td>${h.schools||'—'}/10</td></tr>
+  <tr><td>Safety</td><td>${h.crime||'—'}/10</td></tr>
+  <tr><td>ZHVI (Home Value Index)</td><td>${h.zhvi?M(h.zhvi):'—'}</td></tr>
+  <tr><td>1-Year Appreciation</td><td>${h.appreci1!=null?h.appreci1+'%':'—'}</td></tr>
+  <tr><td>Market Score</td><td>${h.marketScore!=null?h.marketScore+'/100':'—'}</td></tr>
+  <tr><td>Median Income</td><td>${h.medianIncome?M(h.medianIncome):'—'}</td></tr>
+  <tr><td>Affordability Ratio</td><td>${h.affordability?h.affordability+'x':'—'}</td></tr></table>`:''}
+  ${se1?`<h2>Year 1 Tax Impact</h2>
+  <table><tr><td>Gross Rent</td><td>${M(se1.gr)}</td></tr>
+  <tr><td>Total Deductions</td><td>${M(Math.round(se1.totalDeduct))}</td></tr>
+  <tr><td>Depreciation</td><td>${M(Math.round(se1.annDepr))}</td></tr>
+  <tr><td>Net Income (Loss)</td><td class="${se1.netInc<0?'pass':'warn'}">${MS(Math.round(se1.netInc))}</td></tr>
+  <tr><td><strong>Tax Savings</strong></td><td class="pass"><strong>${MS(Math.round(se1.taxSav))}</strong></td></tr></table>`:''}
+  ${exit5?`<h2>5-Year Exit Analysis</h2>
+  <table><tr><td>Exit Value (at ${((h?.appreci5||GP.appreci)*1).toFixed(1)}%/yr)</td><td>${M(Math.round(exit5.exitVal))}</td></tr>
+  <tr><td>Cumulative Cash Flow</td><td class="${exit5.cumCF>=0?'pass':'fail'}">${MS(Math.round(exit5.cumCF))}</td></tr>
+  <tr><td>Cumulative Tax Savings</td><td class="pass">${MS(Math.round(exit5.cumTaxSav))}</td></tr>
+  <tr><td>Total Profit (after tax)</td><td class="${exit5.totalProfit>=0?'pass':'fail'}"><strong>${MS(Math.round(exit5.totalProfit))}</strong></td></tr>
+  <tr><td>5-Year Annualized ROI</td><td class="${exit5.annROI>=0.08?'pass':'warn'}"><strong>${PCT(exit5.annROI)}/yr</strong></td></tr></table>`:''}
+  <div class="footer">Generated by LockBoxIQ — Texas Property Analyst<br>${new Date().toLocaleDateString()} | ${esc(p.address)}</div>
+  </body></html>`);
+  w.document.close();
+  w.print();
+}
 function printMod(){
   const modal=document.querySelector('#ov .modal');if(!modal)return;
   document.body.classList.add('printing-modal');
