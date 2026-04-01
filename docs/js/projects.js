@@ -1,9 +1,17 @@
 
 // GP override helpers — save/restore global financial params per project
 function _applyProjectGP(proj){
-  if(!Object.keys(_gpOrig).length) _gpOrig={rate:GP.rate,downPct:GP.downPct};
+  if(!Object.keys(_gpOrig).length) _gpOrig={rate:GP.rate,downPct:GP.downPct,cleanMaintRate:GP.cleanMaintRate,utilityMo:GP.utilityMo,hoaMo:GP.hoaMo,legalProfRate:GP.legalProfRate,travelMo:GP.travelMo,suppliesMo:GP.suppliesMo,advertisingYr:GP.advertisingYr};
   if(proj.rate!=null)     GP.rate=proj.rate;
   if(proj.down_pct!=null) GP.downPct=proj.down_pct;
+  // Schedule E expense overrides from project
+  if(proj.cleanMaintRate!=null) GP.cleanMaintRate=proj.cleanMaintRate;
+  if(proj.utilityMo!=null)      GP.utilityMo=proj.utilityMo;
+  if(proj.hoaMo!=null)          GP.hoaMo=proj.hoaMo;
+  if(proj.legalProfRate!=null)  GP.legalProfRate=proj.legalProfRate;
+  if(proj.travelMo!=null)       GP.travelMo=proj.travelMo;
+  if(proj.suppliesMo!=null)     GP.suppliesMo=proj.suppliesMo;
+  if(proj.advertisingYr!=null)  GP.advertisingYr=proj.advertisingYr;
   // Hydrate strategy params from DB column onto project object
   if (proj.strategy_params) {
     const sp = proj.strategy_params;
@@ -23,8 +31,15 @@ function _applyProjectGP(proj){
   }
 }
 function _restoreGP(){
-  if(_gpOrig.rate!==undefined)    GP.rate=_gpOrig.rate;
+  if(_gpOrig.rate!==undefined) GP.rate=_gpOrig.rate;
   if(_gpOrig.downPct!==undefined) GP.downPct=_gpOrig.downPct;
+  if(_gpOrig.cleanMaintRate!==undefined) GP.cleanMaintRate=_gpOrig.cleanMaintRate;
+  if(_gpOrig.utilityMo!==undefined) GP.utilityMo=_gpOrig.utilityMo;
+  if(_gpOrig.hoaMo!==undefined) GP.hoaMo=_gpOrig.hoaMo;
+  if(_gpOrig.legalProfRate!==undefined) GP.legalProfRate=_gpOrig.legalProfRate;
+  if(_gpOrig.travelMo!==undefined) GP.travelMo=_gpOrig.travelMo;
+  if(_gpOrig.suppliesMo!==undefined) GP.suppliesMo=_gpOrig.suppliesMo;
+  if(_gpOrig.advertisingYr!==undefined) GP.advertisingYr=_gpOrig.advertisingYr;
   _gpOrig={};
 }
 
@@ -361,6 +376,32 @@ function _buildProjModal(){
         <input type="number" class="no-spin" id="pf-sec179" placeholder="0" value="${p.sec179||''}" style="flex:1">
       </div>
     </div>
+    <div class="sec" style="margin:.6rem 0 .3rem;font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Schedule E Expenses <span style="font-size:.55rem;opacity:.6">(blank = use global)</span></div>
+    <div class="txs">
+      <div class="pf-row"><span class="pf-lbl">Cleaning/Maint %</span>
+        <input type="number" class="no-spin" id="pf-cleanmaint" placeholder="${(GP.cleanMaintRate*100).toFixed(1)}" value="${p.cleanMaintRate!=null?(p.cleanMaintRate*100).toFixed(1):''}">
+        <span style="color:var(--text3);font-size:.7rem">% of price</span>
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Utilities $/mo</span>
+        <input type="number" class="no-spin" id="pf-utility" placeholder="${GP.utilityMo}" value="${p.utilityMo!=null?p.utilityMo:''}">
+      </div>
+      <div class="pf-row"><span class="pf-lbl">HOA $/mo</span>
+        <input type="number" class="no-spin" id="pf-hoa" placeholder="${GP.hoaMo}" value="${p.hoaMo!=null?p.hoaMo:''}">
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Legal/Prof %</span>
+        <input type="number" class="no-spin" id="pf-legalprof" placeholder="${(GP.legalProfRate*100).toFixed(1)}" value="${p.legalProfRate!=null?(p.legalProfRate*100).toFixed(1):''}">
+        <span style="color:var(--text3);font-size:.7rem">% of price</span>
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Travel $/mo</span>
+        <input type="number" class="no-spin" id="pf-travel" placeholder="${GP.travelMo}" value="${p.travelMo!=null?p.travelMo:''}">
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Supplies $/mo</span>
+        <input type="number" class="no-spin" id="pf-supplies" placeholder="${GP.suppliesMo}" value="${p.suppliesMo!=null?p.suppliesMo:''}">
+      </div>
+      <div class="pf-row"><span class="pf-lbl">Advertising $/yr</span>
+        <input type="number" class="no-spin" id="pf-advertising" placeholder="${GP.advertisingYr}" value="${p.advertisingYr!=null?p.advertisingYr:''}">
+      </div>
+    </div>
     <button class="psave-btn" onclick="saveProject()">${p.id?'Save Changes':'Create Project'}</button>
     ${p.id?`<button class="pdel-btn" onclick="deleteProject('${p.id}')">Delete Project</button>`:''}`;
   // Note: _initModalMap() is NOT called here because the modal may still be display:none.
@@ -488,6 +529,13 @@ async function saveProject(){
     participation: document.getElementById('pf-participation')?.value||'active',
     cost_seg_pct: (()=>{const v=document.getElementById('pf-costseg')?.value;return v!==''&&v!=null?+v/100:0.20;})(),
     sec179: n(document.getElementById('pf-sec179')?.value)||0,
+    cleanMaintRate: (()=>{const v=document.getElementById('pf-cleanmaint')?.value;return v!==''&&v!=null?+v/100:null;})(),
+    utilityMo: n(document.getElementById('pf-utility')?.value),
+    hoaMo: n(document.getElementById('pf-hoa')?.value),
+    legalProfRate: (()=>{const v=document.getElementById('pf-legalprof')?.value;return v!==''&&v!=null?+v/100:null;})(),
+    travelMo: n(document.getElementById('pf-travel')?.value),
+    suppliesMo: n(document.getElementById('pf-supplies')?.value),
+    advertisingYr: n(document.getElementById('pf-advertising')?.value),
     strategy_params: {
       str_adr: _editProj._str_adr ?? _editProj.strategy_params?.str_adr,
       str_occ: _editProj._str_occ ?? _editProj.strategy_params?.str_occ,

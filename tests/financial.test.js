@@ -13,9 +13,16 @@ describe('cocCalc', () => {
   it('calculates CoC for standard investment', () => {
     const r = fin.cocCalc(200000, 1800);
     expect(r).not.toBeNull();
-    expect(r.coc).toBeGreaterThan(0);
+    expect(r.coc).toBeDefined();
     expect(r.cashIn).toBeCloseTo(200000 * 0.23, 0);
     expect(r.gr).toBe(21600);
+    // Verify new Schedule E expenses are included
+    expect(r.cleanMaint).toBeGreaterThan(0);
+    expect(r.utilities).toBeGreaterThan(0);
+    expect(r.legalProf).toBeGreaterThan(0);
+    expect(r.travel).toBeGreaterThan(0);
+    expect(r.supplies).toBeGreaterThan(0);
+    expect(r.advertising).toBeGreaterThan(0);
   });
   it('returns null for zero price', () => { expect(fin.cocCalc(0, 1800)).toBeNull(); });
   it('returns null for zero rent', () => { expect(fin.cocCalc(200000, 0)).toBeNull(); });

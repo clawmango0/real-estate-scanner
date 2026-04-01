@@ -229,12 +229,29 @@ function _buildDataSourcesHTML(){
         <a href="https://www.irs.gov/newsroom/irs-provides-tax-inflation-adjustments-for-tax-year-2025" target="_blank" rel="noopener" class="ds-link">irs.gov ↗</a>
       </div>
       <div class="ds-what">
-        <div class="ds-label">What we get</div>
-        Federal income tax brackets, standard deductions, LTCG rates, depreciation schedules (27.5-year), cost segregation rules, Section 179 limits, passive activity loss limits
+        <div class="ds-label">What we calculate (IRS Schedule E Lines 3-19)</div>
+        <table class="ot" style="margin:.5rem 0"><thead><tr><th>Line</th><th>Category</th><th>Default</th></tr></thead><tbody>
+        <tr><td>3</td><td>Gross Rents</td><td>Rent × 12</td></tr>
+        <tr><td>5</td><td>Advertising</td><td>$300/yr</td></tr>
+        <tr><td>6</td><td>Auto & Travel</td><td>$100/mo</td></tr>
+        <tr><td>7</td><td>Cleaning & Maintenance</td><td>1.5% of price</td></tr>
+        <tr><td>9</td><td>Insurance</td><td>0.6% of price</td></tr>
+        <tr><td>10</td><td>Legal & Professional</td><td>0.3% of price</td></tr>
+        <tr><td>11</td><td>Management Fees</td><td>8% of gross rent</td></tr>
+        <tr><td>12</td><td>Mortgage Interest</td><td>Computed from loan</td></tr>
+        <tr><td>14</td><td>Repairs</td><td>1% of price</td></tr>
+        <tr><td>15</td><td>Supplies</td><td>$25/mo</td></tr>
+        <tr><td>16</td><td>Property Taxes</td><td>1.9% of price (TX)</td></tr>
+        <tr><td>17</td><td>Utilities</td><td>$150/mo</td></tr>
+        <tr><td>18</td><td>Depreciation</td><td>27.5yr + cost seg + §179</td></tr>
+        <tr><td>19</td><td>Other (HOA)</td><td>$0/mo (user set)</td></tr>
+        <tr><td>—</td><td>Loan Points</td><td>Amortized over term</td></tr>
+        <tr><td>—</td><td>Vacancy Allowance</td><td>5% of gross rent</td></tr>
+        </tbody></table>
       </div>
       <div class="ds-how">
         <div class="ds-label">How we use it</div>
-        Powers our full <strong>Schedule E tax worksheet</strong> — the same form you'd file with the IRS. We calculate depreciation (straight-line + cost segregation + bonus depreciation), passive activity loss deductions (with $25K phase-out at AGI $100K-$150K), tax savings per year, and depreciation recapture at sale. This feeds into 5/10/15-year exit analysis showing total after-tax returns.
+        All 16 expense categories from IRS Schedule E are computed for each property. Total deductions reduce taxable rental income, generating tax savings via passive activity loss rules. All defaults are configurable in Settings and per-project via the Schedule E Expenses section on the project card. Year 1 includes prorated taxes and insurance. Cost segregation accelerates depreciation in Year 1 via bonus depreciation (100% under the One Big Beautiful Bill Act 2025). The passive activity loss allowance ($25K phase-out at AGI $100K-$150K) limits deductions for active participation; material participation and RE professionals have no limit.
       </div>
       <div class="ds-meta">
         <div class="ds-freq"><span class="ds-freq-label">Source updates</span> Annually (Rev. Proc. release)</div>

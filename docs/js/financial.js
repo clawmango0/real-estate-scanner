@@ -4,7 +4,7 @@ const FLIP_MAO_PCT=0.70, FLIP_HOLD_MO=6, HARD_MONEY_RATE=0.12;
 const REFI_LTV_DEFAULT=0.75, SEASON_MO_DEFAULT=6;
 const DFW_RENT_SQFT_FLOOR=0.80, DFW_RENT_SQFT_CAP=1.40;
 const STR_MGMT_RATE=0.20, STR_DEFAULT_OCC=0.70, STR_DEFAULT_PLAT=0.03;
-const GP={rate:0.0525,termYrs:30,downPct:0.20,closingPct:0.03,pointsPct:0.01,landPct:0.20,deprecYrs:27.5,appreci:0.03,propTaxRate:0.019,insurRate:0.006,mgmtRate:0.08,repairRate:0.01,vacancyRate:0.05,sellCostPct:0.06,cocMin:0.08,cocStrong:0.12,margRate:0.32,ltcgRate:0.15,recapRate:0.25,agi:120000,filingStatus:'single',costSegPct:0.20,bonusDepPct:1.00,sec179:0,participation:'active',showWalkScore:false};
+const GP={rate:0.0525,termYrs:30,downPct:0.20,closingPct:0.03,pointsPct:0.01,landPct:0.20,deprecYrs:27.5,appreci:0.03,propTaxRate:0.019,insurRate:0.006,mgmtRate:0.08,repairRate:0.01,vacancyRate:0.05,sellCostPct:0.06,cocMin:0.08,cocStrong:0.12,margRate:0.32,ltcgRate:0.15,recapRate:0.25,agi:120000,filingStatus:'single',costSegPct:0.20,bonusDepPct:1.00,sec179:0,participation:'active',showWalkScore:false,cleanMaintRate:0.015,utilityMo:150,hoaMo:0,legalProfRate:0.003,travelMo:100,suppliesMo:25,advertisingYr:300};
 const GP_DEFAULTS={...GP};
 const EXIT_YRS=[5,10,15];
 
@@ -37,7 +37,7 @@ const IMPR={asis:{label:'As-Is',costPct:0,upliftPct:0,improvPct:0},cosmetic:{lab
 function pmt(p,r,y){if(p<=0)return 0;const m=r/12,n=y*12;return p*m*Math.pow(1+m,n)/(Math.pow(1+m,n)-1);}
 function balAt(p,r,y,mo){if(p<=0||mo<=0)return p;const m=r/12,pm2=pmt(p,r,y);return p*Math.pow(1+m,mo)-pm2*(Math.pow(1+m,mo)-1)/m;}
 function intInYr(p,r,y,yr){const m=r/12,pm2=pmt(p,r,y);let t=0;for(let mo=(yr-1)*12;mo<yr*12;mo++){t+=balAt(p,r,y,mo)*m;}return t;}
-function cocCalc(price,rent){if(!rent||!price)return null;const loan=price*(1-GP.downPct),annMort=pmt(loan,GP.rate,GP.termYrs)*12;const gr=rent*12,pt=price*GP.propTaxRate,ins=price*GP.insurRate,mgmt=gr*GP.mgmtRate,rep=price*GP.repairRate,oth=gr*GP.vacancyRate;const noi=gr-pt-ins-mgmt-rep-oth,cf=noi-annMort,ci=price*(GP.downPct+GP.closingPct);return{coc:cf/ci,cfMo:cf/12,cfAnn:cf,cashIn:ci,noi,annMort,gr,pt,ins,mgmt,rep,oth};}
+function cocCalc(price,rent){if(!rent||!price)return null;const loan=price*(1-GP.downPct),annMort=pmt(loan,GP.rate,GP.termYrs)*12;const gr=rent*12,pt=price*GP.propTaxRate,ins=price*GP.insurRate,mgmt=gr*GP.mgmtRate,rep=price*GP.repairRate,oth=gr*GP.vacancyRate;const cleanMaint=price*GP.cleanMaintRate,utilities=GP.utilityMo*12,hoa=GP.hoaMo*12,legalProf=price*GP.legalProfRate,travel=GP.travelMo*12,supplies=GP.suppliesMo*12,advertising=GP.advertisingYr;const noi=gr-pt-ins-mgmt-rep-oth-cleanMaint-utilities-hoa-legalProf-travel-supplies-advertising,cf=noi-annMort,ci=price*(GP.downPct+GP.closingPct);return{coc:cf/ci,cfMo:cf/12,cfAnn:cf,cashIn:ci,noi,annMort,gr,pt,ins,mgmt,rep,oth,cleanMaint,utilities,hoa,legalProf,travel,supplies,advertising};}
 function maxPrice(rent,tgt){if(!rent)return 0;let lo=5e3,hi=4e6,mid;for(let i=0;i<64;i++){mid=(lo+hi)/2;const r=cocCalc(mid,rent);if(r&&r.coc>tgt)lo=mid;else hi=mid;}return Math.round(mid/1000)*1000;}
 function getTiers(rent){if(!rent)return null;return{strong:maxPrice(rent,GP.cocStrong),consider:maxPrice(rent,GP.cocMin),stretch:Math.round(maxPrice(rent,GP.cocMin)*1.055/1000)*1000};}
 function classify(price,t){if(!t)return{label:'N/A',cls:''};if(price<=t.strong)return{label:'Strong Buy',cls:'ts'};if(price<=t.consider)return{label:'Consider',cls:'tc'};if(price<=t.stretch)return{label:'Stretch',cls:'tx'};return{label:'Walk Away',cls:'tw2'};}
@@ -71,10 +71,22 @@ function schedE(price,rent,condKey,imprKey,yr,tp,carryIn){
   const mortInt=intInYr(loan,GP.rate,GP.termYrs,yr);
 
   // Income & expenses
-  const gr=(rent||0)*12,pt=price*GP.propTaxRate,ins=price*GP.insurRate;
-  const mgmt=gr*GP.mgmtRate,rep=price*GP.repairRate,oth=gr*GP.vacancyRate;
+  // IRS Schedule E Lines 3-19 — all deductible rental expenses
+  const gr=(rent||0)*12;                                    // Line 3: Gross rents
+  const pt=price*GP.propTaxRate;                            // Line 16: Taxes
+  const ins=price*GP.insurRate;                             // Line 9: Insurance
+  const mgmt=gr*GP.mgmtRate;                               // Line 11: Management fees
+  const rep=price*GP.repairRate;                            // Line 14: Repairs
+  const oth=gr*GP.vacancyRate;                              // Vacancy allowance
+  const cleanMaint=price*GP.cleanMaintRate;                 // Line 7: Cleaning & maintenance
+  const utilities=GP.utilityMo*12;                          // Line 17: Utilities
+  const hoa=GP.hoaMo*12;                                    // Line 19: HOA (Other)
+  const legalProf=price*GP.legalProfRate;                   // Line 10: Legal & professional
+  const travel=GP.travelMo*12;                              // Line 6: Auto & travel
+  const supplies=GP.suppliesMo*12;                          // Line 15: Supplies
+  const advertising=GP.advertisingYr;                       // Line 5: Advertising
   const proratedTax=(yr===1)?pt*(3/12):0,proratedIns=(yr===1)?ins*(2/12):0;
-  const totalDeduct=mortInt+annPoints+pt+proratedTax+ins+proratedIns+mgmt+rep+oth+annDepr;
+  const totalDeduct=mortInt+annPoints+pt+proratedTax+ins+proratedIns+mgmt+rep+oth+cleanMaint+utilities+hoa+legalProf+travel+supplies+advertising+annDepr;
   const netInc=gr-totalDeduct;
 
   // Passive activity loss rules based on participation level
@@ -94,11 +106,12 @@ function schedE(price,rent,condKey,imprKey,yr,tp,carryIn){
   }
 
   return{gr,mortInt,annPoints,pt,proratedTax,ins,proratedIns,mgmt,rep,oth,
+    cleanMaint,utilities,hoa,legalProf,travel,supplies,advertising,
     annDepr,bonusDep,sec179,stdDepr,costSegAmt,
     totalDeduct,netInc,taxSav,usedAllow,passCarry:Math.max(0,newCarry),
     deprBasis,improvCapCost,participation};
 }
-function exitAt(price,rent,condKey,imprKey,holdYrs,tp,appreciRate){const cond=COND[condKey]||COND.good,imprObj=IMPR[imprKey]||IMPR.asis;const totalImprovCost=price*imprObj.costPct,improvUplift=price*imprObj.upliftPct;const arv=price*(1+cond.adj)+improvUplift;const appr=appreciRate??GP.appreci;const exitVal=arv*Math.pow(1+appr,holdYrs);const loan=price*(1-GP.downPct),loanBal=balAt(loan,GP.rate,GP.termYrs,holdYrs*12);const cashIn=price*(GP.downPct+GP.closingPct)+totalImprovCost;let cumCF=0,cumTaxSav=0,cumDepr=0,carry=0;const annMort=pmt(loan,GP.rate,GP.termYrs)*12;for(let yr=1;yr<=holdYrs;yr++){const se=schedE(price,rent,condKey,imprKey,yr,tp,carry);carry=se.passCarry;cumDepr+=se.annDepr;cumTaxSav+=se.taxSav;const cashExp=se.pt+se.ins+se.mgmt+se.rep+se.oth;cumCF+=(se.gr-cashExp-annMort);}const sellCosts=exitVal*GP.sellCostPct,netProc=exitVal-loanBal-sellCosts;const closingBasis=price*GP.closingPct,improvCapTotal=price*(IMPR[imprKey]?.improvPct||0);const adjBasis=price+closingBasis+improvCapTotal-cumDepr;const capGain=Math.max(0,exitVal-sellCosts-adjBasis);const recapAmt=Math.min(cumDepr,capGain),ltcgAmt=Math.max(0,capGain-recapAmt);const exitTax=recapAmt*tp.recap+ltcgAmt*tp.ltcg;const totalProfit=netProc-cashIn+cumCF+cumTaxSav-exitTax;const totalROI=cashIn>0?totalProfit/cashIn:0;const annROI=cashIn>0?Math.pow(Math.max(1+totalROI,0.001),1/holdYrs)-1:0;return{exitVal,arv,totalImprovCost,loanBal,cashIn,sellCosts,netProc,cumCF,cumTaxSav,cumDepr,adjBasis,capGain,recapAmt,ltcgAmt,exitTax,totalProfit,totalROI,annROI};}
+function exitAt(price,rent,condKey,imprKey,holdYrs,tp,appreciRate){const cond=COND[condKey]||COND.good,imprObj=IMPR[imprKey]||IMPR.asis;const totalImprovCost=price*imprObj.costPct,improvUplift=price*imprObj.upliftPct;const arv=price*(1+cond.adj)+improvUplift;const appr=appreciRate??GP.appreci;const exitVal=arv*Math.pow(1+appr,holdYrs);const loan=price*(1-GP.downPct),loanBal=balAt(loan,GP.rate,GP.termYrs,holdYrs*12);const cashIn=price*(GP.downPct+GP.closingPct)+totalImprovCost;let cumCF=0,cumTaxSav=0,cumDepr=0,carry=0;const annMort=pmt(loan,GP.rate,GP.termYrs)*12;for(let yr=1;yr<=holdYrs;yr++){const se=schedE(price,rent,condKey,imprKey,yr,tp,carry);carry=se.passCarry;cumDepr+=se.annDepr;cumTaxSav+=se.taxSav;const cashExp=se.pt+se.ins+se.mgmt+se.rep+se.oth+se.cleanMaint+se.utilities+se.hoa+se.legalProf+se.travel+se.supplies+se.advertising;cumCF+=(se.gr-cashExp-annMort);}const sellCosts=exitVal*GP.sellCostPct,netProc=exitVal-loanBal-sellCosts;const closingBasis=price*GP.closingPct,improvCapTotal=price*(IMPR[imprKey]?.improvPct||0);const adjBasis=price+closingBasis+improvCapTotal-cumDepr;const capGain=Math.max(0,exitVal-sellCosts-adjBasis);const recapAmt=Math.min(cumDepr,capGain),ltcgAmt=Math.max(0,capGain-recapAmt);const exitTax=recapAmt*tp.recap+ltcgAmt*tp.ltcg;const totalProfit=netProc-cashIn+cumCF+cumTaxSav-exitTax;const totalROI=cashIn>0?totalProfit/cashIn:0;const annROI=cashIn>0?Math.pow(Math.max(1+totalROI,0.001),1/holdYrs)-1:0;return{exitVal,arv,totalImprovCost,loanBal,cashIn,sellCosts,netProc,cumCF,cumTaxSav,cumDepr,adjBasis,capGain,recapAmt,ltcgAmt,exitTax,totalProfit,totalROI,annROI};}
 
 // ── Flipper ───────────────────────────────────────────────────────────────────
 function flipCalc(price,condKey,imprKey){
