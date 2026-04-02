@@ -202,6 +202,7 @@ function goToApp(){
 }
 
 function showApp(){
+  document.getElementById('landing').style.display='none';
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('setup-screen').style.display='none';
   document.getElementById('app').style.display='block';

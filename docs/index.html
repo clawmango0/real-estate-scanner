@@ -23,16 +23,102 @@
 <body>
 <a href="#props-container" class="skip-link">Skip to properties</a>
 
-<!-- ══ AUTH SCREEN ══════════════════════════════════════ -->
-<div id="auth-screen">
+<!-- ══ LANDING PAGE ════════════════════════════════════ -->
+<div id="landing">
+  <nav class="lp-nav">
+    <div class="lp-nav-left">
+      <img src="img/logo.png" style="width:36px;height:36px;border-radius:8px" />
+      <span class="brand-text" style="font-size:1.1rem">LockBox<span class="iq">IQ</span></span>
+    </div>
+    <div class="lp-nav-right">
+      <button class="theme-btn" onclick="toggleTheme()" id="theme-btn-lp" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+      <button class="lp-signin-btn" onclick="showLogin()">Sign In</button>
+    </div>
+  </nav>
+
+  <section class="lp-hero">
+    <h1>Texas Property Analyst</h1>
+    <p class="lp-hero-sub">The intelligent platform that automatically ingests property listings, analyzes investment potential, and delivers tax-optimized financial projections — powered by 7 independent data sources and AI.</p>
+    <button class="lp-cta" onclick="showLogin()">Sign In to Your Dashboard</button>
+  </section>
+
+  <section class="lp-section">
+    <h2>How It Works</h2>
+    <div class="lp-steps">
+      <div class="lp-step">
+        <div class="lp-step-num">1</div>
+        <div class="lp-step-content">
+          <h3>Forward Your Alerts</h3>
+          <p>Add your private LockBoxIQ email to your Zillow, Redfin, Realtor.com, or HAR saved searches. Every new listing alert is automatically parsed and analyzed.</p>
+        </div>
+      </div>
+      <div class="lp-step">
+        <div class="lp-step-num">2</div>
+        <div class="lp-step-content">
+          <h3>Instant Analysis</h3>
+          <p>Each property is enriched with neighborhood data, rent estimates, and financial projections. Cash-on-cash return, cash flow, and offer tiers are calculated in real time.</p>
+        </div>
+      </div>
+      <div class="lp-step">
+        <div class="lp-step-num">3</div>
+        <div class="lp-step-content">
+          <h3>Make Better Decisions</h3>
+          <p>Properties are auto-staged based on quality. Compare deals side by side, generate deal briefs for partners, and export your analysis as CSV.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <h2>7 Investment Strategies</h2>
+    <div class="lp-grid">
+      <div class="lp-card"><h3>Buy & Hold</h3><p>CoC return, monthly cash flow, 5-year Schedule E tax worksheet, 5/10/15-year exit projections with depreciation recapture and LTCG tax.</p></div>
+      <div class="lp-card"><h3>Fix & Flip</h3><p>ARV from condition/improvement matrix, 70% MAO rule, holding costs, hard money modeling, net profit and ROI.</p></div>
+      <div class="lp-card"><h3>BRRRR</h3><p>Buy-rehab-rent-refi-repeat: ARV calculation, refi at 75% LTV after seasoning, capital recycled, infinite return detection.</p></div>
+      <div class="lp-card"><h3>Short-Term Rental</h3><p>RevPAR, gross revenue, platform fees, management costs, STR-specific CoC with configurable ADR and occupancy.</p></div>
+      <div class="lp-card"><h3>Wholesale</h3><p>Assignment fee calculation, MAO, offer price, spread analysis for quick-turn deals.</p></div>
+      <div class="lp-card"><h3>Commercial / Multi</h3><p>Cap rate, DSCR, GRM, price-per-unit, NOI with vacancy adjustment for duplexes through apartment complexes.</p></div>
+      <div class="lp-card"><h3>Passive / Syndication</h3><p>IRR via Newton's method, equity multiple, preferred return, annual distributions for limited partner investments.</p></div>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <h2>Powered by Data</h2>
+    <p class="lp-section-sub">Every analysis is built on multiple independent data sources — no single source tells the whole story.</p>
+    <div class="lp-grid lp-grid-3">
+      <div class="lp-card lp-card-source"><div class="lp-source-icon">🏠</div><h3>Zillow + Redfin + Realtor.com</h3><p>Real-time property listings with price, beds, baths, sqft, lot size, and Rent Zestimates from email alerts and bookmarklet capture.</p></div>
+      <div class="lp-card lp-card-source"><div class="lp-source-icon">📊</div><h3>Zillow ZHVI & ZORI</h3><p>Home Value Index and Observed Rent Index at the ZIP code level. Updated monthly to calibrate rent estimates against actual market data.</p></div>
+      <div class="lp-card lp-card-source"><div class="lp-source-icon">🏛️</div><h3>U.S. Census Bureau</h3><p>Median household income, population, and housing units per ZIP from the American Community Survey. Powers affordability ratios.</p></div>
+      <div class="lp-card lp-card-source"><div class="lp-source-icon">🎓</div><h3>NCES & Texas Education Agency</h3><p>School quality ratings (1-10) per ZIP code. A-rated districts command 6-12% rent premiums in our estimation model.</p></div>
+      <div class="lp-card lp-card-source"><div class="lp-source-icon">🛡️</div><h3>FBI UCR & Bureau of Justice</h3><p>Crime safety scores (1-10) per ZIP. High-crime areas face higher vacancy and lower rents — factored into every projection.</p></div>
+      <div class="lp-card lp-card-source"><div class="lp-source-icon">📍</div><h3>Census Bureau Geocoder</h3><p>USPS-verified addresses with city, state, ZIP, and lat/lng. Every property is geocoded — no null locations.</p></div>
+      <div class="lp-card lp-card-source"><div class="lp-source-icon">🤖</div><h3>Claude AI (Anthropic)</h3><p>AI-powered email parsing, listing extraction, and rent estimation. Handles every email format from Zillow digests to Redfin marketing.</p></div>
+      <div class="lp-card lp-card-source"><div class="lp-source-icon">📋</div><h3>IRS 2025 Tax Tables</h3><p>Full Schedule E with all 16 expense categories, cost segregation, bonus depreciation, Section 179, and passive activity loss rules.</p></div>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <h2>Built for Texas Investors</h2>
+    <div class="lp-grid lp-grid-2">
+      <div class="lp-card"><h3>DFW-Calibrated Rent Model</h3><p>9-factor rent estimation engine calibrated to the Dallas-Fort Worth market: yield-by-price-tier, ZHVI comparison, property type, bed/bath adjustment, sqft floor/cap, condition, improvement, market heat, and school district premium.</p></div>
+      <div class="lp-card"><h3>Market Analytics</h3><p>Per-project analytics: CoC distribution, price-to-rent ratios by city, neighborhood performance, cash flow vs. appreciation scatter plot, budget position, and portfolio 5-year projection.</p></div>
+      <div class="lp-card"><h3>Deal Pipeline</h3><p>Properties auto-stage from Inbox through Shortlist, Due Diligence, Offer, Contract, to Closed. Risk flags warn about missing data, negative cash flow, and stale listings.</p></div>
+      <div class="lp-card"><h3>Privacy First</h3><p>All financial calculations run in your browser. Your data is stored securely in Supabase with row-level security. No data is shared with third parties.</p></div>
+    </div>
+  </section>
+
+  <footer class="lp-footer">
+    <span class="brand-text">LockBox<span class="iq">IQ</span></span> — Texas Property Analyst<br>
+    <span style="font-size:.7rem;color:var(--text3)">Built for real estate investors who demand data-driven decisions.</span>
+  </footer>
+</div>
+
+<!-- ══ AUTH SCREEN (hidden, shown by Sign In button) ══ -->
+<div id="auth-screen" style="display:none">
   <div class="auth-box">
     <div class="auth-logo"><img src="img/logo.png" style="width:72px;height:72px;object-fit:contain;border-radius:14px;" /></div>
     <h2><span class="brand-text">LockBox<span class="iq">IQ</span></span></h2>
-    <p>Investment analyzer with automatic email ingestion</p>
-    <div class="auth-tabs">
-      <button class="auth-tab on" onclick="authTab('login',this)">Sign In</button>
-      <button class="auth-tab" onclick="authTab('signup',this)">Create Account</button>
-    </div>
+    <p>Sign in to your investment dashboard</p>
     <div class="auth-field">
       <label>Email</label>
       <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
@@ -41,13 +127,11 @@
       <label>Password</label>
       <input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password">
     </div>
-    <div class="auth-field" id="name-field" style="display:none">
-      <label>Full Name</label>
-      <input type="text" id="auth-name" placeholder="Ian Kelly">
-    </div>
     <button class="auth-btn" id="auth-submit" onclick="doAuth()">Sign In</button>
     <div class="auth-err" id="auth-err"></div>
+    <button onclick="showLanding()" style="background:none;border:none;color:var(--text3);font-size:.72rem;cursor:pointer;margin-top:.75rem;font-family:inherit">← Back to home</button>
   </div>
+</div>
 </div>
 
 <!-- ══ SETUP SCREEN ══════════════════════════════════════ -->
