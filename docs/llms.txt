@@ -1,0 +1,50 @@
+# LockBoxIQ — Texas Property Analyst
+
+> Real estate investment analysis platform for Texas property investors.
+
+LockBoxIQ automatically ingests property listings from Zillow, Redfin, Realtor.com, and HAR email alerts, then analyzes each property across 7 investment strategies with full IRS Schedule E tax modeling.
+
+## Capabilities
+
+- Automatic property listing ingestion from email alerts
+- Cash-on-Cash return, monthly cash flow, and offer tier calculation
+- Full IRS Schedule E tax worksheet with all 16 expense categories
+- Cost segregation, bonus depreciation (100%), and Section 179 modeling
+- 5/10/15-year exit analysis with depreciation recapture and LTCG tax
+- 7 investment strategies: Buy & Hold, Fix & Flip, BRRRR, STR (Airbnb), Wholesale, Commercial/Multi-Family, Passive/Syndication
+- DFW-calibrated 9-factor rent estimation model
+- Neighborhood scoring: schools (35%) + safety (35%) + rent growth (30%)
+- Market analytics: CoC distribution, price-to-rent ratios, market heat index, portfolio projection
+- Deal comparison (side-by-side) and one-page deal briefs
+- Pipeline management: Inbox → Shortlist → Due Diligence → Offer → Contract → Closed
+- Auto-staging based on financial quality + neighborhood score
+- Risk flags for incomplete data, negative cash flow, stale listings
+
+## Data Sources
+
+- Zillow: Property listings, ZHVI (Home Value Index), ZORI (Rent Index)
+- Redfin: Property listings via JSON-LD structured data
+- Realtor.com: Property listings via __NEXT_DATA__ parsing
+- U.S. Census Bureau: Median income, population, housing units (ACS 5-Year)
+- Census Geocoder: USPS-verified addresses with lat/lng
+- NCES / Texas Education Agency: School quality ratings (1-10)
+- FBI UCR / Bureau of Justice: Crime safety scores (1-10)
+- Claude AI (Anthropic): Email parsing, listing extraction, rent estimation
+- IRS 2025 Tax Tables: Federal brackets, LTCG rates, depreciation schedules
+
+## Technical Details
+
+- Frontend: Vanilla JavaScript SPA served via Cloudflare Pages
+- Backend: Supabase Edge Functions (Deno/TypeScript)
+- Database: Supabase PostgreSQL with Row-Level Security
+- AI: Claude Sonnet 4 for parsing and estimation
+- No data shared with third parties
+- All financial calculations run client-side in the browser
+
+## API Access
+
+LockBoxIQ does not currently offer a public API. A future MCP (Model Context Protocol) server is planned to enable AI agent access to property analysis capabilities with authentication.
+
+## Contact
+
+Website: https://lockboxiq.com

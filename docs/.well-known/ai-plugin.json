@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "LockBoxIQ",
+  "name_for_model": "lockboxiq",
+  "description_for_human": "Texas real estate investment analysis platform with automatic listing ingestion and 7 investment strategies.",
+  "description_for_model": "LockBoxIQ is a real estate investment analysis platform focused on Texas markets (primarily DFW). It ingests property listings from Zillow, Redfin, and Realtor.com email alerts, then analyzes each property across 7 investment strategies (Buy & Hold, Fix & Flip, BRRRR, STR, Wholesale, Commercial, Syndication) with full IRS Schedule E tax modeling including all 16 expense categories, cost segregation, bonus depreciation, and passive activity loss rules. Data sources include Zillow ZHVI/ZORI, U.S. Census Bureau ACS, NCES school ratings, FBI crime data, and Claude AI for parsing. The platform does not currently have a public API but plans to offer MCP server access in the future.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "none",
+    "url": "https://lockboxiq.com"
+  },
+  "logo_url": "https://lockboxiq.com/img/logo.png",
+  "contact_email": "ian.aloysious.kelly@gmail.com",
+  "legal_info_url": "https://lockboxiq.com"
+}
